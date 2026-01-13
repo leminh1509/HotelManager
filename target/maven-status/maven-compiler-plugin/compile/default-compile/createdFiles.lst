@@ -1,0 +1,12 @@
+com\hotelmanagersystem\config\SecurityConfig.class
+com\hotelmanagersystem\service\CustomUserDetailsService.class
+com\hotelmanagersystem\entity\Permission.class
+com\hotelmanagersystem\security\CustomUserDetails.class
+com\hotelmanagersystem\controller\AuthController.class
+com\hotelmanagersystem\HotelManagerSystemApplication.class
+com\hotelmanagersystem\entity\Role.class
+com\hotelmanagersystem\dto\auth\LoginRequest.class
+com\hotelmanagersystem\repository\PermissionRepository.class
+com\hotelmanagersystem\repository\UserRepository.class
+com\hotelmanagersystem\entity\User.class
+com\hotelmanagersystem\repository\RoleRepository.class

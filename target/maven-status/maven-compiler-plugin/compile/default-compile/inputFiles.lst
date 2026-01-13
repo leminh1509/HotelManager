@@ -1,0 +1,12 @@
+D:\GitHub\Hotel Manager System\HotelManagerSystem\src\main\java\com\hotelmanagersystem\config\SecurityConfig.java
+D:\GitHub\Hotel Manager System\HotelManagerSystem\src\main\java\com\hotelmanagersystem\controller\AuthController.java
+D:\GitHub\Hotel Manager System\HotelManagerSystem\src\main\java\com\hotelmanagersystem\dto\auth\LoginRequest.java
+D:\GitHub\Hotel Manager System\HotelManagerSystem\src\main\java\com\hotelmanagersystem\entity\Permission.java
+D:\GitHub\Hotel Manager System\HotelManagerSystem\src\main\java\com\hotelmanagersystem\entity\Role.java
+D:\GitHub\Hotel Manager System\HotelManagerSystem\src\main\java\com\hotelmanagersystem\entity\User.java
+D:\GitHub\Hotel Manager System\HotelManagerSystem\src\main\java\com\hotelmanagersystem\HotelManagerSystemApplication.java
+D:\GitHub\Hotel Manager System\HotelManagerSystem\src\main\java\com\hotelmanagersystem\repository\PermissionRepository.java
+D:\GitHub\Hotel Manager System\HotelManagerSystem\src\main\java\com\hotelmanagersystem\repository\RoleRepository.java
+D:\GitHub\Hotel Manager System\HotelManagerSystem\src\main\java\com\hotelmanagersystem\repository\UserRepository.java
+D:\GitHub\Hotel Manager System\HotelManagerSystem\src\main\java\com\hotelmanagersystem\security\CustomUserDetails.java
+D:\GitHub\Hotel Manager System\HotelManagerSystem\src\main\java\com\hotelmanagersystem\service\CustomUserDetailsService.java
