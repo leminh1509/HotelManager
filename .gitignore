@@ -1,4 +1,9 @@
-application.properties
 target/
+*.class
+*.jar
+*.war
+*.ear
 .idea/
 *.iml
+.vscode/
+.DS_Store
