@@ -1,0 +1,31 @@
+/* src/components/Footer/Footer.css */
+
+.footer-section {
+  margin-top: 60px;
+}
+
+.footer-bg {
+  background-color: #eae1df;
+}
+
+.copyright-bg {
+  background-color: #e4d7d6;
+}
+
+.footer-black {
+  color: #000000;
+}
+
+.footer-logo-img {
+  width: 70px;
+  height: auto;
+  display: block;
+  max-width: 100%;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+  margin: 0 auto;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Nếu template của bạn đã có sẵn style cho footer-section/ft-about/etc
+   thì file này chỉ cần override những chỗ inline cũ. */
