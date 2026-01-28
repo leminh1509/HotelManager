@@ -16,8 +16,6 @@ public class InfoService {
     @Autowired
     private LessionRepository lessionRepository;
 
-
-
     public List<Info> getAllInfo() {
         return infoRepository.findAll();
     }
@@ -26,12 +24,14 @@ public class InfoService {
         Lession lession = lessionRepository.findById(dto.getLessionId())
                 .orElseThrow(() -> new RuntimeException("Lession not found with ID: " + dto.getLessionId()));
 
-
         Info info = new Info();
         info.setTerm(dto.getTerm());
         info.setDefine(dto.getDefine());
         info.setLession(lession); // Gán entity thật
         return infoRepository.save(info);
     }
-    public List<Info> getInfoByLessionId(int id) { return infoRepository.findByLession_Id( id);}
+
+    public List<Info> getInfoByLessionId(Long id) {
+        return infoRepository.findByLession_Id(id);
+    }
 }
