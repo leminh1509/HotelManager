@@ -8,8 +8,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface InfoRepository extends JpaRepository<Info, Integer> {
+public interface InfoRepository extends JpaRepository<Info, Long> {
     List<Info> findByLession(Lession lession); // ✅ Tìm theo đối tượng Lession
-    List<Info> findByLession_Id(int lessionId); // ✅ Tìm theo ID của Lession
+
+    List<Info> findByLession_Id(Long lessionId); // ✅ Tìm theo ID của Lession
 
 }
