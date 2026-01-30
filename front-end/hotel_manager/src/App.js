@@ -1,32 +1,62 @@
-// src/App.js
-import "./App.css";
+import React from "react";
+import { Routes, Route } from "react-router-dom";
 
-import Header from "./components/Header/Header";
-import Footer from "./components/Footer/Footer";
-import PaymentPage from "./components/PaymentPage";
+import Login from "./components/Login/Login";
 
+import ProtectedRoute from "./components/Protected/ProtectedRoute";
+import RequireRole from "./components/Protected/RequireRole";
+import RoleRedirect from "./components/Protected/RoleRedirect";
 
-function App() {
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+import AdminLayout from "./components/Admin/AdminLayout";
+import UserManagement from "./components/Admin/Usermanagement";
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    window.location.href = "/login";
-  };
+// ====== USER HOME (bạn thay đúng path Home của bạn) ======
+import Home from "./components/Home/Home";
 
+// ====== RECEPTIONIST (bạn thay đúng component thật) ======
+import BookingList from "./components/Receptionist/BookingList";
+
+// ====== MAINTENANCE (bạn thay đúng component thật) ======
+import MaintenanceRequests from "./components/Maintenance/Requests";
+
+const Forbidden = () => <div style={{ padding: 20 }}>403 - Forbidden</div>;
+const AdminDashboard = () => <div>Admin Dashboard</div>;
+
+export default function App() {
   return (
-    <div className="App">
-      <Header
-        user={user}
-        role={user?.role === "RECEPTIONIST" ? "receptionist" : "guest"}
-        onLogout={handleLogout}
-      />
-      <main style={{ flex: 1 }}>
-        <PaymentPage />
-      </main>
-      <Footer />
-    </div>
+    <Routes>
+      <Route path="/" element={<RoleRedirect />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/forbidden" element={<Forbidden />} />
+
+      {/* ===== USER ===== */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/home" element={<Home />} />
+      </Route>
+
+      {/* ===== ADMIN ===== */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<RequireRole allowed={["ADMIN"]} />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<UserManagement />} />
+          </Route>
+        </Route>
+      </Route>
+
+      {/* ===== RECEPTIONIST ===== */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<RequireRole allowed={["RECEPTIONIST"]} />}>
+          <Route path="/receptionist/booking-list" element={<BookingList />} />
+        </Route>
+      </Route>
+
+      {/* ===== MAINTENANCE ===== */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<RequireRole allowed={["MAINTENANCE"]} />}>
+          <Route path="/maintenance/requests" element={<MaintenanceRequests />} />
+        </Route>
+      </Route>
+    </Routes>
   );
 }
-
-export default App;

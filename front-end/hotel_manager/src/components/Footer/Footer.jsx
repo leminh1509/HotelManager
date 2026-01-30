@@ -38,7 +38,7 @@ export default function Footer({ onSubscribe }) {
                 <div className="logo">
                   <a href="/">
                     <img
-                      src="/img/36x.png"
+                      src="/hms/img/36x.png"
                       alt="36 Hotel Logo"
                       className="footer-logo-img"
                       onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}

@@ -1,0 +1,52 @@
+.sidebar {
+  width: 260px;
+  background: #111827;
+  color: #fff;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebarBrand {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.sidebarRole {
+  font-size: 12px;
+  opacity: 0.85;
+  background: rgba(255,255,255,0.08);
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebarLink {
+  color: #e5e7eb;
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.sidebarLink:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.sidebarLinkActive {
+  background: rgba(255,255,255,0.16);
+  color: #fff;
+}
+
+.sidebarLogout {
+  margin-top: auto;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
