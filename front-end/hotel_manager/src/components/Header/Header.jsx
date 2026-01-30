@@ -15,6 +15,7 @@ export default function Header({
     return role === "receptionist" || Boolean(pageActive);
   }, [role, pageActive]);
 
+  
   const receptionistItems = [
     { key: "booking-list", label: "Booking List", to: "/receptionist/booking-list" },
     { key: "create-booking", label: "Create Booking", to: "/receptionist/create-booking" },

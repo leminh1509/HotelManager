@@ -7,3 +7,4 @@ export default function RequireAdmin() {
   if (role !== "ADMIN") return <Navigate to="/forbidden" replace />;
   return <Outlet />;
 }
+

@@ -29,7 +29,8 @@ import java.util.Map;
 @PreAuthorize("hasRole('ADMIN')")
 public class UserManagementController {
 
-    private final UserManagementService userManagementService;
+    private final
+    UserManagementService userManagementService;
 
     /**
      * Lấy danh sách tất cả users với phân trang

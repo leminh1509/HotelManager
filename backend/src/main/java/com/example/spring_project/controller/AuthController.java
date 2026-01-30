@@ -24,6 +24,7 @@ import java.util.Map;
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
 public class AuthController {
 
+
     private final AuthService authService;
 
     @PostMapping("/register")

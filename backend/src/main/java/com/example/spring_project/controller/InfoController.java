@@ -7,9 +7,6 @@ import com.example.spring_project.model.Info_DTO;
 
 import java.util.List;
 
-
-
-
 @RestController
 @RequestMapping("/api/info")
 @CrossOrigin(origins = "http://localhost:3000") // Cho phép React truy cập API

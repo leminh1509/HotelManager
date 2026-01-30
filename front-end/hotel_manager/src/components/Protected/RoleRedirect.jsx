@@ -18,6 +18,7 @@ export default function RoleRedirect() {
     user = null;
   }
 
+  
   const role = normalizeRole(user?.role);
 
   if (role === "ADMIN") return <Navigate to="/admin" replace />;

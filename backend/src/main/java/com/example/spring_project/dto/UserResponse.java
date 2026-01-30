@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class UserResponse {
 
+
     private Integer userId;
     private String firstName;
     private String middleName;

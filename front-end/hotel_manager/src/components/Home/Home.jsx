@@ -2,6 +2,7 @@ import React from "react";
 import Header from "../Header/Header";  // nếu bạn có Header.jsx
 import Footer from "../Footer/Footer";  // nếu bạn có Footer.jsx
 
+
 export default function Home() {
   return (
     <>
@@ -14,3 +15,4 @@ export default function Home() {
     </>
   );
 }
+

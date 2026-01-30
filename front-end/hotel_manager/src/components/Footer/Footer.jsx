@@ -15,6 +15,7 @@ export default function Footer({ onSubscribe }) {
     }
 
  
+    
     try {
       const res = await fetch("/subscribe", {
         method: "POST",

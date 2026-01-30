@@ -22,35 +22,23 @@ public class UserManagementService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
 
-    /**
-     * Lấy danh sách tất cả users với phân trang
-     */
     public Page<UserResponse> getAllUsers(Pageable pageable) {
         return userRepository.findAll(pageable)
                 .map(this::convertToUserResponse);
     }
 
-    /**
-     * Lấy danh sách tất cả users không phân trang
-     */
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(this::convertToUserResponse)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Tìm user theo ID
-     */
     public UserResponse getUserById(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         return convertToUserResponse(user);
     }
 
-    /**
-     * Tìm users theo role
-     */
     public List<UserResponse> getUsersByRole(String roleName) {
         Role role = roleRepository.findByName(roleName)
                 .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
@@ -61,9 +49,6 @@ public class UserManagementService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Cập nhật thông tin user
-     */
     @Transactional
     public UserResponse updateUser(Integer userId, UpdateUserRequest request) {
         User user = userRepository.findById(userId)
@@ -117,9 +102,6 @@ public class UserManagementService {
         return convertToUserResponse(updatedUser);
     }
 
-    /**
-     * Thay đổi role của user
-     */
     @Transactional
     public UserResponse changeUserRole(Integer userId, Integer roleId) {
         User user = userRepository.findById(userId)

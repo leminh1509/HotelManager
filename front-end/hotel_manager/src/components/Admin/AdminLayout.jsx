@@ -13,10 +13,11 @@ export default function AdminLayout() {
     }
   }, []);
 
+
+
   const role = (user?.role || "").toLowerCase();
 
   const menu = useMemo(() => {
-    // Menu có phân quyền theo role
     const items = [
       { label: "Dashboard", path: "/admin", roles: ["admin"] },
       { label: "User Management", path: "/admin/users", roles: ["admin"] },
