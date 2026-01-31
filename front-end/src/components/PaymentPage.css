@@ -1,0 +1,188 @@
+:root {
+  --primary-color: #3b82f6;
+  /* Lighter blue as per image */
+  --primary-hover: #2563eb;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --background-color: #f8fafc;
+  --surface-color: #ffffff;
+  --border-color: #e2e8f0;
+  --success-color: #10b981;
+}
+
+.payment-page {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--background-color);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+.payment-card {
+  background: var(--surface-color);
+  width: 100%;
+  max-width: 600px;
+  /* Constrained width for card look */
+  padding: 2.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border-color);
+}
+
+.card-header {
+  margin-bottom: 2rem;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.card-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* Total Amount Box */
+.total-amount-box {
+  background-color: #eff6ff;
+  /* Light blue background */
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.total-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.total-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Payment Methods Grid */
+.section-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.methods-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.method-option {
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+  min-height: 100px;
+}
+
+.method-option:hover {
+  border-color: var(--primary-color);
+  background-color: #f8fafc;
+}
+
+.method-option.active {
+  border: 2px solid var(--primary-color);
+  background-color: #eff6ff;
+  /* Very light blue */
+  color: var(--primary-color);
+}
+
+.method-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.method-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Input Fields */
+.input-group {
+  margin-bottom: 1.5rem;
+}
+
+.amount-input {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.amount-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.pay-button {
+  width: 100%;
+  padding: 1rem;
+  background-color: #cbd5e1;
+  /* Grey default like image */
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: not-allowed;
+  transition: background-color 0.2s;
+}
+
+.pay-button.ready {
+  background-color: var(--primary-color);
+  /* Active blue */
+  cursor: pointer;
+}
+
+.pay-button.ready:hover {
+  background-color: var(--primary-hover);
+}
+
+/* Success State */
+.success-container {
+  text-align: center;
+  padding: 2rem;
+}
+
+.success-icon-large {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.success-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
