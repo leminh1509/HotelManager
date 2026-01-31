@@ -302,3 +302,25 @@ INSERT INTO users (
   '1998-01-20', 'admin1@example.com', '$2a$10$WVUjIHe8jOAvMwzIYVTNROypIQN.fOtyFdG5W.vx9fxj84w.NEGZq',-- 123456
   FALSE, TRUE, NULL
 );
+
+-- 1 Maintenance
+INSERT INTO users (
+  role_id, mobile_phone, first_name, middle_name, last_name,
+  birthday, email, password, is_black_list, is_active, avatar_url
+) VALUES (
+  4, '0901234578', 'Nguyen', NULL, 'banh',
+  '2002-05-20', 'maintenance1@example.com', '$2a$10$WVUjIHe8jOAvMwzIYVTNROypIQN.fOtyFdG5W.vx9fxj84w.NEGZq', -- 123456
+  FALSE, TRUE, NULL
+);
+
+-- 1 Receptionists
+INSERT INTO users (
+  role_id, mobile_phone, first_name, middle_name, last_name,
+  birthday, email, password, is_black_list, is_active, avatar_url
+) VALUES (
+  2, '090123987', 'Nguyen', NULL, 'binh',
+  '2002-05-31', 'receptionists1@example.com', '$2a$10$WVUjIHe8jOAvMwzIYVTNROypIQN.fOtyFdG5W.vx9fxj84w.NEGZq', -- 123456
+  FALSE, TRUE, NULL
+);
+
+

@@ -17,7 +17,6 @@
   margin-bottom: 0.5rem;
 }
 
-
 .page-header .text-muted {
   color: #6c757d;
   font-size: 1rem;
@@ -292,7 +291,7 @@
   gap: 0.25rem;
 }
 
-/* Action Buttons */
+/* NEW: Better Action Buttons with Text */
 .action-buttons {
   display: flex;
   gap: 0.5rem;
@@ -300,42 +299,77 @@
 }
 
 .btn-action {
-  padding: 0.5rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 500;
   color: white;
-  transition: transform 0.2s, opacity 0.2s;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .btn-action:hover {
   transform: translateY(-2px);
-  opacity: 0.9;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-action:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .btn-action i {
-  pointer-events: none;
+  font-size: 0.9rem;
+}
+
+.btn-action span {
+  font-weight: 600;
 }
 
 .btn-edit {
-  background: #17a2b8;
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.btn-edit:hover {
+  background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
 }
 
 .btn-role {
-  background: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-role:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a429c 100%);
 }
 
 .btn-toggle {
-  background: #28a745;
+  background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+}
+
+.btn-toggle:hover {
+  background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
 }
 
 .btn-blacklist {
-  background: #343a40;
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+}
+
+.btn-blacklist:hover {
+  background: linear-gradient(135deg, #5a6268 0%, #545b62 100%);
 }
 
 .btn-delete {
-  background: #dc3545;
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.btn-delete:hover {
+  background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
 }
 
 /* Modal Styles */
@@ -417,6 +451,18 @@
 
 .form-group {
   margin-bottom: 1.5rem;
+}
+
+.current-role-display {
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.current-role-display .badge {
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
 }
 
 .modal-actions {
@@ -501,6 +547,19 @@
   .stats-grid {
     grid-template-columns: repeat(3, 1fr);
   }
+  
+  .action-buttons {
+    gap: 0.4rem;
+  }
+  
+  .btn-action {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.8rem;
+  }
+  
+  .btn-action span {
+    display: inline;
+  }
 }
 
 @media (max-width: 768px) {
@@ -559,12 +618,13 @@
 
   .action-buttons {
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.4rem;
   }
 
   .btn-action {
     width: 100%;
     justify-content: center;
+    padding: 0.6rem 1rem;
   }
 
   .modal-content {
@@ -593,6 +653,23 @@
 
   .page-header h1 {
     font-size: 1.25rem;
+  }
+  
+  /* Hide button text on very small screens, show only icons */
+  .btn-action span {
+    display: none;
+  }
+  
+  .btn-action {
+    width: auto;
+    padding: 0.5rem;
+    min-width: 40px;
+    justify-content: center;
+  }
+  
+  .action-buttons {
+    flex-direction: row;
+    justify-content: center;
   }
 }
 

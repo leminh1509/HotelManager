@@ -1,4 +1,4 @@
-// src/pages/Admin/UserManagement.jsx
+// src/components/Admin/Usermanagement.jsx
 import React, { useState, useEffect } from 'react';
 import './Usermanagement.css';
 
@@ -16,7 +16,6 @@ const UserManagement = () => {
     maintenanceCount: 0
   });
 
-  
   const [filters, setFilters] = useState({
     role: '',
     status: '',
@@ -45,12 +44,10 @@ const UserManagement = () => {
 
   const API_BASE_URL = 'http://localhost:9999/api';
 
-  // Fetch data on component mount
   useEffect(() => {
     fetchAllData();
   }, []);
 
-  // Apply filters when users or filters change
   useEffect(() => {
     applyFilters();
   }, [users, filters]);
@@ -65,6 +62,7 @@ const UserManagement = () => {
   };
 
   const fetchAllData = async () => {
+    setLoading(true);
     try {
       await Promise.all([
         fetchUsers(),
@@ -72,7 +70,7 @@ const UserManagement = () => {
         fetchStatistics()
       ]);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('❌ Error fetching data:', error);
       showAlert('Failed to load data', 'error');
     } finally {
       setLoading(false);
@@ -81,6 +79,7 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     try {
+      console.log('📡 Fetching users...');
       const response = await fetch(`${API_BASE_URL}/admin/users/all`, {
         headers: {
           'Authorization': `Bearer ${getToken()}`
@@ -96,16 +95,18 @@ const UserManagement = () => {
       }
 
       const data = await response.json();
+      console.log('✅ Fetched users:', data.length);
       setUsers(data);
       setFilteredUsers(data);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('❌ Error fetching users:', error);
       throw error;
     }
   };
 
   const fetchRoles = async () => {
     try {
+      console.log('📡 Fetching roles...');
       const response = await fetch(`${API_BASE_URL}/admin/users/roles/list`, {
         headers: {
           'Authorization': `Bearer ${getToken()}`
@@ -114,10 +115,11 @@ const UserManagement = () => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Fetched roles:', data);
         setRoles(data);
       }
     } catch (error) {
-      console.error('Error fetching roles:', error);
+      console.error('❌ Error fetching roles:', error);
     }
   };
 
@@ -141,14 +143,12 @@ const UserManagement = () => {
   const applyFilters = () => {
     let filtered = [...users];
 
-    // Filter by role
     if (filters.role) {
       filtered = filtered.filter(user => 
         user.roleName.toLowerCase() === filters.role.toLowerCase()
       );
     }
 
-    // Filter by status
     if (filters.status === 'active') {
       filtered = filtered.filter(user => user.isActive);
     } else if (filters.status === 'inactive') {
@@ -157,7 +157,6 @@ const UserManagement = () => {
       filtered = filtered.filter(user => user.isBlackList);
     }
 
-    // Search filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(user =>
@@ -211,59 +210,114 @@ const UserManagement = () => {
         body: JSON.stringify(editFormData)
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to update user');
+        throw new Error(data.message || 'Failed to update user');
       }
 
       showAlert('User updated successfully!');
       setShowEditModal(false);
-      fetchAllData();
+      await fetchAllData();
     } catch (error) {
       showAlert(error.message, 'error');
     }
   };
 
   const handleChangeRole = (user) => {
+    console.log('🔵 ===== OPEN ROLE MODAL =====');
+    console.log('🔵 User:', user);
+    console.log('🔵 Current Role ID:', user.roleId);
+    console.log('🔵 Current Role Name:', user.roleName);
+    
     setSelectedUser(user);
-    setNewRoleId(user.roleId);
+    setNewRoleId(''); // Force user to select a new role
     setShowRoleModal(true);
   };
 
   const handleRoleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!newRoleId) {
+    console.log('🟢 ===== SUBMITTING ROLE CHANGE =====');
+    console.log('🟢 User ID:', selectedUser?.userId);
+    console.log('🟢 User Email:', selectedUser?.email);
+    console.log('🟢 Current Role ID:', selectedUser?.roleId);
+    console.log('🟢 Current Role Name:', selectedUser?.roleName);
+    console.log('🟢 New Role ID (raw):', newRoleId);
+    console.log('🟢 New Role ID (type):', typeof newRoleId);
+
+    if (!newRoleId || newRoleId === '') {
+      console.log('❌ No role selected');
       showAlert('Please select a role', 'error');
       return;
     }
 
+    const roleIdNumber = parseInt(newRoleId, 10);
+    console.log('🟢 New Role ID (parsed):', roleIdNumber);
+
+    if (isNaN(roleIdNumber)) {
+      console.log('❌ Invalid role ID');
+      showAlert('Invalid role selected', 'error');
+      return;
+    }
+
+    if (roleIdNumber === selectedUser.roleId) {
+      console.log('⚠️ Same role selected');
+      showAlert('User already has this role', 'error');
+      return;
+    }
+
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/users/${selectedUser.userId}/role`, {
+      const requestBody = { roleId: roleIdNumber };
+      const url = `${API_BASE_URL}/admin/users/${selectedUser.userId}/role`;
+      
+      console.log('🟢 Request URL:', url);
+      console.log('🟢 Request Method: PATCH');
+      console.log('🟢 Request Body:', JSON.stringify(requestBody));
+      console.log('🟢 Authorization:', getToken() ? 'Token Present' : 'Token Missing');
+
+      const response = await fetch(url, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${getToken()}`
         },
-        body: JSON.stringify({ roleId: parseInt(newRoleId) })
+        body: JSON.stringify(requestBody)
       });
 
+      console.log('🟢 Response Status:', response.status);
+      console.log('🟢 Response Status Text:', response.statusText);
+      console.log('🟢 Response OK:', response.ok);
+
+      const responseData = await response.json();
+      console.log('🟢 Response Data:', responseData);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to change role');
+        console.log('❌ Response NOT OK');
+        throw new Error(responseData.message || 'Failed to change role');
       }
 
-      showAlert('Role changed successfully!');
+      console.log('✅ ===== ROLE CHANGE SUCCESS =====');
+      console.log('✅ New Role:', responseData.user?.roleName);
+      
+      showAlert('User role changed successfully!');
       setShowRoleModal(false);
-      fetchAllData();
+      setSelectedUser(null);
+      setNewRoleId('');
+      
+      // Refresh data
+      await fetchAllData();
+      
     } catch (error) {
+      console.error('❌ ===== ROLE CHANGE ERROR =====');
+      console.error('❌ Error:', error);
+      console.error('❌ Error Message:', error.message);
       showAlert(error.message, 'error');
     }
   };
 
-  const handleToggleActive = async (userId, isActive) => {
-    const action = isActive ? 'deactivate' : 'activate';
-    if (!window.confirm(`Are you sure you want to ${action} this account?`)) {
+  const handleToggleActive = async (userId, currentStatus) => {
+    if (!window.confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this user?`)) {
       return;
     }
 
@@ -275,21 +329,21 @@ const UserManagement = () => {
         }
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to toggle active status');
+        throw new Error(data.message || 'Failed to toggle user status');
       }
 
-      const result = await response.json();
-      showAlert(result.message);
-      fetchAllData();
+      showAlert(data.message);
+      await fetchAllData();
     } catch (error) {
-      showAlert('Failed to change status', 'error');
+      showAlert(error.message, 'error');
     }
   };
 
-  const handleToggleBlacklist = async (userId, isBlackList) => {
-    const action = isBlackList ? 'remove from' : 'add to';
-    if (!window.confirm(`Are you sure you want to ${action} blacklist this user?`)) {
+  const handleToggleBlacklist = async (userId, currentStatus) => {
+    if (!window.confirm(`Are you sure you want to ${currentStatus ? 'remove from' : 'add to'} blacklist?`)) {
       return;
     }
 
@@ -301,24 +355,33 @@ const UserManagement = () => {
         }
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to toggle blacklist');
+        throw new Error(data.message || 'Failed to toggle blacklist status');
       }
 
-      const result = await response.json();
-      showAlert(result.message);
-      fetchAllData();
+      showAlert(data.message);
+      await fetchAllData();
     } catch (error) {
-      showAlert('Failed to change blacklist status', 'error');
+      showAlert(error.message, 'error');
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user? The account will be deactivated.')) {
+    const user = users.find(u => u.userId === userId);
+    
+    if (!window.confirm(
+      `⚠️ WARNING: This will PERMANENTLY delete user "${user?.firstName} ${user?.lastName}" (${user?.email}).\n\n` +
+      `This action CANNOT be undone!\n\n` +
+      `Are you absolutely sure?`
+    )) {
       return;
     }
 
     try {
+      console.log('🗑️ Deleting user:', userId);
+      
       const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
         method: 'DELETE',
         headers: {
@@ -326,50 +389,52 @@ const UserManagement = () => {
         }
       });
 
+      const data = await response.json();
+      console.log('Response:', data);
+
       if (!response.ok) {
-        throw new Error('Failed to delete user');
+        throw new Error(data.message || 'Failed to delete user');
       }
 
-      const result = await response.json();
-      showAlert(result.message);
-      fetchAllData();
+      console.log('✅ User deleted successfully');
+      showAlert('User deleted successfully!');
+      await fetchAllData();
+      
     } catch (error) {
-      showAlert('Failed to delete user', 'error');
+      console.error('❌ Delete error:', error);
+      showAlert(error.message, 'error');
     }
   };
 
   const getRoleBadgeClass = (roleName) => {
-    const roleClasses = {
-      admin: 'badge-admin',
-      receptionist: 'badge-receptionist',
-      customer: 'badge-customer',
-      maintenance: 'badge-maintenance'
+    const roleMap = {
+      'admin': 'badge-admin',
+      'receptionist': 'badge-receptionist',
+      'customer': 'badge-customer',
+      'maintenance': 'badge-maintenance'
     };
-    return roleClasses[roleName.toLowerCase()] || 'badge-secondary';
+    return roleMap[roleName?.toLowerCase()] || 'badge-admin';
   };
 
   if (loading) {
     return (
-      <div className="user-management">
-        <div className="loading-container">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-        </div>
+      <div className="loading-container">
+        <div className="spinner-border text-primary"></div>
       </div>
     );
   }
 
   return (
     <div className="user-management">
+      {/* Page Header */}
       <div className="page-header">
-        <h1>👥 User Management</h1>
-        <p className="text-muted">Manage all users and their roles</p>
+        <h1>User Management</h1>
+        <p className="text-muted">Manage system users and their roles</p>
       </div>
 
-      {/* Alert Message */}
+      {/* Alert Messages */}
       {alert.show && (
-        <div className={`alert alert-${alert.type === 'error' ? 'danger' : 'success'}`}>
+        <div className={`alert ${alert.type === 'success' ? 'alert-success' : 'alert-danger'}`}>
           {alert.message}
         </div>
       )}
@@ -418,7 +483,7 @@ const UserManagement = () => {
 
         <div className="stat-card">
           <div className="stat-icon receptionist">
-            <i className="fas fa-user-tie"></i>
+            <i className="fas fa-concierge-bell"></i>
           </div>
           <div className="stat-details">
             <h3>{statistics.receptionistCount}</h3>
@@ -428,7 +493,7 @@ const UserManagement = () => {
 
         <div className="stat-card">
           <div className="stat-icon customer">
-            <i className="fas fa-user-friends"></i>
+            <i className="fas fa-user"></i>
           </div>
           <div className="stat-details">
             <h3>{statistics.customerCount}</h3>
@@ -437,7 +502,7 @@ const UserManagement = () => {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters Section */}
       <div className="filters-section">
         <div className="filter-group">
           <label>Filter by Role</label>
@@ -477,12 +542,12 @@ const UserManagement = () => {
             name="search"
             value={filters.search}
             onChange={handleFilterChange}
-            className="form-control"
             placeholder="Search by email or name..."
+            className="form-control"
           />
         </div>
 
-        <button className="btn-refresh" onClick={() => fetchAllData()}>
+        <button className="btn-refresh" onClick={fetchAllData}>
           <i className="fas fa-sync-alt"></i> Refresh
         </button>
       </div>
@@ -534,37 +599,37 @@ const UserManagement = () => {
                         <button
                           className="btn-action btn-edit"
                           onClick={() => handleEditUser(user)}
-                          title="Edit"
                         >
                           <i className="fas fa-edit"></i>
+                          <span>Edit</span>
                         </button>
                         <button
                           className="btn-action btn-role"
                           onClick={() => handleChangeRole(user)}
-                          title="Change Role"
                         >
                           <i className="fas fa-user-tag"></i>
+                          <span>Role</span>
                         </button>
                         <button
                           className="btn-action btn-toggle"
                           onClick={() => handleToggleActive(user.userId, user.isActive)}
-                          title={user.isActive ? 'Deactivate' : 'Activate'}
                         >
-                          <i className={`fas fa-${user.isActive ? 'lock' : 'unlock'}`}></i>
+                          <i className={`fas ${user.isActive ? 'fa-user-lock' : 'fa-user-check'}`}></i>
+                          <span>{user.isActive ? 'Deactivate' : 'Activate'}</span>
                         </button>
                         <button
                           className="btn-action btn-blacklist"
                           onClick={() => handleToggleBlacklist(user.userId, user.isBlackList)}
-                          title={user.isBlackList ? 'Remove from Blacklist' : 'Add to Blacklist'}
                         >
-                          <i className={`fas fa-${user.isBlackList ? 'check' : 'ban'}`}></i>
+                          <i className={`fas ${user.isBlackList ? 'fa-user-plus' : 'fa-ban'}`}></i>
+                          <span>{user.isBlackList ? 'Unblock' : 'Block'}</span>
                         </button>
                         <button
                           className="btn-action btn-delete"
                           onClick={() => handleDeleteUser(user.userId)}
-                          title="Delete"
                         >
                           <i className="fas fa-trash"></i>
+                          <span>Delete</span>
                         </button>
                       </div>
                     </td>
@@ -583,7 +648,7 @@ const UserManagement = () => {
       </div>
 
       {/* Edit User Modal */}
-      {showEditModal && (
+      {showEditModal && selectedUser && (
         <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -648,6 +713,8 @@ const UserManagement = () => {
                   value={editFormData.mobilePhone}
                   onChange={handleEditFormChange}
                   className="form-control"
+                  pattern="[0-9]{10,20}"
+                  placeholder="10-20 digits"
                 />
               </div>
 
@@ -680,7 +747,7 @@ const UserManagement = () => {
       )}
 
       {/* Change Role Modal */}
-      {showRoleModal && (
+      {showRoleModal && selectedUser && (
         <div className="modal-overlay" onClick={() => setShowRoleModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -701,17 +768,34 @@ const UserManagement = () => {
               </div>
 
               <div className="form-group">
+                <label>Current Role</label>
+                <div className="current-role-display">
+                  <span className={`badge ${getRoleBadgeClass(selectedUser.roleName)}`}>
+                    {selectedUser.roleName ? selectedUser.roleName.charAt(0).toUpperCase() + selectedUser.roleName.slice(1) : ''}
+                  </span>
+                </div>
+              </div>
+
+              <div className="form-group">
                 <label>Select New Role *</label>
                 <select
                   value={newRoleId}
-                  onChange={(e) => setNewRoleId(e.target.value)}
+                  onChange={(e) => {
+                    console.log('🔵 Role selection changed to:', e.target.value);
+                    setNewRoleId(e.target.value);
+                  }}
                   className="form-select"
                   required
                 >
-                  <option value="">-- Select Role --</option>
+                  <option value="">-- Select a new role --</option>
                   {roles.map(role => (
-                    <option key={role.roleId} value={role.roleId}>
-                      {role.name}
+                    <option 
+                      key={role.roleId} 
+                      value={role.roleId}
+                      disabled={role.roleId === selectedUser.roleId}
+                    >
+                      {role.name.charAt(0).toUpperCase() + role.name.slice(1)}
+                      {role.roleId === selectedUser.roleId && ' (Current)'}
                     </option>
                   ))}
                 </select>
@@ -721,7 +805,11 @@ const UserManagement = () => {
                 <button
                   type="button"
                   className="btn-secondary"
-                  onClick={() => setShowRoleModal(false)}
+                  onClick={() => {
+                    setShowRoleModal(false);
+                    setNewRoleId('');
+                    setSelectedUser(null);
+                  }}
                 >
                   Cancel
                 </button>
