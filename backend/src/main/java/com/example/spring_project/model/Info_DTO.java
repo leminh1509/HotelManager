@@ -2,9 +2,9 @@ package com.example.spring_project.model;
 
 public class Info_DTO {
 
-        private String term;
-        private String define;
-        private int lessionId;
+    private String term;
+    private String define;
+    private Long lessionId;
 
     public String getTerm() {
         return term;
@@ -22,11 +22,11 @@ public class Info_DTO {
         this.define = define;
     }
 
-    public int getLessionId() {
+    public Long getLessionId() {
         return lessionId;
     }
 
-    public void setLessionId(int lessionId) {
+    public void setLessionId(Long lessionId) {
         this.lessionId = lessionId;
     }
 }
