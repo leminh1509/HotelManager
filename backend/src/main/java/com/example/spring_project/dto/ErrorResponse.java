@@ -14,6 +14,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class ErrorResponse {
 
+
     private LocalDateTime timestamp;
     private Integer status;
     private String error;

@@ -16,6 +16,7 @@ export function logout() {
   localStorage.removeItem("role");
 }
 
+
 function normalizeRole(role) {
   if (!role) return "";
   const r = String(role).toUpperCase();

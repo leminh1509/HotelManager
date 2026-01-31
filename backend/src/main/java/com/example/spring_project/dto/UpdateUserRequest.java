@@ -14,6 +14,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class UpdateUserRequest {
 
+
     @Size(max = 50, message = "First name must not exceed 50 characters")
     private String firstName;
 

@@ -15,6 +15,7 @@ export default function RequireRole({ allowed = [] }) {
     user = null;
   }
 
+  
   const role = normalizeRole(user?.role);
   const ok = allowed.map(a => a.toUpperCase()).includes(role);
 

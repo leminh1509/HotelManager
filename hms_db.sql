@@ -281,3 +281,46 @@ CREATE INDEX idx_payment_invoice_id ON payment(invoice_id);
 CREATE INDEX idx_mr_booking_id ON maintenance_request(booking_id);
 CREATE INDEX idx_mr_status_priority ON maintenance_request(status, priority);
 CREATE INDEX idx_feedback_booking_id ON feedback(booking_id);
+
+USE hms_db;
+-- 1 customer
+INSERT INTO users (
+  role_id, mobile_phone, first_name, middle_name, last_name,
+  birthday, email, password, is_black_list, is_active, avatar_url
+) VALUES (
+  3, '0901234567', 'Nguyen', NULL, 'An',
+  '2002-05-14', 'customer1@example.com', '$2a$10$WVUjIHe8jOAvMwzIYVTNROypIQN.fOtyFdG5W.vx9fxj84w.NEGZq', -- 123456
+  FALSE, TRUE, NULL
+);
+
+-- 1 admin
+INSERT INTO users (
+  role_id, mobile_phone, first_name, middle_name, last_name,
+  birthday, email, password, is_black_list, is_active, avatar_url
+) VALUES (
+  1, '0909998888', 'Tran', NULL, 'Admin',
+  '1998-01-20', 'admin1@example.com', '$2a$10$WVUjIHe8jOAvMwzIYVTNROypIQN.fOtyFdG5W.vx9fxj84w.NEGZq',-- 123456
+  FALSE, TRUE, NULL
+);
+
+-- 1 Maintenance
+INSERT INTO users (
+  role_id, mobile_phone, first_name, middle_name, last_name,
+  birthday, email, password, is_black_list, is_active, avatar_url
+) VALUES (
+  4, '0901234578', 'Nguyen', NULL, 'banh',
+  '2002-05-20', 'maintenance1@example.com', '$2a$10$WVUjIHe8jOAvMwzIYVTNROypIQN.fOtyFdG5W.vx9fxj84w.NEGZq', -- 123456
+  FALSE, TRUE, NULL
+);
+
+-- 1 Receptionists
+INSERT INTO users (
+  role_id, mobile_phone, first_name, middle_name, last_name,
+  birthday, email, password, is_black_list, is_active, avatar_url
+) VALUES (
+  2, '090123987', 'Nguyen', NULL, 'binh',
+  '2002-05-31', 'receptionists1@example.com', '$2a$10$WVUjIHe8jOAvMwzIYVTNROypIQN.fOtyFdG5W.vx9fxj84w.NEGZq', -- 123456
+  FALSE, TRUE, NULL
+);
+
+

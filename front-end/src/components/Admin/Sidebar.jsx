@@ -6,14 +6,14 @@ import "./Sidebar.css";
 const MENU = [
   { label: "Dashboard", to: "/admin", roles: ["ADMIN", "MANAGER", "RECEPTIONIST"] },
   { label: "User Management", to: "/admin/users", roles: ["ADMIN"] },
-
-  // Bạn thêm các trang khác ở đây:
-  // { label: "Rooms", to: "/admin/rooms", roles: ["ADMIN","MANAGER"] },
+,
 ];
+
 
 export default function Sidebar() {
   const nav = useNavigate();
   const role = (getRole() || "").toUpperCase();
+
 
   const items = useMemo(() => {
     return MENU.filter((m) => !m.roles || m.roles.includes(role));
