@@ -2,7 +2,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 
 import Login from "./components/Login/Login";
-import Register from "./components/Register/Register"; 
+import Register from "./components/Register/Register";
 
 
 import ProtectedRoute from "./components/Protected/ProtectedRoute";
@@ -20,6 +20,7 @@ import BookingList from "./components/Receptionist/BookingList";
 
 // ====== MAINTENANCE (bạn thay đúng component thật) ======
 import MaintenanceRequests from "./components/Maintenance/Requests";
+import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
 
 const Forbidden = () => <div style={{ padding: 20 }}>403 - Forbidden</div>;
 const AdminDashboard = () => <div>Admin Dashboard</div>;
@@ -57,6 +58,7 @@ export default function App() {
       {/* ===== MAINTENANCE ===== */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["MAINTENANCE"]} />}>
+          <Route path="/maintenance/dashboard" element={<MaintenanceDashboard />} />
           <Route path="/maintenance/requests" element={<MaintenanceRequests />} />
         </Route>
       </Route>
