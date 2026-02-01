@@ -1,86 +1,87 @@
-import React, { useMemo } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+// /src/components/Admin/AdminLayout.jsx
+import React, { useState, useEffect } from "react";
+import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import "./AdminLayout.css";
 
 export default function AdminLayout() {
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  const user = useMemo(() => {
+  useEffect(() => {
     try {
-      return JSON.parse(localStorage.getItem("user") || "null");
-    } catch {
-      return null;
+      const userData = JSON.parse(localStorage.getItem("user"));
+      setUser(userData);
+    } catch (error) {
+      console.error("Error loading user data:", error);
     }
   }, []);
-
-
-
-  const role = (user?.role || "").toLowerCase();
-
-  const menu = useMemo(() => {
-    const items = [
-      { label: "Dashboard", path: "/admin", roles: ["admin"] },
-      { label: "User Management", path: "/admin/users", roles: ["admin"] },
-      { label: "Room Management", path: "/admin/rooms", roles: ["admin"] },
-      { label: "Booking Management", path: "/admin/bookings", roles: ["admin"] },
-      { label: "Reports", path: "/admin/reports", roles: ["admin"] },
-      { label: "Settings", path: "/admin/settings", roles: ["admin"] },
-    ];
-
-    return items.filter(i => i.roles.includes(role));
-  }, [role]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/login");
+    localStorage.removeItem("role");
+    navigate("/login", { replace: true });
   };
 
   return (
-    <div className="admin-shell">
+    <div className="admin-layout">
+      {/* Sidebar */}
       <aside className="admin-sidebar">
-        <div className="admin-brand">
-          <div className="brand-dot" />
-          <div>
-            <div className="brand-title">HMS Admin</div>
-            <div className="brand-sub">Role: {role || "unknown"}</div>
-          </div>
+        <div className="sidebar-header">
+          <h2>36 Hotel Admin</h2>
+          {user && (
+            <p className="admin-user">
+              <i className="fa fa-user-circle"></i> {user.firstName} {user.lastName}
+            </p>
+          )}
         </div>
 
-        <nav className="admin-nav">
-          {menu.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === "/admin"}
-              className={({ isActive }) =>
-                "admin-link" + (isActive ? " active" : "")
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+        <nav className="sidebar-nav">
+          <NavLink 
+            to="/admin" 
+            end 
+            className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
+          >
+            <i className="fa fa-dashboard"></i> Dashboard
+          </NavLink>
 
-        <div className="admin-sidebar-footer">
-          <button className="logout-btn" onClick={handleLogout}>
-            Logout
+          <NavLink 
+            to="/admin/users" 
+            className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
+          >
+            <i className="fa fa-users"></i> User Management
+          </NavLink>
+
+          <NavLink 
+            to="/admin/rooms" 
+            className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
+          >
+            <i className="fa fa-bed"></i> Room Management
+          </NavLink>
+
+          <NavLink 
+            to="/admin/bookings" 
+            className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
+          >
+            <i className="fa fa-calendar"></i> Bookings
+          </NavLink>
+
+          <NavLink 
+            to="/admin/reports" 
+            className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
+          >
+            <i className="fa fa-bar-chart"></i> Reports
+          </NavLink>
+
+          <button onClick={handleLogout} className="nav-item logout-btn">
+            <i className="fa fa-sign-out"></i> Logout
           </button>
-        </div>
+        </nav>
       </aside>
 
+      {/* Main Content */}
       <main className="admin-main">
-        <div className="admin-topbar">
-          <div className="topbar-title">Admin Panel</div>
-          <div className="topbar-user">
-            {user?.firstName || ""} {user?.lastName || ""}
-          </div>
-        </div>
-
-        {/* QUAN TRỌNG: Outlet để render trang con => nếu thiếu sẽ trắng */}
-        <div className="admin-content">
-          <Outlet />
-        </div>
+        <Outlet />
       </main>
     </div>
   );

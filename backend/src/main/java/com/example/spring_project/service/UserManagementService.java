@@ -24,18 +24,18 @@ public class UserManagementService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
 
-
+    // ✅ TỐI ƯU: Dùng pagination
     public Page<UserResponse> getAllUsers(Pageable pageable) {
         return userRepository.findAll(pageable)
                 .map(this::convertToUserResponse);
     }
 
+    // ✅ TỐI ƯU: Load all khi cần (ít dùng)
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(this::convertToUserResponse)
                 .collect(Collectors.toList());
     }
-
 
     public UserResponse getUserById(Integer userId) {
         User user = userRepository.findById(userId)
@@ -43,17 +43,24 @@ public class UserManagementService {
         return convertToUserResponse(user);
     }
 
-
+    // ✅ TỐI ƯU: Query trực tiếp theo role_name
     public List<UserResponse> getUsersByRole(String roleName) {
-        Role role = roleRepository.findByName(roleName)
-                .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
-
-        return userRepository.findAll().stream()
-                .filter(user -> user.getRole().getRoleId().equals(role.getRoleId()))
+        return userRepository.findByRole_Name(roleName).stream()
                 .map(this::convertToUserResponse)
                 .collect(Collectors.toList());
     }
 
+    // ✅ Hoặc validate role trước
+    public List<UserResponse> getUsersByRoleValidated(String roleName) {
+        // Validate role tồn tại
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+
+        // Query users
+        return userRepository.findByRole(role).stream()
+                .map(this::convertToUserResponse)
+                .collect(Collectors.toList());
+    }
 
     @Transactional
     public UserResponse updateUser(Integer userId, UpdateUserRequest request) {
@@ -126,25 +133,20 @@ public class UserManagementService {
     public UserResponse changeUserRole(Integer userId, Integer roleId) {
         log.info("Changing role for user {} to role {}", userId, roleId);
 
-        // Validate user exists
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        // Validate role exists
         Role newRole = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
 
-        // Check if already has this role
         if (user.getRole().getRoleId().equals(roleId)) {
             log.warn("User {} already has role {}", userId, newRole.getName());
             throw new RuntimeException("User already has role: " + newRole.getName());
         }
 
-        // Update role
         Role oldRole = user.getRole();
         user.setRole(newRole);
 
-        // Save and flush to database
         User updatedUser = userRepository.saveAndFlush(user);
 
         log.info("Successfully changed user {} role from {} to {}",
@@ -189,14 +191,13 @@ public class UserManagementService {
     public void deleteUser(Integer userId) {
         log.info("Permanently deleting user: {}", userId);
 
-        // Kiểm tra user có tồn tại không
         if (!userRepository.existsById(userId)) {
             throw new RuntimeException("User not found with id: " + userId);
         }
 
         try {
             userRepository.deleteById(userId);
-            userRepository.flush(); // Ensure deletion is committed
+            userRepository.flush();
 
             log.info("Successfully deleted user: {}", userId);
         } catch (Exception e) {
@@ -222,25 +223,19 @@ public class UserManagementService {
         return roleRepository.findAll();
     }
 
+    // ✅ TỐI ƯU: Dùng countByRole_Name
     public long countUsersByRole(String roleName) {
-        Role role = roleRepository.findByName(roleName)
-                .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
-
-        return userRepository.findAll().stream()
-                .filter(user -> user.getRole().getRoleId().equals(role.getRoleId()))
-                .count();
+        return userRepository.countByRole_Name(roleName);
     }
 
+    // ✅ TỐI ƯU: Dùng countByIsActiveTrue
     public long countActiveUsers() {
-        return userRepository.findAll().stream()
-                .filter(User::getIsActive)
-                .count();
+        return userRepository.countByIsActiveTrue();
     }
 
+    // ✅ TỐI ƯU: Dùng countByIsBlackListTrue
     public long countBlacklistedUsers() {
-        return userRepository.findAll().stream()
-                .filter(User::getIsBlackList)
-                .count();
+        return userRepository.countByIsBlackListTrue();
     }
 
     private UserResponse convertToUserResponse(User user) {

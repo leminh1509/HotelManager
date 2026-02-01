@@ -9,35 +9,64 @@ SET sql_mode = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION';
 -- Role 
 CREATE TABLE role (
   role_id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(50) NOT NULL UNIQUE
+  name VARCHAR(50) NOT NULL UNIQUE,
+  description VARCHAR(255) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
-INSERT INTO role(name) VALUES ('admin'),('receptionist'),('customer'),('maintenance');
+INSERT INTO role(name, description) VALUES 
+('admin', 'System Administrator'),
+('receptionist', 'Hotel Receptionist'),
+('customer', 'Hotel Customer'),
+('maintenance', 'Maintenance Staff');
 
 -- Users 
 CREATE TABLE users (
   user_id INT AUTO_INCREMENT PRIMARY KEY,
   role_id INT NOT NULL,
-  mobile_phone VARCHAR(20) NULL,
+
+  -- Thông tin cơ bản
+  email VARCHAR(255) NOT NULL,
+  password VARCHAR(255) NOT NULL,
   first_name VARCHAR(50) NOT NULL,
   middle_name VARCHAR(50) NULL,
   last_name VARCHAR(50) NOT NULL,
+  mobile_phone VARCHAR(20) NULL,
   birthday DATE NULL,
-  email VARCHAR(255) NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  is_black_list BOOLEAN NOT NULL DEFAULT FALSE,
-  is_active BOOLEAN NOT NULL DEFAULT TRUE,
   avatar_url VARCHAR(500) NULL,
   
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  is_black_list BOOLEAN NOT NULL DEFAULT FALSE,
+  
+  deleted_at TIMESTAMP NULL,
+  deleted_by INT NULL,
+  
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_by INT NULL,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-  CONSTRAINT fk_users_role
-    FOREIGN KEY (role_id) REFERENCES role(role_id),
-
+  updated_by INT NULL,
+  
+  CONSTRAINT fk_users_role 
+    FOREIGN KEY (role_id) REFERENCES role(role_id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+  
+  CONSTRAINT fk_users_deleted_by 
+    FOREIGN KEY (deleted_by) REFERENCES users(user_id)
+    ON DELETE SET NULL,
+    
+  CONSTRAINT fk_users_created_by 
+    FOREIGN KEY (created_by) REFERENCES users(user_id)
+    ON DELETE SET NULL,
   CONSTRAINT uq_users_email UNIQUE (email),
-  CONSTRAINT uq_users_mobile UNIQUE (mobile_phone)
+  CONSTRAINT uq_users_mobile UNIQUE (mobile_phone),
+  CONSTRAINT chk_users_email_format CHECK (email LIKE '%@%.%'),
+  CONSTRAINT chk_users_password_length CHECK (CHAR_LENGTH(password) >= 60),
+  CONSTRAINT chk_users_mobile_format CHECK (
+    mobile_phone IS NULL OR 
+    mobile_phone REGEXP '^[0-9]{10,20}$'
+  )
 ) ENGINE=InnoDB;
+
 
 -- Category 
 CREATE TABLE category (
@@ -273,6 +302,11 @@ CREATE TABLE audit_log (
 
 -- Indexes 
 CREATE INDEX idx_users_role_id ON users(role_id);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_mobile_phone ON users(mobile_phone);
+CREATE INDEX idx_users_role_active ON users(role_id, is_active);
+CREATE INDEX idx_users_deleted_at ON users(deleted_at);
+CREATE INDEX idx_users_created_at ON users(created_at DESC);
 CREATE INDEX idx_booking_user_id ON booking(user_id);
 CREATE INDEX idx_booking_room_id ON booking(room_id);
 CREATE INDEX idx_booking_status ON booking(status);
@@ -283,44 +317,15 @@ CREATE INDEX idx_mr_status_priority ON maintenance_request(status, priority);
 CREATE INDEX idx_feedback_booking_id ON feedback(booking_id);
 
 USE hms_db;
--- 1 customer
-INSERT INTO users (
-  role_id, mobile_phone, first_name, middle_name, last_name,
-  birthday, email, password, is_black_list, is_active, avatar_url
-) VALUES (
-  3, '0901234567', 'Nguyen', NULL, 'An',
-  '2002-05-14', 'customer1@example.com', '$2a$10$WVUjIHe8jOAvMwzIYVTNROypIQN.fOtyFdG5W.vx9fxj84w.NEGZq', -- 123456
-  FALSE, TRUE, NULL
-);
-
--- 1 admin
-INSERT INTO users (
-  role_id, mobile_phone, first_name, middle_name, last_name,
-  birthday, email, password, is_black_list, is_active, avatar_url
-) VALUES (
-  1, '0909998888', 'Tran', NULL, 'Admin',
-  '1998-01-20', 'admin1@example.com', '$2a$10$WVUjIHe8jOAvMwzIYVTNROypIQN.fOtyFdG5W.vx9fxj84w.NEGZq',-- 123456
-  FALSE, TRUE, NULL
-);
-
--- 1 Maintenance
-INSERT INTO users (
-  role_id, mobile_phone, first_name, middle_name, last_name,
-  birthday, email, password, is_black_list, is_active, avatar_url
-) VALUES (
-  4, '0901234578', 'Nguyen', NULL, 'banh',
-  '2002-05-20', 'maintenance1@example.com', '$2a$10$WVUjIHe8jOAvMwzIYVTNROypIQN.fOtyFdG5W.vx9fxj84w.NEGZq', -- 123456
-  FALSE, TRUE, NULL
-);
-
--- 1 Receptionists
-INSERT INTO users (
-  role_id, mobile_phone, first_name, middle_name, last_name,
-  birthday, email, password, is_black_list, is_active, avatar_url
-) VALUES (
-  2, '090123987', 'Nguyen', NULL, 'binh',
-  '2002-05-31', 'receptionists1@example.com', '$2a$10$WVUjIHe8jOAvMwzIYVTNROypIQN.fOtyFdG5W.vx9fxj84w.NEGZq', -- 123456
-  FALSE, TRUE, NULL
-);
-
-
+-- Password: Admin@2026
+INSERT INTO users (role_id, email, password, first_name, last_name, mobile_phone, is_active, created_at) VALUES
+(1, 'admin@36hotel.com', '$2a$10$CBLOTC7g68Hx78ad6aZ2n.Ru5o4ePh0jV2bgo9F4Uo/4/Bt9MM6gi', 'System', 'Admin', '0909998888', TRUE, NOW());
+-- Password: Customer@2026
+INSERT INTO users (role_id, email, password, first_name, last_name, mobile_phone, birthday, is_active, created_at) VALUES
+(3, 'customer1@example.com', '$2a$10$usfqGcSqeif9RNY13yQB0.T37Q2G5UZx8ay6yukl3/2ruxwDskoPm', 'Nguyen', 'An', '0901234567', '2002-05-14', TRUE, NOW());
+-- Password: Receptionist@2026
+INSERT INTO users (role_id, email, password, first_name, last_name, mobile_phone, is_active, created_at) VALUES
+(2, 'receptionist@36hotel.com', '$2a$10$tgr.xM5F2kmyzu8UOROnv.IZClNiPo952L0rQTgbkk1m46t9QCfem', 'Nguyen', 'Binh', '0901239876', TRUE, NOW());
+-- Password: Maintenance@2026
+INSERT INTO users (role_id, email, password, first_name, last_name, mobile_phone, is_active, created_at) VALUES
+(4, 'maintenance@36hotel.com', '$2a$10$Ab9Papng2muU9q.YWMkkieEZ6Ni6/TCM0l1325W6uaKaBoqfmTYWa', 'Le', 'Banh', '0901234578', TRUE, NOW());

@@ -1,18 +1,49 @@
 package com.example.spring_project.repository;
 
+import com.example.spring_project.entity.Role;
 import com.example.spring_project.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
-
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
 
     Optional<User> findByEmail(String email);
-
     Boolean existsByEmail(String email);
-
     Boolean existsByMobilePhone(String mobilePhone);
+
+    // ✅ Tìm users theo role name
+    List<User> findByRole_Name(String roleName);
+
+    // ✅ Tìm users theo Role object
+    List<User> findByRole(Role role);
+
+    // ✅ Với pagination
+    Page<User> findByRole_Name(String roleName, Pageable pageable);
+
+    // ✅ Đếm users theo role
+    Long countByRole_Name(String roleName);
+
+    // ✅ Đếm active users
+    Long countByIsActiveTrue();
+
+    // ✅ Đếm blacklisted users
+    Long countByIsBlackListTrue();
+
+    // ✅ Tìm active users
+    List<User> findByIsActiveTrue();
+
+    // ✅ Custom query với nhiều điều kiện
+    @Query("SELECT u FROM User u WHERE u.role.name = :roleName AND u.isActive = :isActive")
+    List<User> findByRoleNameAndActiveStatus(
+            @Param("roleName") String roleName,
+            @Param("isActive") Boolean isActive
+    );
 }
