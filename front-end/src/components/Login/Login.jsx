@@ -46,22 +46,16 @@ const Login = ({ onLoginSuccess }) => {
         setError(data?.message || 'Login failed. Please try again.');
         return;
       }
-
-      // ====== TOKEN (hỗ trợ nhiều field name khác nhau) ======
       const token = data?.token || data?.accessToken || data?.jwt;
       if (!token) {
         setError('Login response missing token.');
         return;
       }
 
-      // ====== ROLE ======
       const role = normalizeRole(data?.role || data?.authority || (data?.roles?.[0] ?? ''));
-
-      // Save token + role (để ProtectedRoute/Sidebar đọc)
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
 
-      // Prepare user data
       const userData = {
         userId: data?.userId,
         email: data?.email || formData.email,
@@ -72,12 +66,7 @@ const Login = ({ onLoginSuccess }) => {
 
       localStorage.setItem('user', JSON.stringify(userData));
 
-      // Notify parent
       if (onLoginSuccess) onLoginSuccess(userData);
-
-      // ====== Redirect ======
-      // Admin: vào layout admin (/admin) để sidebar hoạt động
-      // Các role khác giữ như bạn đang làm, nhưng mình chuẩn hoá role trước
       switch (role) {
         case 'ADMIN':
           navigate('/admin', { replace: true }); // <-- quan trọng
@@ -107,7 +96,7 @@ const Login = ({ onLoginSuccess }) => {
         <div className="login-card">
           <div className="login-header">
             <h2>Welcome Back</h2>
-            <p>Sign in to continue to 36 Hotel</p>
+            <p>Sign in to continue to Hotel</p>
           </div>
 
           {error && (

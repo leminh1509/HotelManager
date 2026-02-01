@@ -6,8 +6,8 @@ import "./Sidebar.css";
 const MENU = [
   { label: "Dashboard", to: "/admin", roles: ["ADMIN", "MANAGER", "RECEPTIONIST"] },
   { label: "User Management", to: "/admin/users", roles: ["ADMIN"] },
-,
 ];
+
 
 
 export default function Sidebar() {
