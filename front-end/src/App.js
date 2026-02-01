@@ -4,7 +4,6 @@ import { Routes, Route } from "react-router-dom";
 
 import Login from "./components/Login/Login";
 import Register from "./components/Register/Register";
-
 import ProtectedRoute from "./components/Protected/ProtectedRoute";
 import RequireRole from "./components/Protected/RequireRole";
 import RoleRedirect from "./components/Protected/RoleRedirect";
@@ -14,6 +13,7 @@ import UserManagement from "./components/Admin/UserManagement";
 import Home from "./components/Home/Home";
 import BookingList from "./components/Receptionist/BookingList";
 import MaintenanceRequests from "./components/Maintenance/Requests";
+import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
 
 const Forbidden = () => (
   <div style={{ padding: 40, textAlign: "center" }}>
@@ -82,6 +82,7 @@ export default function App() {
       {/* ===== MAINTENANCE ===== */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["MAINTENANCE"]} />}>
+          <Route path="/maintenance/dashboard" element={<MaintenanceDashboard />} />
           <Route path="/maintenance/requests" element={<MaintenanceRequests />} />
         </Route>
       </Route>
