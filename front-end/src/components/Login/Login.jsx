@@ -27,7 +27,7 @@ const Login = ({ onLoginSuccess }) => {
     setError('');
   };
 
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -86,7 +86,7 @@ const Login = ({ onLoginSuccess }) => {
           navigate('/receptionist/booking-list', { replace: true });
           break;
         case 'MAINTENANCE':
-          navigate('/maintenance/requests', { replace: true });
+          navigate('/maintenance/dashboard', { replace: true });
           break;
         case 'CUSTOMER':
         default:
