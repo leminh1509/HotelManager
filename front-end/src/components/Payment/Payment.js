@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import './PaymentPage.css';
+import './Payment.css';
 
-const PaymentPage = () => {
+const Payment = () => {
   const [paymentMethod, setPaymentMethod] = useState('cash'); // cash, transfer, gateway
   const [amountTendered, setAmountTendered] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -175,4 +175,4 @@ const PaymentPage = () => {
   );
 };
 
-export default PaymentPage;
+export default Payment;

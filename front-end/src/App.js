@@ -19,6 +19,7 @@ import Home from "./components/Home/Home";
 import BookingList from "./components/Receptionist/BookingList";
 import MaintenanceRequests from "./components/Maintenance/Requests";
 import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
+import Payment from "./components/Payment/Payment";
 
 const Forbidden = () => (
   <div style={{ padding: 40, textAlign: "center" }}>
@@ -66,15 +67,16 @@ export default function App() {
       {/* ===== CUSTOMER/USER ===== */}
       <Route element={<ProtectedRoute />}>
         <Route path="/home" element={<Home />} />
-      
-       {/* ===== BOOKING ===== */}
-        
+        <Route path="/payment" element={<Payment />} />
+
+        {/* ===== BOOKING ===== */}
+
         <Route path="/rooms/:roomId" element={<RoomDetail />} />
         <Route path="/booking/new/:roomId" element={<BookingForm />} />
         <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmation />} />
         <Route path="/my-bookings" element={<MyBookings />} />
       </Route>
-       {/* ===== ADMIN ===== */}
+      {/* ===== ADMIN ===== */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["ADMIN"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
@@ -89,18 +91,18 @@ export default function App() {
           <Route path="/receptionist/booking-list" element={<BookingList />} />
         </Route>
       </Route>
-     {/* ===== MAINTENANCE ===== */}
+      {/* ===== MAINTENANCE ===== */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["MAINTENANCE"]} />}>
           <Route path="/maintenance/dashboard" element={<MaintenanceDashboard />} />
           <Route path="/maintenance/requests" element={<MaintenanceRequests />} />
         </Route>
       </Route>
-      
-     
 
-      
-      
+
+
+
+
     </Routes>
   );
 }
