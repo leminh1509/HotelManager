@@ -72,7 +72,7 @@ const Login = ({ onLoginSuccess }) => {
           navigate('/admin', { replace: true }); // <-- quan trọng
           break;
         case 'RECEPTIONIST':
-          navigate('/receptionist/booking-list', { replace: true });
+          navigate('/receptionist', { replace: true });
           break;
         case 'MAINTENANCE':
           navigate('/maintenance/dashboard', { replace: true });

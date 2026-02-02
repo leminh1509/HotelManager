@@ -18,11 +18,11 @@ export default function RoleRedirect() {
     user = null;
   }
 
-  
+
   const role = normalizeRole(user?.role);
 
   if (role === "ADMIN") return <Navigate to="/admin" replace />;
-  if (role === "RECEPTIONIST") return <Navigate to="/receptionist/booking-list" replace />;
+  if (role === "RECEPTIONIST") return <Navigate to="/receptionist" replace />;
   if (role === "MAINTENANCE") return <Navigate to="/maintenance/requests" replace />;
   return <Navigate to="/home" replace />;
 }

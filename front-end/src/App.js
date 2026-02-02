@@ -17,6 +17,8 @@ import BookingConfirmation from "./components/Booking/BookingConfirmation";
 import MyBookings from "./components/Booking/MyBookings";
 import Home from "./components/Home/Home";
 import BookingList from "./components/Receptionist/BookingList";
+import ReceptionistLayout from "./components/Receptionist/ReceptionistLayout";
+import BookingDetail from "./components/Receptionist/BookingDetail";
 import MaintenanceRequests from "./components/Maintenance/Requests";
 import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
 
@@ -66,15 +68,15 @@ export default function App() {
       {/* ===== CUSTOMER/USER ===== */}
       <Route element={<ProtectedRoute />}>
         <Route path="/home" element={<Home />} />
-      
-       {/* ===== BOOKING ===== */}
-        
+
+        {/* ===== BOOKING ===== */}
+
         <Route path="/rooms/:roomId" element={<RoomDetail />} />
         <Route path="/booking/new/:roomId" element={<BookingForm />} />
         <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmation />} />
         <Route path="/my-bookings" element={<MyBookings />} />
       </Route>
-       {/* ===== ADMIN ===== */}
+      {/* ===== ADMIN ===== */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["ADMIN"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
@@ -86,21 +88,24 @@ export default function App() {
       {/* ===== RECEPTIONIST ===== */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["RECEPTIONIST"]} />}>
-          <Route path="/receptionist/booking-list" element={<BookingList />} />
+          <Route path="/receptionist" element={<ReceptionistLayout />}>
+            <Route index element={<BookingList />} />
+            <Route path="bookings/:id" element={<BookingDetail />} />
+          </Route>
         </Route>
       </Route>
-     {/* ===== MAINTENANCE ===== */}
+      {/* ===== MAINTENANCE ===== */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["MAINTENANCE"]} />}>
           <Route path="/maintenance/dashboard" element={<MaintenanceDashboard />} />
           <Route path="/maintenance/requests" element={<MaintenanceRequests />} />
         </Route>
       </Route>
-      
-     
 
-      
-      
+
+
+
+
     </Routes>
   );
 }
