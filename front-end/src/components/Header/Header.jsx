@@ -15,7 +15,7 @@ export default function Header({
     return role === "receptionist" || Boolean(pageActive);
   }, [role, pageActive]);
 
-  
+
   const receptionistItems = [
     { key: "booking-list", label: "Booking List", to: "/receptionist/booking-list" },
     { key: "create-booking", label: "Create Booking", to: "/receptionist/create-booking" },
@@ -23,6 +23,13 @@ export default function Header({
     { key: "bills", label: "Bills", to: "/receptionist/bills" },
     { key: "rules", label: "Rules", to: "/receptionist/rules" },
     { key: "rooms", label: "Rooms", to: "/receptionist/rooms" },
+  ];
+
+  const maintenanceItems = [
+    { key: "dashboard", label: "Dashboard", to: "/maintenance/dashboard", end: true },
+    { key: "requests", label: "Requests", to: "/maintenance/requests" },
+    { key: "schedule", label: "Schedule", to: "/maintenance/schedule" },
+    { key: "inventory", label: "Inventory", to: "/maintenance/inventory" },
   ];
 
   const guestItems = [
@@ -36,7 +43,7 @@ export default function Header({
   const closeMobile = () => setMobileOpen(false);
 
   return (
-    <header className="header-section">
+    <header className={`header-section ${role === 'maintenance' ? 'maintenance-header-mode' : ''}`}>
       <div className="top-nav">
         <div className="container">
           <div className="row top-nav-row">
@@ -122,13 +129,28 @@ export default function Header({
                 </button>
 
                 <nav className={`mainmenu ${mobileOpen ? "open" : ""}`}>
-                  {isReceptionistMenu ? (
+                  {role === "receptionist" || pageActive === "receptionist" ? (
                     <ul>
                       {receptionistItems.map((it) => (
                         <li key={it.key} className={pageActive === it.key ? "active" : ""}>
                           <Link to={it.to} onClick={closeMobile}>
                             {it.label}
                           </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : role === "maintenance" ? (
+                    <ul>
+                      {maintenanceItems.map((it) => (
+                        <li key={it.key}>
+                          <NavLink
+                            to={it.to}
+                            end={Boolean(it.end)}
+                            className={({ isActive }) => (isActive ? "active-link" : "")}
+                            onClick={closeMobile}
+                          >
+                            {it.label}
+                          </NavLink>
                         </li>
                       ))}
                     </ul>

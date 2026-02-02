@@ -1,7 +1,6 @@
 // /src/App.js
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-
 import Login from "./components/Login/Login";
 import Register from "./components/Register/Register";
 import ProtectedRoute from "./components/Protected/ProtectedRoute";
@@ -44,14 +43,19 @@ export default function App() {
   };
 
   useEffect(() => {
+    // load lúc mở app
     syncUserFromStorage();
+
+    // update ngay trong cùng tab khi bạn login/logout
     const onAuthChanged = () => syncUserFromStorage();
     window.addEventListener("auth:changed", onAuthChanged);
+
     return () => window.removeEventListener("auth:changed", onAuthChanged);
   }, []);
 
   const handleLoginSuccess = (userData) => {
     setCurrentUser(userData);
+    // đảm bảo mọi nơi (Header/Home) đều sync
     window.dispatchEvent(new Event("auth:changed"));
   };
 
@@ -59,6 +63,7 @@ export default function App() {
     setCurrentUser(userData);
     window.dispatchEvent(new Event("auth:changed"));
   };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -69,11 +74,19 @@ export default function App() {
 
   return (
     <Routes>
+      {/* vào web -> home trước */}
       <Route path="/" element={<Navigate to="/home" replace />} />
+
+      {/* Home có thể public */}
       <Route path="/home" element={<Home user={currentUser} onLogout={handleLogout} />} />
+
+      {/* login/register phải truyền callback */}
       <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
       <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
+
       <Route path="/forbidden" element={<Forbidden />} />
+
+      {/* ===== BOOKING ===== */}
       <Route element={<ProtectedRoute />}>
         <Route path="/rooms/:roomId" element={<RoomDetail />} />
         <Route path="/booking/new/:roomId" element={<BookingForm />} />
@@ -91,18 +104,18 @@ export default function App() {
         </Route>
       </Route>
 
-      {/* ===== RECEPTIONIST ===== */} <Route element={<ProtectedRoute />}>
+      {/* ===== RECEPTIONIST ===== */}
+      <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["RECEPTIONIST"]} />}>
           <Route path="/receptionist/booking-list" element={<BookingList />} />
         </Route>
       </Route>
-
-      {/* ===== MAINTENANCE ===== */} <Route element={<ProtectedRoute />}>
+      {/* ===== MAINTENANCE ===== */}
+      <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["MAINTENANCE"]} />}>
           <Route path="/maintenance/dashboard" element={<MaintenanceDashboard />} />
         </Route>
       </Route>
-
       {/* fallback */}
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
