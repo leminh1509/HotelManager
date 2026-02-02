@@ -1,25 +1,19 @@
 // /src/App.js
-import React, { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
-
+import React, { useEffect, useState } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./components/Login/Login";
 import Register from "./components/Register/Register";
 import ProtectedRoute from "./components/Protected/ProtectedRoute";
 import RequireRole from "./components/Protected/RequireRole";
-import RoleRedirect from "./components/Protected/RoleRedirect";
-
 import AdminLayout from "./components/Admin/AdminLayout";
 import UserManagement from "./components/Admin/Usermanagement";
-
 import RoomDetail from "./components/Booking/RoomDetail";
 import BookingForm from "./components/Booking/BookingForm";
 import BookingConfirmation from "./components/Booking/BookingConfirmation";
 import MyBookings from "./components/Booking/MyBookings";
 import Home from "./components/Home/Home";
 import BookingList from "./components/Receptionist/BookingList";
-import MaintenanceRequests from "./components/Maintenance/Requests";
 import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
-import Payment from "./components/Payment/Payment";
 
 const Forbidden = () => (
   <div style={{ padding: 40, textAlign: "center" }}>
@@ -39,43 +33,67 @@ const AdminDashboard = () => (
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
 
-  useEffect(() => {
-    // Load user khi app khởi động
+  const syncUserFromStorage = () => {
     try {
-      const userData = JSON.parse(localStorage.getItem("user"));
+      const userData = JSON.parse(localStorage.getItem("user") || "null");
       setCurrentUser(userData);
-    } catch (error) {
-      console.error("Error loading user:", error);
+    } catch {
+      setCurrentUser(null);
     }
+  };
+
+  useEffect(() => {
+    // load lúc mở app
+    syncUserFromStorage();
+
+    // update ngay trong cùng tab khi bạn login/logout
+    const onAuthChanged = () => syncUserFromStorage();
+    window.addEventListener("auth:changed", onAuthChanged);
+
+    return () => window.removeEventListener("auth:changed", onAuthChanged);
   }, []);
 
   const handleLoginSuccess = (userData) => {
     setCurrentUser(userData);
+    // đảm bảo mọi nơi (Header/Home) đều sync
+    window.dispatchEvent(new Event("auth:changed"));
   };
 
   const handleRegisterSuccess = (userData) => {
     setCurrentUser(userData);
+    window.dispatchEvent(new Event("auth:changed"));
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
+    setCurrentUser(null);
+    window.dispatchEvent(new Event("auth:changed"));
   };
 
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      {/* vào web -> home trước */}
+      <Route path="/" element={<Navigate to="/home" replace />} />
+
+      {/* Home có thể public */}
+      <Route path="/home" element={<Home user={currentUser} onLogout={handleLogout} />} />
+
+      {/* login/register phải truyền callback */}
+      <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
+      <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
+
       <Route path="/forbidden" element={<Forbidden />} />
 
-      {/* ===== CUSTOMER/USER ===== */}
+      {/* ===== BOOKING ===== */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/home" element={<Home />} />
-        <Route path="/payment" element={<Payment />} />
-
-        {/* ===== BOOKING ===== */}
-
         <Route path="/rooms/:roomId" element={<RoomDetail />} />
         <Route path="/booking/new/:roomId" element={<BookingForm />} />
         <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmation />} />
         <Route path="/my-bookings" element={<MyBookings />} />
       </Route>
+
       {/* ===== ADMIN ===== */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["ADMIN"]} />}>
@@ -85,6 +103,7 @@ export default function App() {
           </Route>
         </Route>
       </Route>
+
       {/* ===== RECEPTIONIST ===== */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["RECEPTIONIST"]} />}>
@@ -95,14 +114,10 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["MAINTENANCE"]} />}>
           <Route path="/maintenance/dashboard" element={<MaintenanceDashboard />} />
-          <Route path="/maintenance/requests" element={<MaintenanceRequests />} />
         </Route>
       </Route>
-
-
-
-
-
+      {/* fallback */}
+      <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   );
 }

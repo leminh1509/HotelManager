@@ -69,7 +69,7 @@ const Login = ({ onLoginSuccess }) => {
       if (onLoginSuccess) onLoginSuccess(userData);
       switch (role) {
         case 'ADMIN':
-          navigate('/admin', { replace: true }); // <-- quan trọng
+          navigate('/admin', { replace: true }); 
           break;
         case 'RECEPTIONIST':
           navigate('/receptionist/booking-list', { replace: true });
