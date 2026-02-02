@@ -20,7 +20,6 @@ import java.util.List;
 @AllArgsConstructor
 public class User implements UserDetails {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
@@ -30,8 +29,11 @@ public class User implements UserDetails {
     @JoinColumn(name = "role_id", referencedColumnName = "role_id", nullable = false)
     private Role role;
 
-    @Column(name = "mobile_phone", length = 20)
-    private String mobilePhone;
+    @Column(name = "email", nullable = false, unique = true, length = 255)
+    private String email;
+
+    @Column(name = "password", nullable = false, length = 255)
+    private String password;
 
     @Column(name = "first_name", nullable = false, length = 50)
     private String firstName;
@@ -42,29 +44,38 @@ public class User implements UserDetails {
     @Column(name = "last_name", nullable = false, length = 50)
     private String lastName;
 
+    @Column(name = "mobile_phone", length = 20, unique = true)
+    private String mobilePhone;
+
     @Column(name = "birthday")
     private LocalDate birthday;
-
-    @Column(name = "email", nullable = false, unique = true, length = 255)
-    private String email;
-
-    @Column(name = "password", nullable = false, length = 255)
-    private String password;
-
-    @Column(name = "is_black_list", nullable = false)
-    private Boolean isBlackList = false;
-
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
 
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
+    @Column(name = "is_black_list", nullable = false)
+    private Boolean isBlackList = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by")
+    private Integer deletedBy;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "created_by")
+    private Integer createdBy;
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column(name = "updated_by")
+    private Integer updatedBy;
 
     @PrePersist
     protected void onCreate() {
@@ -77,7 +88,6 @@ public class User implements UserDetails {
         updatedAt = LocalDateTime.now();
     }
 
-    // UserDetails implementation
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.getName().toUpperCase()));
@@ -95,7 +105,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !isBlackList;
+        return !isBlackList && deletedAt == null;
     }
 
     @Override
@@ -105,6 +115,17 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return isActive;
+        return isActive && deletedAt == null;
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
+    }
+
+    public String getFullName() {
+        if (middleName != null && !middleName.isEmpty()) {
+            return firstName + " " + middleName + " " + lastName;
+        }
+        return firstName + " " + lastName;
     }
 }

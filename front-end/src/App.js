@@ -1,10 +1,9 @@
-import React from "react";
+// /src/App.js
+import React, { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 
 import Login from "./components/Login/Login";
-import Register from "./components/Register/Register"; 
-
-
+import Register from "./components/Register/Register";
 import ProtectedRoute from "./components/Protected/ProtectedRoute";
 import RequireRole from "./components/Protected/RequireRole";
 import RoleRedirect from "./components/Protected/RoleRedirect";
@@ -19,17 +18,46 @@ import MyBookings from "./components/Booking/MyBookings";
 
 // ====== USER HOME (bạn thay đúng path Home của bạn) ======
 import Home from "./components/Home/Home";
-
-// ====== RECEPTIONIST (bạn thay đúng component thật) ======
 import BookingList from "./components/Receptionist/BookingList";
-
-// ====== MAINTENANCE (bạn thay đúng component thật) ======
 import MaintenanceRequests from "./components/Maintenance/Requests";
+import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
 
-const Forbidden = () => <div style={{ padding: 20 }}>403 - Forbidden</div>;
-const AdminDashboard = () => <div>Admin Dashboard</div>;
+const Forbidden = () => (
+  <div style={{ padding: 40, textAlign: "center" }}>
+    <h1>403 - Forbidden</h1>
+    <p>You don't have permission to access this page.</p>
+    <a href="/">Go Home</a>
+  </div>
+);
+
+const AdminDashboard = () => (
+  <div>
+    <h1>Admin Dashboard</h1>
+    <p>Welcome to admin panel!</p>
+  </div>
+);
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    // Load user khi app khởi động
+    try {
+      const userData = JSON.parse(localStorage.getItem("user"));
+      setCurrentUser(userData);
+    } catch (error) {
+      console.error("Error loading user:", error);
+    }
+  }, []);
+
+  const handleLoginSuccess = (userData) => {
+    setCurrentUser(userData);
+  };
+
+  const handleRegisterSuccess = (userData) => {
+    setCurrentUser(userData);
+  };
+
   return (
     <Routes>
       <Route path="/" element={<RoleRedirect />} />
@@ -38,7 +66,7 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/forbidden" element={<Forbidden />} />
 
-      {/* ===== USER ===== */}
+      {/* ===== CUSTOMER/USER ===== */}
       <Route element={<ProtectedRoute />}>
         <Route path="/home" element={<Home />} />
       
@@ -67,6 +95,7 @@ export default function App() {
      {/* ===== MAINTENANCE ===== */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["MAINTENANCE"]} />}>
+          <Route path="/maintenance/dashboard" element={<MaintenanceDashboard />} />
           <Route path="/maintenance/requests" element={<MaintenanceRequests />} />
         </Route>
       </Route>

@@ -104,12 +104,10 @@ const Register = ({ onRegisterSuccess }) => {
         
         localStorage.setItem('user', JSON.stringify(userData));
 
-        // Notify parent component (App.js) about successful registration
         if (onRegisterSuccess) {
           onRegisterSuccess(userData);
         }
 
-        // Redirect to home
         navigate('/home');
       } else {
         if (data.validationErrors) {
@@ -132,7 +130,7 @@ const Register = ({ onRegisterSuccess }) => {
         <div className="register-card">
           <div className="register-header">
             <h2>Create Account</h2>
-            <p>Join 36 Hotel today</p>
+            <p>Join Hotel today</p>
           </div>
 
           {errors.general && (
