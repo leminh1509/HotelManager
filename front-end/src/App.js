@@ -15,7 +15,7 @@ import Home from "./components/Home/Home";
 import BookingList from "./components/Receptionist/BookingList";
 import ReceptionistLayout from "./components/Receptionist/ReceptionistLayout";
 import BookingDetail from "./components/Receptionist/BookingDetail";
-import MaintenanceRequests from "./components/Maintenance/Requests";
+
 import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
 
 const Forbidden = () => (
