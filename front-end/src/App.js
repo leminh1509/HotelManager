@@ -15,8 +15,6 @@ import RoomDetail from "./components/Booking/RoomDetail";
 import BookingForm from "./components/Booking/BookingForm";
 import BookingConfirmation from "./components/Booking/BookingConfirmation";
 import MyBookings from "./components/Booking/MyBookings";
-
-// ====== USER HOME (bạn thay đúng path Home của bạn) ======
 import Home from "./components/Home/Home";
 import BookingList from "./components/Receptionist/BookingList";
 import MaintenanceRequests from "./components/Maintenance/Requests";
@@ -60,8 +58,7 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<RoleRedirect />} />
-      <Route path="/home" element={<Home />} />
+      <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forbidden" element={<Forbidden />} />
