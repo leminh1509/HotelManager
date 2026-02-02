@@ -57,16 +57,23 @@ export default function App() {
     setCurrentUser(userData);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    setCurrentUser(null);
+  };
+
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/" element={<Home user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
+      <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
+      <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
       <Route path="/forbidden" element={<Forbidden />} />
 
       {/* ===== CUSTOMER/USER ===== */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/home" element={<Home />} />
+        <Route path="/home" element={<Home user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
         <Route path="/payment" element={<Payment />} />
 
         {/* ===== BOOKING ===== */}
