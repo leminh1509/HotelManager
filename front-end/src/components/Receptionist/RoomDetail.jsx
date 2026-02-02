@@ -8,9 +8,14 @@ export default function RoomDetail() {
     const [room, setRoom] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [allStatuses, setAllStatuses] = useState([]);
+    const [updating, setUpdating] = useState(false);
 
     useEffect(() => {
-        if (id) fetchRoomDetail();
+        if (id) {
+            fetchRoomDetail();
+            fetchStatuses();
+        }
     }, [id]);
 
     const fetchRoomDetail = async () => {
@@ -25,6 +30,36 @@ export default function RoomDetail() {
             setError("Failed to load room details");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchStatuses = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await axios.get("http://localhost:9999/api/rooms/statuses", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setAllStatuses(res.data);
+        } catch (err) {
+            console.error("Failed to fetch statuses", err);
+        }
+    };
+
+    const updateStatus = async (newStatus) => {
+        if (!window.confirm(`Change status to ${newStatus}?`)) return;
+        setUpdating(true);
+        try {
+            const token = localStorage.getItem("token");
+            await axios.patch(`http://localhost:9999/api/rooms/${id}/status`,
+                { status: newStatus },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            fetchRoomDetail(); // reload
+        } catch (err) {
+            alert("Failed to update status");
+            console.error(err);
+        } finally {
+            setUpdating(false);
         }
     };
 
@@ -54,10 +89,25 @@ export default function RoomDetail() {
                                 <div className="col-sm-3 fw-bold">Room Category</div>
                                 <div className="col-sm-9">{room.categoryName}</div>
                             </div>
+
+                            {/* Status Update Dropdown */}
                             <div className="row mb-3">
                                 <div className="col-sm-3 fw-bold">Status</div>
-                                <div className="col-sm-9"><span className="badge bg-secondary">{room.statusName}</span></div>
+                                <div className="col-sm-9">
+                                    <select
+                                        className="form-select form-select-sm d-inline-block w-auto"
+                                        value={room.statusName}
+                                        onChange={(e) => updateStatus(e.target.value)}
+                                        disabled={updating}
+                                    >
+                                        {allStatuses.map(s => (
+                                            <option key={s.statusId} value={s.name}>{s.name}</option>
+                                        ))}
+                                    </select>
+                                    {updating && <span className="ms-2 spinner-border spinner-border-sm"></span>}
+                                </div>
                             </div>
+
                             <div className="row mb-3">
                                 <div className="col-sm-3 fw-bold">Price</div>
                                 <div className="col-sm-9">${room.price} / night</div>
