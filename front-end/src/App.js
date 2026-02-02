@@ -12,6 +12,11 @@ import RoleRedirect from "./components/Protected/RoleRedirect";
 import AdminLayout from "./components/Admin/AdminLayout";
 import UserManagement from "./components/Admin/Usermanagement";
 
+import RoomDetail from "./components/Booking/RoomDetail";
+import BookingForm from "./components/Booking/BookingForm";
+import BookingConfirmation from "./components/Booking/BookingConfirmation";
+import MyBookings from "./components/Booking/MyBookings";
+
 // ====== USER HOME (bạn thay đúng path Home của bạn) ======
 import Home from "./components/Home/Home";
 
@@ -28,6 +33,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<RoleRedirect />} />
+      <Route path="/home" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forbidden" element={<Forbidden />} />
@@ -35,9 +41,15 @@ export default function App() {
       {/* ===== USER ===== */}
       <Route element={<ProtectedRoute />}>
         <Route path="/home" element={<Home />} />
+      
+       {/* ===== BOOKING ===== */}
+        
+        <Route path="/rooms/:roomId" element={<RoomDetail />} />
+        <Route path="/booking/new/:roomId" element={<BookingForm />} />
+        <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmation />} />
+        <Route path="/my-bookings" element={<MyBookings />} />
       </Route>
-
-      {/* ===== ADMIN ===== */}
+       {/* ===== ADMIN ===== */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["ADMIN"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
@@ -46,20 +58,23 @@ export default function App() {
           </Route>
         </Route>
       </Route>
-
       {/* ===== RECEPTIONIST ===== */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["RECEPTIONIST"]} />}>
           <Route path="/receptionist/booking-list" element={<BookingList />} />
         </Route>
       </Route>
-
-      {/* ===== MAINTENANCE ===== */}
+     {/* ===== MAINTENANCE ===== */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["MAINTENANCE"]} />}>
           <Route path="/maintenance/requests" element={<MaintenanceRequests />} />
         </Route>
       </Route>
+      
+     
+
+      
+      
     </Routes>
   );
 }
