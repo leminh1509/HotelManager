@@ -15,7 +15,8 @@ import Home from "./components/Home/Home";
 import BookingList from "./components/Receptionist/BookingList";
 import ReceptionistLayout from "./components/Receptionist/ReceptionistLayout";
 import BookingDetail from "./components/Receptionist/BookingDetail";
-
+import RoomList from "./components/Receptionist/RoomList";
+import ReceptionistRoomDetail from "./components/Receptionist/RoomDetail";
 import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
 
 const Forbidden = () => (
@@ -116,6 +117,8 @@ export default function App() {
           <Route path="/receptionist" element={<ReceptionistLayout />}>
             <Route index element={<BookingList />} />
             <Route path="bookings/:id" element={<BookingDetail />} />
+            <Route path="rooms" element={<RoomList />} />
+            <Route path="rooms/:id" element={<ReceptionistRoomDetail />} />
           </Route>
         </Route>
       </Route>

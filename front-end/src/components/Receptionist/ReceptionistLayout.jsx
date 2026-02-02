@@ -36,12 +36,19 @@ export default function ReceptionistLayout() {
         </div>
 
         <nav className="sidebar-nav">
-          <NavLink 
-            to="/receptionist" 
-            end 
+          <NavLink
+            to="/receptionist"
+            end
             className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
           >
             <i className="fa fa-calendar"></i> Bookings
+          </NavLink>
+
+          <NavLink
+            to="/receptionist/rooms"
+            className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
+          >
+            <i className="fa fa-bed"></i> Rooms
           </NavLink>
 
           {/* Add more links if needed */}
