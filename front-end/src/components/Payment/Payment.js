@@ -1,7 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './Payment.css';
 
 const Payment = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Get data passed from BookingConfirmation
+  const { bookingId: passedBookingId, totalAmount: passedTotalAmount } = location.state || {};
   const [paymentMethod, setPaymentMethod] = useState('cash'); // cash, transfer, gateway
   const [amountTendered, setAmountTendered] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -16,8 +22,9 @@ const Payment = () => {
   });
 
   // Mock Invoice Data
-  const invoiceId = 1; // Assuming we are paying for invoice #1
-  const totalAmount = 1250.00;
+  // Use passed data or fallbacks (for testing)
+  const invoiceId = passedBookingId || 1;
+  const totalAmount = passedTotalAmount || 1250.00;
 
   const mapMethodToBackend = (method) => {
     switch (method) {
@@ -83,8 +90,8 @@ const Payment = () => {
             <span className="success-icon-large">🎉</span>
             <h2 className="success-title">Payment Successful!</h2>
             <p style={{ color: '#64748b', marginBottom: '2rem' }}>Transaction completed successfully.</p>
-            <button className="pay-button ready" onClick={() => window.location.reload()}>
-              Return to Dashboard
+            <button className="pay-button ready" onClick={() => navigate(`/booking/confirmation/${invoiceId}`)}>
+              View Booking Confirmation
             </button>
           </div>
         </div>

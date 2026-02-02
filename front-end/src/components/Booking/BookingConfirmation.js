@@ -142,8 +142,12 @@ export default function BookingConfirmation() {
 
         {/* CTA buttons */}
         <div className="bc-actions">
-          <Link to="/my-bookings" className="bc-btn bc-btn-primary">
-            Xem danh sách đặt phòng
+          <Link
+            to="/payment"
+            state={{ bookingId, totalAmount: totalPrice }}
+            className="bc-btn bc-btn-primary"
+          >
+            Thanh toán ngay ({formatPrice(totalPrice)} đ)
           </Link>
           <button
             onClick={resetBooking}

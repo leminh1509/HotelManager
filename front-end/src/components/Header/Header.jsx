@@ -77,9 +77,11 @@ export default function Header({
                       </NavLink>
                     </div>
 
-                    <NavLink to="/my-bookings" className="user-nav-link">
-                      <i className="fa fa-book" /> My Bookings
-                    </NavLink>
+                    {role !== 'maintenance' && (
+                      <NavLink to="/my-bookings" className="user-nav-link">
+                        <i className="fa fa-book" /> My Bookings
+                      </NavLink>
+                    )}
                     <button
                       type="button"
                       className="user-nav-link btn-linklike"
@@ -168,7 +170,7 @@ export default function Header({
                           </NavLink>
                         </li>
                       ))}
-                      {user && (
+                      {user && role !== 'maintenance' && (
                         <li className="mobile-only-link">
                           <NavLink
                             to="/my-bookings"
