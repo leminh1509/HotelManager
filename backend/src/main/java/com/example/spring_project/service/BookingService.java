@@ -31,9 +31,6 @@ public class BookingService {
         this.userRepository = userRepository;
     }
 
-    // ─────────────────────────────────────────────────────
-    // CREATE
-    // ─────────────────────────────────────────────────────
     @Transactional
     public BookingResponse create(BookingCreateRequest request, Integer userId) {
         // 1. Validate info
@@ -128,14 +125,14 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
-        // Check ownership (simple check)
-        if (!booking.getUser().getUserId().equals(userId)) {
-            // In real app, Admin/Receptionist might cancel too.
-            // Here we assume this is user canceling their own booking.
-            // If caller is Admin/Receptionist, we might skip this check.
-            // For simplicity, let's allow if user matches OR handle in controller layer
-            // permissions.
-            // But following existing logic:
+        User requester = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean isOwner = booking.getUser().getUserId().equals(userId);
+        boolean isAdminOrReceptionist = requester.getRole().getName().equalsIgnoreCase("ADMIN")
+                || requester.getRole().getName().equalsIgnoreCase("RECEPTIONIST");
+
+        if (!isOwner && !isAdminOrReceptionist) {
             throw new RuntimeException("Access denied");
         }
 
@@ -143,7 +140,6 @@ public class BookingService {
             throw new RuntimeException("Booking is already cancelled");
         }
 
-        // Logic: Allow cancel if Pending or Confirmed?
         booking.setStatus(Status.Cancelled);
         booking.setUpdatedAt(LocalDateTime.now());
 
@@ -151,32 +147,15 @@ public class BookingService {
         return mapToResponse(saved);
     }
 
-    // ─────────────────────────────────────────────────────
-    // [NEW] GET ALL BOOKINGS (For Admin/Receptionist)
-    // ─────────────────────────────────────────────────────
     @Transactional(readOnly = true)
     public List<BookingResponse> getAllBookings() {
-        // Sort by CreatedAt Desc is common
         List<Booking> list = bookingRepository.findAll();
-        // We might want to sort in memory or ensure repo returns sorted.
-        // Let's sort simply here or rely on repo if we add a method.
-        // Or cleaner: findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
-        // Since I haven't changed Repository to extend PagingAndSortingRepository
-        // explicitly (JpaRepository does),
-        // I can just use Java stream sort for simplicity or assume standard list order
-        // until refined.
-        // Better: List<Booking> list =
-        // bookingRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
-
         return list.stream()
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
-    // ─────────────────────────────────────────────────────
-    // [NEW] UPDATE STATUS (For Receptionist)
-    // ─────────────────────────────────────────────────────
     @Transactional
     public BookingResponse updateStatus(Integer bookingId, String statusStr) {
         Booking booking = bookingRepository.findById(bookingId)
@@ -186,7 +165,6 @@ public class BookingService {
         try {
             newStatus = Status.fromString(statusStr);
         } catch (Exception e) {
-            // Try to match upper case if fromString fails or is strict
             try {
                 newStatus = Status.valueOf(statusStr);
             } catch (IllegalArgumentException ex) {
@@ -201,9 +179,6 @@ public class BookingService {
         return mapToResponse(saved);
     }
 
-    // ─────────────────────────────────────────────────────
-    // MAPPER
-    // ─────────────────────────────────────────────────────
     private BookingResponse mapToResponse(Booking b) {
         BookingResponse res = new BookingResponse();
         res.setBookingId(b.getBookingId());

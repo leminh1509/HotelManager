@@ -22,21 +22,19 @@ public class BookingController {
         this.bookingService = bookingService;
     }
 
-    // ─────────────────────────────────────────────────────
-    // Helper: lấy userId từ Authentication principal
-    // ─────────────────────────────────────────────────────
     private Integer getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || auth.getPrincipal() == null) {
             throw new RuntimeException("Not authenticated");
         }
-        return (Integer) auth.getPrincipal(); // Adjusted to match perceived logic
+        Object principal = auth.getPrincipal();
+        if (principal instanceof com.example.spring_project.entity.User) {
+            return ((com.example.spring_project.entity.User) principal).getUserId();
+        }
+        throw new RuntimeException("Unknown principal type: " + principal.getClass().getName());
     }
 
-    // ─────────────────────────────────────────────────────
-    // POST /api/bookings
     // Đặt phòng mới
-    // ─────────────────────────────────────────────────────
     @PostMapping
     public ResponseEntity<BookingResponse> create(@Valid @RequestBody BookingCreateRequest request) {
         Integer userId = getCurrentUserId();
@@ -44,31 +42,14 @@ public class BookingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // ─────────────────────────────────────────────────────
-    // GET /api/bookings/{bookingId}
     // Lấy chi tiết 1 booking
-    // ─────────────────────────────────────────────────────
     @GetMapping("/{bookingId}")
     public ResponseEntity<BookingResponse> getById(@PathVariable Integer bookingId) {
         BookingResponse response = bookingService.getById(bookingId);
         return ResponseEntity.ok(response);
     }
 
-    // ─────────────────────────────────────────────────────
-    // GET /api/bookings/me
-    // Lấy tất cả bookings của user đang login
-    // ─────────────────────────────────────────────────────
-    @GetMapping("/me")
-    public ResponseEntity<List<BookingResponse>> getMyBookings() {
-        Integer userId = getCurrentUserId();
-        List<BookingResponse> bookings = bookingService.getMyBookings(userId);
-        return ResponseEntity.ok(bookings);
-    }
-
-    // ─────────────────────────────────────────────────────
-    // PUT /api/bookings/{bookingId}/cancel
-    // Hủy booking (User tự hủy)
-    // ─────────────────────────────────────────────────────
+    // Hủy booking
     @PutMapping("/{bookingId}/cancel")
     public ResponseEntity<BookingResponse> cancel(@PathVariable Integer bookingId) {
         Integer userId = getCurrentUserId();
@@ -76,27 +57,18 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
-    // ─────────────────────────────────────────────────────
-    // [NEW] GET /api/bookings
-    // Lấy tất cả bookings (Admin / Receptionist)
-    // ─────────────────────────────────────────────────────
+    // Lấy tất cả bookings
     @GetMapping
     public ResponseEntity<List<BookingResponse>> getAllBookings() {
-        // Trong thực tế nên check Role ở SecurityConfig hoặc PreAuthorize
-        // @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST')")
         List<BookingResponse> list = bookingService.getAllBookings();
         return ResponseEntity.ok(list);
     }
 
-    // ─────────────────────────────────────────────────────
-    // [NEW] PUT /api/bookings/{bookingId}/status?status=...
-    // Update status (Receptionist check-in, check-out...)
-    // ─────────────────────────────────────────────────────
+    // Update status
     @PutMapping("/{bookingId}/status")
     public ResponseEntity<BookingResponse> updateStatus(
             @PathVariable Integer bookingId,
             @RequestParam String status) {
-        // @PreAuthorize("hasRole('RECEPTIONIST')")
         BookingResponse response = bookingService.updateStatus(bookingId, status);
         return ResponseEntity.ok(response);
     }
