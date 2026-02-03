@@ -10,8 +10,14 @@ const api = axios.create({
 
 // Tự gắn token nếu đã login
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+   const token = localStorage.getItem("token");
+
+  if (token && token.startsWith("ey")) {
+    config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    delete config.headers.Authorization;
+  }
+
   return config;
 });
 

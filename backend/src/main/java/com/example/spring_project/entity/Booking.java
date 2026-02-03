@@ -1,161 +1,160 @@
-// package com.example.spring_project.entity;
+package com.example.spring_project.entity;
 
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "booking")
+public class Booking {
 
-// import jakarta.persistence.*;
-// import java.time.LocalDateTime;
+    public enum Status {
+        Pending, Confirmed, CheckedIn("Checked-in"), CheckedOut("Checked-out"), Cancelled;
 
-// @Entity
-// @Table(name = "booking")
-// public class Booking {
+        private final String dbValue;
+        Status()              { this.dbValue = name(); }
+        Status(String dbVal)  { this.dbValue = dbVal; }
 
-//     public enum Status {
-//         Pending, Confirmed, CheckedIn("Checked-in"), CheckedOut("Checked-out"), Cancelled;
+        public String getDbValue() { return dbValue; }
 
-//         private final String dbValue;
-//         Status()              { this.dbValue = name(); }
-//         Status(String dbVal)  { this.dbValue = dbVal; }
+        public static Status fromString(String s) {
+            for (Status st : values()) {
+                if (st.dbValue.equalsIgnoreCase(s)) return st;
+            }
+            throw new IllegalArgumentException("Unknown booking status: " + s);
+        }
+    }
 
-//         public String getDbValue() { return dbValue; }
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "booking_id")  // ✅ FIX: Map rõ ràng với database column
+    private Integer bookingId;
 
-//         public static Status fromString(String s) {
-//             for (Status st : values()) {
-//                 if (st.dbValue.equalsIgnoreCase(s)) return st;
-//             }
-//             throw new IllegalArgumentException("Unknown booking status: " + s);
-//         }
-//     }
+    // ── FK: customer ──
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)  // ✅ FIX: snake_case
+    private User user;
 
-//     @Id
-//     @GeneratedValue(strategy = GenerationType.IDENTITY)
-//     private Integer bookingId;
+    // ── FK: room ──
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", nullable = false)  // ✅ FIX: snake_case
+    private Room room;
 
-//     // ── FK: customer ──
-//     @ManyToOne(fetch = FetchType.LAZY)
-//     @JoinColumn(name = "userId", nullable = false)
-//     private User user;
+    // ── FK: receptionist (nullable) ──
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "receptionist_id")  // ✅ FIX: snake_case
+    private User receptionist;
 
-//     // ── FK: room ──
-//     @ManyToOne(fetch = FetchType.LAZY)
-//     @JoinColumn(name = "roomId", nullable = false)
-//     private Room room;
+    // ── guest info ──
+    @Column(name = "guest_name", length = 100)
+    private String guestName;
 
-//     // ── FK: receptionist (nullable) ──
-//     @ManyToOne(fetch = FetchType.LAZY)
-//     @JoinColumn(name = "receptionistId")
-//     private User receptionist;
+    @Column(name = "guest_email", length = 100)
+    private String guestEmail;
 
-//     // ── guest info ──
-//     @Column(name = "guestName", length = 100)
-//     private String guestName;
+    @Column(name = "guest_phone", length = 20)
+    private String guestPhone;
 
-//     @Column(name = "guestEmail", length = 100)
-//     private String guestEmail;
+    @Column(name = "guest_id_number", length = 20)
+    private String guestIdNumber;
 
-//     @Column(name = "guestPhone", length = 20)
-//     private String guestPhone;
+    @Column(name = "guest_nationality", length = 80)
+    private String guestNationality;
 
-//     @Column(name = "guestIdNumber", length = 20)
-//     private String guestIdNumber;
+    @Column(name = "guest_address", length = 255)
+    private String guestAddress;
 
-//     @Column(name = "guestNationality", length = 80)
-//     private String guestNationality;
+    @Column(name = "guest_count", nullable = false)
+    private Integer guestCount = 1;
 
-//     @Column(name = "guestAddress", length = 255)
-//     private String guestAddress;
+    @Column(name = "special_request", length = 500)
+    private String specialRequest;
 
-//     @Column(name = "guestCount", nullable = false)
-//     private Integer guestCount = 1;
+    @Column(name = "early_checkin", nullable = false)
+    private Boolean earlyCheckin = false;
 
-//     @Column(name = "specialRequest", length = 500)
-//     private String specialRequest;
+    @Column(name = "late_checkout", nullable = false)
+    private Boolean lateCheckout = false;
 
-//     @Column(name = "earlyCheckin", nullable = false)
-//     private Boolean earlyCheckin = false;
+    // ── dates ──
+    @Column(name = "checkin_time", nullable = false)
+    private LocalDateTime checkinTime;
 
-//     @Column(name = "lateCheckout", nullable = false)
-//     private Boolean lateCheckout = false;
+    @Column(name = "checkout_time", nullable = false)
+    private LocalDateTime checkoutTime;
 
-//     // ── dates ──
-//     @Column(name = "checkinTime", nullable = false)
-//     private LocalDateTime checkinTime;
+    // ── status & price ──
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20, nullable = false)
+    private Status status = Status.Pending;
 
-//     @Column(name = "checkoutTime", nullable = false)
-//     private LocalDateTime checkoutTime;
+    @Column(name = "total_price", nullable = false)
+    private Double totalPrice = 0.0;
 
-//     // ── status & price ──
-//     @Enumerated(EnumType.STRING)
-//     @Column(name = "status", length = 20, nullable = false)
-//     private Status status = Status.Pending;
+    // ── timestamps ──
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
-//     @Column(name = "totalPrice", nullable = false)
-//     private Double totalPrice = 0.0;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
-//     // ── timestamps ──
-//     @Column(name = "createdAt")
-//     private LocalDateTime createdAt;
+    // ── getters / setters ──
+    public Integer        getBookingId()              { return bookingId; }
+    public void           setBookingId(Integer v)     { this.bookingId = v; }
 
-//     @Column(name = "updatedAt")
-//     private LocalDateTime updatedAt;
+    public User           getUser()                   { return user; }
+    public void           setUser(User v)             { this.user = v; }
 
-//     // ── getters / setters ──
-//     public Integer        getBookingId()              { return bookingId; }
-//     public void           setBookingId(Integer v)     { this.bookingId = v; }
+    public Room           getRoom()                   { return room; }
+    public void           setRoom(Room v)             { this.room = v; }
 
-//     public User           getUser()                   { return user; }
-//     public void           setUser(User v)             { this.user = v; }
+    public User           getReceptionist()           { return receptionist; }
+    public void           setReceptionist(User v)     { this.receptionist = v; }
 
-//     public Room           getRoom()                   { return room; }
-//     public void           setRoom(Room v)             { this.room = v; }
+    public String         getGuestName()              { return guestName; }
+    public void           setGuestName(String v)      { this.guestName = v; }
 
-//     public User           getReceptionist()           { return receptionist; }
-//     public void           setReceptionist(User v)     { this.receptionist = v; }
+    public String         getGuestEmail()             { return guestEmail; }
+    public void           setGuestEmail(String v)     { this.guestEmail = v; }
 
-//     public String         getGuestName()              { return guestName; }
-//     public void           setGuestName(String v)      { this.guestName = v; }
+    public String         getGuestPhone()             { return guestPhone; }
+    public void           setGuestPhone(String v)     { this.guestPhone = v; }
 
-//     public String         getGuestEmail()             { return guestEmail; }
-//     public void           setGuestEmail(String v)     { this.guestEmail = v; }
+    public String         getGuestIdNumber()          { return guestIdNumber; }
+    public void           setGuestIdNumber(String v)  { this.guestIdNumber = v; }
 
-//     public String         getGuestPhone()             { return guestPhone; }
-//     public void           setGuestPhone(String v)     { this.guestPhone = v; }
+    public String         getGuestNationality()       { return guestNationality; }
+    public void           setGuestNationality(String v){ this.guestNationality = v; }
 
-//     public String         getGuestIdNumber()          { return guestIdNumber; }
-//     public void           setGuestIdNumber(String v)  { this.guestIdNumber = v; }
+    public String         getGuestAddress()           { return guestAddress; }
+    public void           setGuestAddress(String v)   { this.guestAddress = v; }
 
-//     public String         getGuestNationality()       { return guestNationality; }
-//     public void           setGuestNationality(String v){ this.guestNationality = v; }
+    public Integer        getGuestCount()             { return guestCount; }
+    public void           setGuestCount(Integer v)    { this.guestCount = v; }
 
-//     public String         getGuestAddress()           { return guestAddress; }
-//     public void           setGuestAddress(String v)   { this.guestAddress = v; }
+    public String         getSpecialRequest()         { return specialRequest; }
+    public void           setSpecialRequest(String v) { this.specialRequest = v; }
 
-//     public Integer        getGuestCount()             { return guestCount; }
-//     public void           setGuestCount(Integer v)    { this.guestCount = v; }
+    public Boolean        getEarlyCheckin()           { return earlyCheckin; }
+    public void           setEarlyCheckin(Boolean v)  { this.earlyCheckin = v; }
 
-//     public String         getSpecialRequest()         { return specialRequest; }
-//     public void           setSpecialRequest(String v) { this.specialRequest = v; }
+    public Boolean        getLateCheckout()           { return lateCheckout; }
+    public void           setLateCheckout(Boolean v)  { this.lateCheckout = v; }
 
-//     public Boolean        getEarlyCheckin()           { return earlyCheckin; }
-//     public void           setEarlyCheckin(Boolean v)  { this.earlyCheckin = v; }
+    public LocalDateTime  getCheckinTime()            { return checkinTime; }
+    public void           setCheckinTime(LocalDateTime v){ this.checkinTime = v; }
 
-//     public Boolean        getLateCheckout()           { return lateCheckout; }
-//     public void           setLateCheckout(Boolean v)  { this.lateCheckout = v; }
+    public LocalDateTime  getCheckoutTime()           { return checkoutTime; }
+    public void           setCheckoutTime(LocalDateTime v){ this.checkoutTime = v; }
 
-//     public LocalDateTime  getCheckinTime()            { return checkinTime; }
-//     public void           setCheckinTime(LocalDateTime v){ this.checkinTime = v; }
+    public Status         getStatus()                 { return status; }
+    public void           setStatus(Status v)         { this.status = v; }
 
-//     public LocalDateTime  getCheckoutTime()           { return checkoutTime; }
-//     public void           setCheckoutTime(LocalDateTime v){ this.checkoutTime = v; }
+    public Double         getTotalPrice()             { return totalPrice; }
+    public void           setTotalPrice(Double v)     { this.totalPrice = v; }
 
-//     public Status         getStatus()                 { return status; }
-//     public void           setStatus(Status v)         { this.status = v; }
+    public LocalDateTime  getCreatedAt()              { return createdAt; }
+    public void           setCreatedAt(LocalDateTime v){ this.createdAt = v; }
 
-//     public Double         getTotalPrice()             { return totalPrice; }
-//     public void           setTotalPrice(Double v)     { this.totalPrice = v; }
-
-//     public LocalDateTime  getCreatedAt()              { return createdAt; }
-//     public void           setCreatedAt(LocalDateTime v){ this.createdAt = v; }
-
-//     public LocalDateTime  getUpdatedAt()              { return updatedAt; }
-//     public void           setUpdatedAt(LocalDateTime v){ this.updatedAt = v; }
-// }
+    public LocalDateTime  getUpdatedAt()              { return updatedAt; }
+    public void           setUpdatedAt(LocalDateTime v){ this.updatedAt = v; }
+}
