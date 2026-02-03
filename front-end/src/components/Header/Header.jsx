@@ -73,7 +73,7 @@ export default function Header({
                   <>
                     <div className="user-nav-link user-welcome">
                       <NavLink to="/profile">
-                        <i className="fa fa-user-circle-o" /> Hi, {user.firstName}
+                        <i className="fa fa-user-circle-o" /> Hi, {user.firstName+" "+user.lastName}
                       </NavLink>
                     </div>
 

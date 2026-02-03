@@ -5,9 +5,6 @@ import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
 import "./Home.css";
 
-/* ──────────────────────────────────────────────────────────
-   STATIC DATA  (đổi bằng API call sau khi có backend)
-   ────────────────────────────────────────────────────────── */
 const HERO_SLIDES = [
   {
     id: 1,
