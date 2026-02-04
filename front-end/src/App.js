@@ -13,6 +13,7 @@ import BookingConfirmation from "./components/Booking/BookingConfirmation";
 import MyBookings from "./components/Booking/MyBookings";
 import Home from "./components/Home/Home";
 import Payment from "./components/Payment/Payment";
+import PaymentResult from "./components/Payment/PaymentResult";
 import BookingList from "./components/Receptionist/BookingList";
 import ReceptionistLayout from "./components/Receptionist/ReceptionistLayout";
 import BookingDetail from "./components/Receptionist/BookingDetail";
@@ -95,6 +96,7 @@ export default function App() {
       {/* ===== BOOKING ===== */}
       <Route element={<ProtectedRoute />}>
         <Route path="/payment" element={<Payment />} />
+        <Route path="/payment/vnpay-return" element={<PaymentResult />} />
 
         {/* ===== BOOKING ===== */}
 
