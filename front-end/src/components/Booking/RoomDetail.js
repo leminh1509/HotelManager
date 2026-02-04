@@ -191,7 +191,7 @@ export default function RoomDetail() {
               </div>
               <div className="rd-spec">
                 <span className="rd-spec-icon">📐</span>
-                <span>Diện tích: {room.size_m2} m²</span>
+                <span>Diện tích: {room.sizem2} m²</span>
               </div>
               <div className="rd-spec">
                 <span className="rd-spec-icon">🛏️</span>

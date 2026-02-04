@@ -2,7 +2,7 @@ package com.example.spring_project.dto;
 
 
 import jakarta.validation.constraints.*;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 /**
  * Client gửi lên khi đặt phòng mới.
@@ -15,10 +15,10 @@ public class BookingCreateRequest {
 
     // ── dates ──
     @NotNull(message = "checkinTime is required")
-    private LocalDateTime checkinTime;
+    private LocalDate checkinTime;
 
     @NotNull(message = "checkoutTime is required")
-    private LocalDateTime checkoutTime;
+    private LocalDate checkoutTime;
 
     // ── guest ──
     @NotNull(message = "guestCount is required")
@@ -55,10 +55,10 @@ public class BookingCreateRequest {
     // ── getters / setters ──
     public Integer        getRoomId()              { return roomId; }
     public void           setRoomId(Integer v)     { this.roomId = v; }
-    public LocalDateTime  getCheckinTime()         { return checkinTime; }
-    public void           setCheckinTime(LocalDateTime v){ this.checkinTime = v; }
-    public LocalDateTime  getCheckoutTime()        { return checkoutTime; }
-    public void           setCheckoutTime(LocalDateTime v){ this.checkoutTime = v; }
+    public LocalDate      getCheckinTime()         { return checkinTime; }
+    public void           setCheckinTime(LocalDate v){ this.checkinTime = v; }
+    public LocalDate      getCheckoutTime()        { return checkoutTime; }
+    public void           setCheckoutTime(LocalDate v){ this.checkoutTime = v; }
     public Integer        getGuestCount()          { return guestCount; }
     public void           setGuestCount(Integer v) { this.guestCount = v; }
     public String         getGuestName()           { return guestName; }

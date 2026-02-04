@@ -1,6 +1,7 @@
 package com.example.spring_project.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -77,10 +78,10 @@ public class Booking {
 
     // ── dates ──
     @Column(name = "checkin_time", nullable = false)
-    private LocalDateTime checkinTime;
+    private LocalDate checkinTime;
 
     @Column(name = "checkout_time", nullable = false)
-    private LocalDateTime checkoutTime;
+    private LocalDate checkoutTime;
 
     // ── status & price ──
     @Enumerated(EnumType.STRING)
@@ -140,11 +141,11 @@ public class Booking {
     public Boolean        getLateCheckout()           { return lateCheckout; }
     public void           setLateCheckout(Boolean v)  { this.lateCheckout = v; }
 
-    public LocalDateTime  getCheckinTime()            { return checkinTime; }
-    public void           setCheckinTime(LocalDateTime v){ this.checkinTime = v; }
+    public LocalDate  getCheckinTime()            { return checkinTime; }
+    public void           setCheckinTime(LocalDate v){ this.checkinTime = v; }
 
-    public LocalDateTime  getCheckoutTime()           { return checkoutTime; }
-    public void           setCheckoutTime(LocalDateTime v){ this.checkoutTime = v; }
+    public LocalDate  getCheckoutTime()           { return checkoutTime; }
+    public void           setCheckoutTime(LocalDate v){ this.checkoutTime = v; }
 
     public Status         getStatus()                 { return status; }
     public void           setStatus(Status v)         { this.status = v; }
