@@ -95,10 +95,15 @@ export default function UserManagement() {
   };
 
   const closeModal = () => {
+    setModal((m) => ({ ...m, open: false, onOk: null }));
+  };
+
+  const confirmOk = async () => {
     const cb = modal.onOk;
     setModal((m) => ({ ...m, open: false, onOk: null }));
-    if (typeof cb === "function") cb();
+    if (typeof cb === "function") await cb();
   };
+
 
   const openEditModal = (user) => {
     setEditingUser(user);
@@ -263,17 +268,30 @@ export default function UserManagement() {
       return;
     }
 
-    try {
-      markBusy(user.userId, true);
-      await apiFetch(`/api/admin/users/${user.userId}/toggle-active`, { method: "PATCH" });
-      await refreshUsersAndStats();
-      showModal({ variant: "success", title: "Thành công", message: "Cập nhật trạng thái thành công." });
-    } catch (e) {
-      handleApiError(e);
-    } finally {
-      markBusy(user.userId, false);
-    }
+    const nextAction = user.isActive ? "Deactivate" : "Activate";
+    const msg = user.isActive
+      ? `Bạn chắc chắn muốn Deactivate user: ${user.email}?`
+      : `Bạn chắc chắn muốn Activate user: ${user.email}?`;
+
+    showModal({
+      variant: "warning",
+      title: `Xác nhận ${nextAction}`,
+      message: msg,
+      onOk: async () => {
+        try {
+          markBusy(user.userId, true);
+          await apiFetch(`/api/admin/users/${user.userId}/toggle-active`, { method: "PATCH" });
+          await refreshUsersAndStats();
+        } catch (e) {
+          handleApiError(e);
+        } finally {
+          markBusy(user.userId, false);
+        }
+      },
+    });
   };
+
+
 
   const handleDeleteUser = async (user) => {
     const isMe = user.userId === currentUserId || (currentEmail && user.email === currentEmail);
@@ -369,13 +387,18 @@ export default function UserManagement() {
             </div>
             <div className="um-modal-body">{modal.message}</div>
             <div className="um-modal-footer">
-              <button className="um-btn um-primary" onClick={closeModal}>
+              <button className="um-btn" onClick={closeModal}>
+                Cancel
+              </button>
+
+              <button className="um-btn um-primary" onClick={confirmOk}>
                 OK
               </button>
             </div>
           </div>
         </div>
       )}
+
 
       {/* Edit modal */}
       {editModalOpen && (
