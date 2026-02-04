@@ -177,7 +177,7 @@ export default function BookingForm() {
         bookingId = "BK-" + Date.now().toString().slice(-6);
       }
 
-      navigate(`/booking/confirmation/${bookingId}`);
+      navigate("/payment", { state: { bookingId, totalAmount: totalPrice } });
     } catch (err) {
       console.error(err);
     } finally {

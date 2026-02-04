@@ -12,6 +12,8 @@ import BookingForm from "./components/Booking/BookingForm";
 import BookingConfirmation from "./components/Booking/BookingConfirmation";
 import MyBookings from "./components/Booking/MyBookings";
 import Home from "./components/Home/Home";
+import Payment from "./components/Payment/Payment";
+import PaymentResult from "./components/Payment/PaymentResult";
 import BookingList from "./components/Receptionist/BookingList";
 import ReceptionistLayout from "./components/Receptionist/ReceptionistLayout";
 import BookingDetail from "./components/Receptionist/BookingDetail";
@@ -76,23 +78,25 @@ export default function App() {
     window.dispatchEvent(new Event("auth:changed"));
   };
 
+
+
   return (
     <Routes>
       {/* vào web -> home trước */}
       <Route path="/" element={<Navigate to="/home" replace />} />
 
       {/* Home có thể public */}
-      <Route path="/home" element={<Home user={currentUser} onLogout={handleLogout} />} />
+      <Route path="/home" element={<Home user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
 
       {/* login/register phải truyền callback */}
       <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
       <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
-
       <Route path="/forbidden" element={<Forbidden />} />
 
       {/* ===== BOOKING ===== */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/home" element={<Home />} />
+        <Route path="/payment" element={<Payment />} />
+        <Route path="/payment/vnpay-return" element={<PaymentResult />} />
 
         {/* ===== BOOKING ===== */}
 
