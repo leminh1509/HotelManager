@@ -23,15 +23,15 @@ import java.util.stream.Collectors;
 public class BookingService {
 
     private final BookingRepository bookingRepo;
-    private final RoomService       roomService;
-    private final UserRepository    userRepo;
+    private final RoomService roomService;
+    private final UserRepository userRepo;
 
     public BookingService(BookingRepository bookingRepo,
-                          RoomService       roomService,
-                          UserRepository    userRepo) {
+            RoomService roomService,
+            UserRepository userRepo) {
         this.bookingRepo = bookingRepo;
         this.roomService = roomService;
-        this.userRepo    = userRepo;
+        this.userRepo = userRepo;
     }
 
     // ─────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ public class BookingService {
                 room.getRoomId(),
                 req.getCheckinTime(),
                 req.getCheckoutTime(),
-                Status.Cancelled          // trừ các booking đã hủy
+                Status.Cancelled // trừ các booking đã hủy
         );
         if (overlap > 0) {
             throw new ConflictException("Room is not available for the selected dates");
@@ -72,8 +72,7 @@ public class BookingService {
         // 6) tính giá: price × số đêm
         long nights = ChronoUnit.DAYS.between(
                 req.getCheckinTime().toLocalDate(),
-                req.getCheckoutTime().toLocalDate()
-        );
+                req.getCheckoutTime().toLocalDate());
         double totalPrice = room.getPrice() * Math.max(nights, 1);
 
         // 7) build entity
@@ -138,15 +137,19 @@ public class BookingService {
             throw new ResourceNotFoundException("Booking not found with id: " + bookingId);
         }
 
-        // chỉ cho phép hủy booking của chính user đang login
-        if (!booking.getUser().getUserId().equals(userId)) {
+        User requester = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        boolean isOwner = booking.getUser().getUserId().equals(userId);
+        boolean isAdminOrReceptionist = requester.getRole().getName().equalsIgnoreCase("ADMIN")
+                || requester.getRole().getName().equalsIgnoreCase("RECEPTIONIST");
+
+        if (!isOwner && !isAdminOrReceptionist) {
             throw new ConflictException("You can only cancel your own bookings");
         }
 
-        // chỉ hủy được Pending hoặc Confirmed
-        if (booking.getStatus() != Status.Pending && booking.getStatus() != Status.Confirmed) {
-            throw new ConflictException(
-                    "Cannot cancel booking in status: " + booking.getStatus().getDbValue());
+        if (booking.getStatus() == Status.Cancelled) {
+            throw new ConflictException("Booking is already cancelled");
         }
 
         booking.setStatus(Status.Cancelled);
@@ -154,5 +157,39 @@ public class BookingService {
 
         Booking updated = bookingRepo.save(booking);
         return BookingMapper.toBookingResponse(updated);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getAllBookings() {
+        List<Booking> list = bookingRepo.findAll();
+        return list.stream()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .map(BookingMapper::toBookingResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public BookingResponse updateStatus(Integer bookingId, String statusStr) {
+        Booking booking = bookingRepo.findByIdWithDetails(bookingId);
+        if (booking == null) {
+            throw new ResourceNotFoundException("Booking not found: " + bookingId);
+        }
+
+        Status newStatus;
+        try {
+            newStatus = Status.fromString(statusStr);
+        } catch (Exception e) {
+            try {
+                newStatus = Status.valueOf(statusStr);
+            } catch (IllegalArgumentException ex) {
+                throw new ConflictException("Invalid status: " + statusStr);
+            }
+        }
+
+        booking.setStatus(newStatus);
+        booking.setUpdatedAt(LocalDateTime.now());
+
+        Booking saved = bookingRepo.save(booking);
+        return BookingMapper.toBookingResponse(saved);
     }
 }

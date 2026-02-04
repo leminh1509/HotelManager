@@ -1,7 +1,5 @@
 package com.example.spring_project.service;
 
-
-
 import com.example.spring_project.dto.RoomResponse;
 import com.example.spring_project.entity.Room;
 import com.example.spring_project.exception.ResourceNotFoundException;
@@ -19,9 +17,12 @@ import java.util.stream.Collectors;
 public class RoomService {
 
     private final RoomRepository roomRepository;
+    private final com.example.spring_project.repository.RoomStatusRepository roomStatusRepository;
 
-    public RoomService(RoomRepository roomRepository) {
+    public RoomService(RoomRepository roomRepository,
+            com.example.spring_project.repository.RoomStatusRepository roomStatusRepository) {
         this.roomRepository = roomRepository;
+        this.roomStatusRepository = roomStatusRepository;
     }
 
     // ─────────────────────────────────────────────────────
@@ -42,11 +43,9 @@ public class RoomService {
             int guestCount,
             Integer categoryId,
             Double minPrice,
-            Double maxPrice
-    ) {
+            Double maxPrice) {
         List<Room> rooms = roomRepository.findAvailableRoomsFiltered(
-                checkin, checkout, guestCount, categoryId, minPrice, maxPrice
-        );
+                checkin, checkout, guestCount, categoryId, minPrice, maxPrice);
 
         return rooms.stream()
                 .map(BookingMapper::toRoomResponse)
@@ -59,5 +58,31 @@ public class RoomService {
     public Room getEntityById(Integer roomId) {
         return roomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
+    }
+
+    public List<RoomResponse> getAllRooms() {
+        return roomRepository.findAll().stream()
+                .map(BookingMapper::toRoomResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public RoomResponse updateRoomStatus(Integer roomId, String statusName) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found: " + roomId));
+
+        com.example.spring_project.entity.RoomStatus statusEntity = roomStatusRepository.findAll().stream()
+                .filter(s -> s.getName().equalsIgnoreCase(statusName))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Status not found: " + statusName));
+
+        room.setStatus(statusEntity);
+        // room.setUpdatedAt(...) if needed
+        Room saved = roomRepository.save(room);
+        return BookingMapper.toRoomResponse(saved);
+    }
+
+    public List<com.example.spring_project.entity.RoomStatus> getAllStatuses() {
+        return roomStatusRepository.findAll();
     }
 }

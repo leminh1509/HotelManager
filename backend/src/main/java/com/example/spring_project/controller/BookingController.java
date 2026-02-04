@@ -10,16 +10,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.spring_project.dto.BookingCreateRequest;
-import com.example.spring_project.dto.BookingResponse;
-import com.example.spring_project.service.BookingService;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -36,7 +26,7 @@ public class BookingController {
     // Helper: lấy userId từ Authentication principal
     // Giả sử auth setup của bạn store userId (Integer) trong principal.
     // Nếu project dùng custom UserDetails thì đổi thành:
-    //   ((MyUserDetails) auth.getPrincipal()).getUserId()
+    // ((MyUserDetails) auth.getPrincipal()).getUserId()
     // ─────────────────────────────────────────────────────
     private Integer getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -48,10 +38,16 @@ public class BookingController {
         // return (Integer) auth.getPrincipal();
 
         // Option B: principal là custom UserDetails
-        // return ((com.example.hotelmanager.model.CustomUserDetails) auth.getPrincipal()).getUserId();
+        // return ((com.example.hotelmanager.model.CustomUserDetails)
+        // auth.getPrincipal()).getUserId();
 
         // Option C: fallback generic (dùng tạm)
         return (Integer) auth.getPrincipal();
+    }
+
+    @GetMapping
+    public ResponseEntity<List<BookingResponse>> getAllBookings() {
+        return ResponseEntity.ok(bookingService.getAllBookings());
     }
 
     // ─────────────────────────────────────────────────────
@@ -94,6 +90,14 @@ public class BookingController {
     public ResponseEntity<BookingResponse> cancel(@PathVariable Integer bookingId) {
         Integer userId = getCurrentUserId();
         BookingResponse response = bookingService.cancel(bookingId, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{bookingId}/status")
+    public ResponseEntity<BookingResponse> updateStatus(
+            @PathVariable Integer bookingId,
+            @RequestParam String status) {
+        BookingResponse response = bookingService.updateStatus(bookingId, status);
         return ResponseEntity.ok(response);
     }
 }

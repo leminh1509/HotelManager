@@ -1,7 +1,5 @@
 package com.example.spring_project.controller;
 
-
-
 import com.example.spring_project.dto.RoomResponse;
 import com.example.spring_project.service.RoomService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -21,27 +19,17 @@ public class RoomController {
         this.roomService = roomService;
     }
 
-    // ─────────────────────────────────────────────────────
-    // GET /api/rooms/{roomId}
-    // Lấy chi tiết 1 phòng (cho trang RoomDetail)
-    // ─────────────────────────────────────────────────────
+    @GetMapping
+    public ResponseEntity<List<RoomResponse>> getAllRooms() {
+        return ResponseEntity.ok(roomService.getAllRooms());
+    }
+
     @GetMapping("/{roomId}")
     public ResponseEntity<RoomResponse> getById(@PathVariable Integer roomId) {
         RoomResponse room = roomService.getById(roomId);
         return ResponseEntity.ok(room);
     }
 
-    // ─────────────────────────────────────────────────────
-    // GET /api/rooms/search
-    //   ?checkin=2026-02-10T14:00:00
-    //   &checkout=2026-02-12T11:00:00
-    //   &guests=2
-    //   &categoryId=1          (optional)
-    //   &minPrice=1000000      (optional)
-    //   &maxPrice=5000000      (optional)
-    //
-    // Frontend gửi checkin/checkout dạng ISO LocalDateTime.
-    // ─────────────────────────────────────────────────────
     @GetMapping("/search")
     public ResponseEntity<List<RoomResponse>> search(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime checkin,
@@ -49,11 +37,21 @@ public class RoomController {
             @RequestParam(defaultValue = "1") int guests,
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice
-    ) {
+            @RequestParam(required = false) Double maxPrice) {
         List<RoomResponse> rooms = roomService.search(
-                checkin, checkout, guests, categoryId, minPrice, maxPrice
-        );
+                checkin, checkout, guests, categoryId, minPrice, maxPrice);
         return ResponseEntity.ok(rooms);
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<RoomResponse> updateRoomStatus(@PathVariable Integer id,
+            @RequestBody java.util.Map<String, String> body) {
+        String statusName = body.get("status");
+        return ResponseEntity.ok(roomService.updateRoomStatus(id, statusName));
+    }
+
+    @GetMapping("/statuses")
+    public ResponseEntity<java.util.List<com.example.spring_project.entity.RoomStatus>> getAllStatuses() {
+        return ResponseEntity.ok(roomService.getAllStatuses());
     }
 }
