@@ -19,7 +19,6 @@ public class RoomResponse {
     private String description;
     private String imgUrl;
 
-    // ── getters / setters ──
     public Integer getRoomId() {
         return roomId;
     }

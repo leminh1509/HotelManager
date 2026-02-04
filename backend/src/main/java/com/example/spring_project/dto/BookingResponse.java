@@ -42,7 +42,6 @@ public class BookingResponse {
     private Integer userId;
     private String userEmail;
 
-    // ── getters / setters ──
     public Integer getBookingId() {
         return bookingId;
     }
