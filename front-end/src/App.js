@@ -20,6 +20,7 @@ import BookingDetail from "./components/Receptionist/BookingDetail";
 import RoomList from "./components/Receptionist/RoomList";
 import ReceptionistRoomDetail from "./components/Receptionist/RoomDetail";
 import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
+import RoomList1 from "./components/Room/RoomList";
 
 const Forbidden = () => (
   <div style={{ padding: 40, textAlign: "center" }}>
@@ -87,6 +88,9 @@ export default function App() {
 
       {/* Home có thể public */}
       <Route path="/home" element={<Home user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
+
+      {/*List room */}
+      <Route path="/rooms" element={<RoomList1/>} />
 
       {/* login/register phải truyền callback */}
       <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />

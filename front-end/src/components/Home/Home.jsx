@@ -105,22 +105,11 @@ export default function Home({ user, role, onLogout }) {
   }, [slideIdx, goTo]);
 
   /* ── search form state ── */
-  const [checkin, setCheckin] = useState("");
-  const [checkout, setCheckout] = useState("");
-  const [guests, setGuests] = useState("1 GUEST");
-  const [category, setCategory] = useState("");
+ 
 
   const navigate = useNavigate();
 
-  const handleSearch = () => {
-    const params = new URLSearchParams();
-    if (checkin) params.set("checkin", checkin);
-    if (checkout) params.set("checkout", checkout);
-    params.set("guests", guests.replace(/\D/g, "") || "1");
-    if (category) params.set("category", category);
-    navigate(`/home?${params.toString()}`);
-  };
-
+  
   /* ── render ── */
   return (
     <>
@@ -153,80 +142,7 @@ export default function Home({ user, role, onLogout }) {
           <i className="fa fa-chevron-right" />
         </button>
 
-        {/* ── floating search bar ── */}
-        <div className="search-bar-wrap">
-          <div className="search-bar">
-            {/* CHECK IN */}
-            <div className="search-field">
-              <label>Check In</label>
-              <div className="field-icon">
-                <i className="fa fa-calendar" />
-                <input
-                  type="date"
-                  value={checkin}
-                  onChange={(e) => setCheckin(e.target.value)}
-                  placeholder="Select date"
-                />
-              </div>
-            </div>
-
-            {/* CHECK OUT */}
-            <div className="search-field">
-              <label>Check Out</label>
-              <div className="field-icon">
-                <i className="fa fa-calendar" />
-                <input
-                  type="date"
-                  value={checkout}
-                  min={checkin || undefined}
-                  onChange={(e) => setCheckout(e.target.value)}
-                  placeholder="Select date"
-                />
-              </div>
-            </div>
-
-            {/* GUESTS */}
-            <div className="search-field">
-              <label>Guests</label>
-              <div className="field-icon">
-                <i className="fa fa-user" />
-                <select
-                  value={guests}
-                  onChange={(e) => setGuests(e.target.value)}
-                >
-                  {[1, 2, 3, 4, 5, 6].map((n) => (
-                    <option key={n} value={`${n} GUEST${n > 1 ? "S" : ""}`}>
-                      {n} GUEST{n > 1 ? "S" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* CATEGORY */}
-            <div className="search-field">
-              <label>Category</label>
-              <div className="field-icon">
-                <i className="fa fa-th-large" />
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* FIND ROOMS btn */}
-            <button type="button" className="search-btn" onClick={handleSearch}>
-              Find Rooms
-            </button>
-          </div>
-        </div>
+       
       </section>
 
       {/* spacer so search bar doesn't overlap next section */}

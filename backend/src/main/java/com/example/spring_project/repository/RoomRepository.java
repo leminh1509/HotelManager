@@ -2,18 +2,13 @@ package com.example.spring_project.repository;
 
 import com.example.spring_project.entity.Room;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.example.spring_project.entity.Room;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 public interface RoomRepository extends JpaRepository<Room, Integer> {
@@ -24,6 +19,17 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
      *
      * Subquery loại trừ phòng đã có booking overlap (status != Cancelled).
      */
+    @Modifying
+@Transactional
+@Query("""
+    UPDATE Room r
+    SET r.status.statusId = :statusId
+    WHERE r.roomId = :roomId
+""")
+int updateRoomStatus(
+        @Param("roomId") Integer roomId,
+        @Param("statusId") Integer statusId
+);
     @Query("""
             SELECT r FROM Room r
             WHERE r.status.name = 'Available'
@@ -36,8 +42,8 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
               )
     """)
     List<Room> findAvailableRooms(
-            @Param("checkin")    LocalDateTime checkin,
-            @Param("checkout")  LocalDateTime checkout,
+            @Param("checkin")    LocalDate checkin,
+            @Param("checkout")  LocalDate checkout,
             @Param("guestCount") Integer guestCount
     );
 
@@ -60,8 +66,8 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
             ORDER BY r.price ASC
     """)
     List<Room> findAvailableRoomsFiltered(
-            @Param("checkin")     LocalDateTime checkin,
-            @Param("checkout")   LocalDateTime checkout,
+            @Param("checkin")     LocalDate checkin,
+            @Param("checkout")   LocalDate checkout,
             @Param("guestCount") Integer       guestCount,
             @Param("categoryId") Integer       categoryId,
             @Param("minPrice")   Double        minPrice,

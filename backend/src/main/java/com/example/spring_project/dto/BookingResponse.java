@@ -2,6 +2,7 @@ package com.example.spring_project.dto;
 
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 /**
  * Response DTO trả về cho client.
@@ -34,8 +35,8 @@ public class BookingResponse {
     private Boolean       lateCheckout;
 
     // ── dates ──
-    private LocalDateTime checkinTime;
-    private LocalDateTime checkoutTime;
+    private LocalDate checkinTime;
+    private LocalDate checkoutTime;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -85,10 +86,10 @@ public class BookingResponse {
     public Boolean        getLateCheckout()           { return lateCheckout; }
     public void           setLateCheckout(Boolean v)  { this.lateCheckout = v; }
 
-    public LocalDateTime  getCheckinTime()            { return checkinTime; }
-    public void           setCheckinTime(LocalDateTime v){ this.checkinTime = v; }
-    public LocalDateTime  getCheckoutTime()           { return checkoutTime; }
-    public void           setCheckoutTime(LocalDateTime v){ this.checkoutTime = v; }
+    public LocalDate  getCheckinTime()            { return checkinTime; }
+    public void           setCheckinTime(LocalDate v){ this.checkinTime = v; }
+    public LocalDate  getCheckoutTime()           { return checkoutTime; }
+    public void           setCheckoutTime(LocalDate v){ this.checkoutTime = v; }
     public LocalDateTime  getCreatedAt()              { return createdAt; }
     public void           setCreatedAt(LocalDateTime v){ this.createdAt = v; }
     public LocalDateTime  getUpdatedAt()              { return updatedAt; }
