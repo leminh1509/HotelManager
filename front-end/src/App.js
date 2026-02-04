@@ -13,6 +13,10 @@ import BookingConfirmation from "./components/Booking/BookingConfirmation";
 import MyBookings from "./components/Booking/MyBookings";
 import Home from "./components/Home/Home";
 import BookingList from "./components/Receptionist/BookingList";
+import ReceptionistLayout from "./components/Receptionist/ReceptionistLayout";
+import BookingDetail from "./components/Receptionist/BookingDetail";
+import RoomList from "./components/Receptionist/RoomList";
+import ReceptionistRoomDetail from "./components/Receptionist/RoomDetail";
 import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
 
 const Forbidden = () => (
@@ -88,12 +92,15 @@ export default function App() {
 
       {/* ===== BOOKING ===== */}
       <Route element={<ProtectedRoute />}>
+        <Route path="/home" element={<Home />} />
+
+        {/* ===== BOOKING ===== */}
+
         <Route path="/rooms/:roomId" element={<RoomDetail />} />
         <Route path="/booking/new/:roomId" element={<BookingForm />} />
         <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmation />} />
         <Route path="/my-bookings" element={<MyBookings />} />
       </Route>
-
       {/* ===== ADMIN ===== */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["ADMIN"]} />}>
@@ -107,7 +114,12 @@ export default function App() {
       {/* ===== RECEPTIONIST ===== */}
       <Route element={<ProtectedRoute />}>
         <Route element={<RequireRole allowed={["RECEPTIONIST"]} />}>
-          <Route path="/receptionist/booking-list" element={<BookingList />} />
+          <Route path="/receptionist" element={<ReceptionistLayout />}>
+            <Route index element={<BookingList />} />
+            <Route path="bookings/:id" element={<BookingDetail />} />
+            <Route path="rooms" element={<RoomList />} />
+            <Route path="rooms/:id" element={<ReceptionistRoomDetail />} />
+          </Route>
         </Route>
       </Route>
       {/* ===== MAINTENANCE ===== */}
@@ -116,8 +128,11 @@ export default function App() {
           <Route path="/maintenance/dashboard" element={<MaintenanceDashboard />} />
         </Route>
       </Route>
-      {/* fallback */}
-      <Route path="*" element={<Navigate to="/home" replace />} />
+
+
+
+
+
     </Routes>
   );
 }
