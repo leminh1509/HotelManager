@@ -11,23 +11,14 @@ public class Booking {
         Pending, Confirmed, CheckedIn("Checked-in"), CheckedOut("Checked-out"), Cancelled;
 
         private final String dbValue;
+        Status()              { this.dbValue = name(); }
+        Status(String dbVal)  { this.dbValue = dbVal; }
 
-        Status() {
-            this.dbValue = name();
-        }
-
-        Status(String dbVal) {
-            this.dbValue = dbVal;
-        }
-
-        public String getDbValue() {
-            return dbValue;
-        }
+        public String getDbValue() { return dbValue; }
 
         public static Status fromString(String s) {
             for (Status st : values()) {
-                if (st.dbValue.equalsIgnoreCase(s))
-                    return st;
+                if (st.dbValue.equalsIgnoreCase(s)) return st;
             }
             throw new IllegalArgumentException("Unknown booking status: " + s);
         }
@@ -35,22 +26,22 @@ public class Booking {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "booking_id")
+    @Column(name = "booking_id")  // ✅ FIX: Map rõ ràng với database column
     private Integer bookingId;
 
     // ── FK: customer ──
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)  // ✅ FIX: snake_case
     private User user;
 
     // ── FK: room ──
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id", nullable = false)
+    @JoinColumn(name = "room_id", nullable = false)  // ✅ FIX: snake_case
     private Room room;
 
     // ── FK: receptionist (nullable) ──
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "receptionist_id")
+    @JoinColumn(name = "receptionist_id")  // ✅ FIX: snake_case
     private User receptionist;
 
     // ── guest info ──
@@ -92,7 +83,7 @@ public class Booking {
     private LocalDateTime checkoutTime;
 
     // ── status & price ──
-    // @Enumerated(EnumType.STRING) -- Removed, using Converter
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
     private Status status = Status.Pending;
 
@@ -107,163 +98,63 @@ public class Booking {
     private LocalDateTime updatedAt;
 
     // ── getters / setters ──
-    public Integer getBookingId() {
-        return bookingId;
-    }
+    public Integer        getBookingId()              { return bookingId; }
+    public void           setBookingId(Integer v)     { this.bookingId = v; }
 
-    public void setBookingId(Integer v) {
-        this.bookingId = v;
-    }
+    public User           getUser()                   { return user; }
+    public void           setUser(User v)             { this.user = v; }
 
-    public User getUser() {
-        return user;
-    }
+    public Room           getRoom()                   { return room; }
+    public void           setRoom(Room v)             { this.room = v; }
 
-    public void setUser(User v) {
-        this.user = v;
-    }
+    public User           getReceptionist()           { return receptionist; }
+    public void           setReceptionist(User v)     { this.receptionist = v; }
 
-    public Room getRoom() {
-        return room;
-    }
+    public String         getGuestName()              { return guestName; }
+    public void           setGuestName(String v)      { this.guestName = v; }
 
-    public void setRoom(Room v) {
-        this.room = v;
-    }
+    public String         getGuestEmail()             { return guestEmail; }
+    public void           setGuestEmail(String v)     { this.guestEmail = v; }
 
-    public User getReceptionist() {
-        return receptionist;
-    }
+    public String         getGuestPhone()             { return guestPhone; }
+    public void           setGuestPhone(String v)     { this.guestPhone = v; }
 
-    public void setReceptionist(User v) {
-        this.receptionist = v;
-    }
+    public String         getGuestIdNumber()          { return guestIdNumber; }
+    public void           setGuestIdNumber(String v)  { this.guestIdNumber = v; }
 
-    public String getGuestName() {
-        return guestName;
-    }
+    public String         getGuestNationality()       { return guestNationality; }
+    public void           setGuestNationality(String v){ this.guestNationality = v; }
 
-    public void setGuestName(String v) {
-        this.guestName = v;
-    }
+    public String         getGuestAddress()           { return guestAddress; }
+    public void           setGuestAddress(String v)   { this.guestAddress = v; }
 
-    public String getGuestEmail() {
-        return guestEmail;
-    }
+    public Integer        getGuestCount()             { return guestCount; }
+    public void           setGuestCount(Integer v)    { this.guestCount = v; }
 
-    public void setGuestEmail(String v) {
-        this.guestEmail = v;
-    }
+    public String         getSpecialRequest()         { return specialRequest; }
+    public void           setSpecialRequest(String v) { this.specialRequest = v; }
 
-    public String getGuestPhone() {
-        return guestPhone;
-    }
+    public Boolean        getEarlyCheckin()           { return earlyCheckin; }
+    public void           setEarlyCheckin(Boolean v)  { this.earlyCheckin = v; }
 
-    public void setGuestPhone(String v) {
-        this.guestPhone = v;
-    }
+    public Boolean        getLateCheckout()           { return lateCheckout; }
+    public void           setLateCheckout(Boolean v)  { this.lateCheckout = v; }
 
-    public String getGuestIdNumber() {
-        return guestIdNumber;
-    }
+    public LocalDateTime  getCheckinTime()            { return checkinTime; }
+    public void           setCheckinTime(LocalDateTime v){ this.checkinTime = v; }
 
-    public void setGuestIdNumber(String v) {
-        this.guestIdNumber = v;
-    }
+    public LocalDateTime  getCheckoutTime()           { return checkoutTime; }
+    public void           setCheckoutTime(LocalDateTime v){ this.checkoutTime = v; }
 
-    public String getGuestNationality() {
-        return guestNationality;
-    }
+    public Status         getStatus()                 { return status; }
+    public void           setStatus(Status v)         { this.status = v; }
 
-    public void setGuestNationality(String v) {
-        this.guestNationality = v;
-    }
+    public Double         getTotalPrice()             { return totalPrice; }
+    public void           setTotalPrice(Double v)     { this.totalPrice = v; }
 
-    public String getGuestAddress() {
-        return guestAddress;
-    }
+    public LocalDateTime  getCreatedAt()              { return createdAt; }
+    public void           setCreatedAt(LocalDateTime v){ this.createdAt = v; }
 
-    public void setGuestAddress(String v) {
-        this.guestAddress = v;
-    }
-
-    public Integer getGuestCount() {
-        return guestCount;
-    }
-
-    public void setGuestCount(Integer v) {
-        this.guestCount = v;
-    }
-
-    public String getSpecialRequest() {
-        return specialRequest;
-    }
-
-    public void setSpecialRequest(String v) {
-        this.specialRequest = v;
-    }
-
-    public Boolean getEarlyCheckin() {
-        return earlyCheckin;
-    }
-
-    public void setEarlyCheckin(Boolean v) {
-        this.earlyCheckin = v;
-    }
-
-    public Boolean getLateCheckout() {
-        return lateCheckout;
-    }
-
-    public void setLateCheckout(Boolean v) {
-        this.lateCheckout = v;
-    }
-
-    public LocalDateTime getCheckinTime() {
-        return checkinTime;
-    }
-
-    public void setCheckinTime(LocalDateTime v) {
-        this.checkinTime = v;
-    }
-
-    public LocalDateTime getCheckoutTime() {
-        return checkoutTime;
-    }
-
-    public void setCheckoutTime(LocalDateTime v) {
-        this.checkoutTime = v;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status v) {
-        this.status = v;
-    }
-
-    public Double getTotalPrice() {
-        return totalPrice;
-    }
-
-    public void setTotalPrice(Double v) {
-        this.totalPrice = v;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime v) {
-        this.createdAt = v;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime v) {
-        this.updatedAt = v;
-    }
+    public LocalDateTime  getUpdatedAt()              { return updatedAt; }
+    public void           setUpdatedAt(LocalDateTime v){ this.updatedAt = v; }
 }

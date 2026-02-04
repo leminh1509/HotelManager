@@ -213,7 +213,7 @@ export default function RoomDetail() {
             <div className="rd-section">
               <h3>Tiện nghi</h3>
               <div className="rd-amenities">
-                {room.amenities.map((a) => (
+                {room.amenities?.map((a) => (
                   <div key={a} className="rd-amenity">
                     <span>{AMENITY_ICONS[a] || "✓"}</span>
                     <span>{a}</span>
