@@ -46,14 +46,6 @@ const Payment = ({ user, role, onLogout }) => {
     setIsProcessing(true);
     setError('');
 
-    // Simulate Redirect delay for MoMo (VNPay is now QR based)
-    if (paymentMethod === 'momo') {
-      setRedirecting(true);
-      await new Promise(r => setTimeout(r, 2000));
-      setRedirecting(false);
-    }
-    // VNPay also mocks a "processing" delay if confirmed
-
     try {
       const response = await fetch('http://localhost:9999/api/payments', {
         method: 'POST',
@@ -65,8 +57,8 @@ const Payment = ({ user, role, onLogout }) => {
           invoiceId: displayId,
           amount: parseFloat(displayAmount),
           method: mapMethodToBackend(paymentMethod),
-          bankName: ['transfer', 'vnpay'].includes(paymentMethod) ? bankInfo.bankId : null,
-          bankAccount: ['transfer', 'vnpay'].includes(paymentMethod) ? bankInfo.accountNumber : null,
+          bankName: ['transfer'].includes(paymentMethod) ? bankInfo.bankId : null,
+          bankAccount: ['transfer'].includes(paymentMethod) ? bankInfo.accountNumber : null,
         }),
       });
 
@@ -81,6 +73,63 @@ const Payment = ({ user, role, onLogout }) => {
   };
 
   const formatPrice = (n) => new Intl.NumberFormat("vi-VN").format(n);
+
+  const getQrTitle = () => {
+    if (paymentMethod === 'vnpay') return 'Quét mã VNPay để thanh toán';
+    if (paymentMethod === 'momo') return 'Quét mã MoMo để thanh toán';
+    return 'Quét mã ngân hàng để thanh toán';
+  };
+
+  const getQrContent = () => {
+    if (paymentMethod === 'vnpay') return `VNPAY ${displayId}`;
+    if (paymentMethod === 'momo') return `MOMO ${displayId}`;
+    return `INV ${displayId}`;
+  };
+
+  const getQrNote = () => {
+    if (paymentMethod === 'vnpay') return 'Mở ứng dụng Ví VNPAY hoặc App Ngân hàng';
+    if (paymentMethod === 'momo') return 'Mở ứng dụng MoMo';
+    return 'Mở App Ngân hàng';
+  };
+
+  // Helper to render QR
+  const renderQrCode = () => {
+    // 1. Bank Transfer -> Use VietQR (renders Bank template + Logo)
+    if (paymentMethod === 'transfer') {
+      const qrUrl = `https://img.vietqr.io/image/${bankInfo.bankId}-${bankInfo.accountNumber}-${bankInfo.template}.png?amount=${displayAmount}&addInfo=${getQrContent()}&accountName=${encodeURIComponent(bankInfo.accountName)}`;
+      return <img src={qrUrl} alt="Bank QR" style={{ width: '200px', height: 'auto' }} />;
+    }
+
+    // 2. VNPay / MoMo -> Use Generic QR to avoid VCB branding
+    // Use quickchart or api.qrserver
+    const qrData = encodeURIComponent(`AMOUNT:${displayAmount}|MSG:${getQrContent()}`);
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}`;
+
+    // We can overlay a logo if we want to be fancy, but simple is better to fix the bug
+    return (
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        <img src={qrUrl} alt={`${paymentMethod} QR`} style={{ width: '200px', height: '200px' }} />
+        {/* Optional central logo overlay */}
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: '#fff',
+          padding: 4,
+          borderRadius: 4
+        }}>
+          <img
+            src={paymentMethod === 'momo'
+              ? "https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png"
+              : "https://vinadesign.vn/uploads/images/2023/05/vnpay-logo-vinadesign-25-12-57-55.jpg"}
+            alt="Logo"
+            style={{ width: 30, height: 30, objectFit: 'contain', display: 'block' }}
+          />
+        </div>
+      </div>
+    );
+  };
 
   if (paymentSuccess) {
     return (
@@ -152,31 +201,24 @@ const Payment = ({ user, role, onLogout }) => {
               </div>
             </div>
 
-            {/* QR Section for Transfer OR VNPay */}
-            {['transfer', 'vnpay'].includes(paymentMethod) && (
+            {/* QR Section (Shared for Transfer, VNPay, MoMo) */}
+            {['transfer', 'vnpay', 'momo'].includes(paymentMethod) && (
               <div style={{ marginTop: 30, textAlign: 'center', background: '#f9f9f9', padding: 20, borderRadius: 8, border: '1px dashed #ccc' }}>
                 <h4 style={{ marginBottom: 15, color: '#333' }}>
-                  {paymentMethod === 'vnpay' ? 'Quét mã VNPay để thanh toán' : 'Quét mã ngân hàng để thanh toán'}
+                  {getQrTitle()}
                 </h4>
 
                 <div className="qr-box" style={{ background: '#fff', padding: 10, display: 'inline-block', borderRadius: 8, boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
-                  {/* Mock VNPay QR by using VietQR with different params to generate unique look */}
-                  <img
-                    src={`https://img.vietqr.io/image/${bankInfo.bankId}-${bankInfo.accountNumber}-${bankInfo.template}.png?amount=${displayAmount}&addInfo=${paymentMethod === 'vnpay' ? 'VNPAY' : 'INV'}${displayId}&accountName=${encodeURIComponent(bankInfo.accountName)}`}
-                    alt="QR Code"
-                    style={{ width: '200px', height: 'auto', display: 'block' }}
-                  />
+                  {renderQrCode()}
                 </div>
 
                 <div style={{ marginTop: 15 }}>
                   <p style={{ margin: '5px 0' }}>Tổng tiền: <strong style={{ color: '#008000', fontSize: 18 }}>{formatPrice(displayAmount)} đ</strong></p>
-                  <p style={{ margin: '5px 0', fontSize: 14 }}>Nội dung chuyển khoản: <strong style={{ background: '#eee', padding: '2px 6px', borderRadius: 4 }}>{paymentMethod === 'vnpay' ? `VNPAY ${displayId}` : `INV ${displayId}`}</strong></p>
+                  <p style={{ margin: '5px 0', fontSize: 14 }}>Nội dung: <strong style={{ background: '#eee', padding: '2px 6px', borderRadius: 4 }}>{getQrContent()}</strong></p>
 
-                  {paymentMethod === 'vnpay' && (
-                    <p style={{ fontSize: 13, color: '#666', marginTop: 10, fontStyle: 'italic' }}>
-                      Mở ứng dụng <strong>Ví VNPAY</strong> hoặc <strong>App Ngân hàng</strong> để quét mã.
-                    </p>
-                  )}
+                  <p style={{ fontSize: 13, color: '#666', marginTop: 10, fontStyle: 'italic' }}>
+                    {getQrNote()} để quét mã.
+                  </p>
                 </div>
               </div>
             )}
@@ -218,7 +260,7 @@ const Payment = ({ user, role, onLogout }) => {
                 ? `Đang chuyển hướng...`
                 : (isProcessing
                   ? 'Đang xử lý...'
-                  : (['vnpay', 'transfer'].includes(paymentMethod) ? 'Xác nhận đã thanh toán' : 'Tiếp tục thanh toán')
+                  : (['vnpay', 'momo', 'transfer'].includes(paymentMethod) ? 'Xác nhận đã thanh toán' : 'Tiếp tục thanh toán')
                 )
               }
             </button>
