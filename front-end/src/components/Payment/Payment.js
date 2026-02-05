@@ -46,12 +46,13 @@ const Payment = ({ user, role, onLogout }) => {
     setIsProcessing(true);
     setError('');
 
-    // Simulate Redirect
-    if (['vnpay', 'momo'].includes(paymentMethod)) {
+    // Simulate Redirect delay for MoMo (VNPay is now QR based)
+    if (paymentMethod === 'momo') {
       setRedirecting(true);
       await new Promise(r => setTimeout(r, 2000));
       setRedirecting(false);
     }
+    // VNPay also mocks a "processing" delay if confirmed
 
     try {
       const response = await fetch('http://localhost:9999/api/payments', {
@@ -64,8 +65,8 @@ const Payment = ({ user, role, onLogout }) => {
           invoiceId: displayId,
           amount: parseFloat(displayAmount),
           method: mapMethodToBackend(paymentMethod),
-          bankName: paymentMethod === 'transfer' ? bankInfo.bankId : null,
-          bankAccount: paymentMethod === 'transfer' ? bankInfo.accountNumber : null,
+          bankName: ['transfer', 'vnpay'].includes(paymentMethod) ? bankInfo.bankId : null,
+          bankAccount: ['transfer', 'vnpay'].includes(paymentMethod) ? bankInfo.accountNumber : null,
         }),
       });
 
@@ -151,18 +152,32 @@ const Payment = ({ user, role, onLogout }) => {
               </div>
             </div>
 
-            {/* Transfer QR Section */}
-            {paymentMethod === 'transfer' && (
-              <div style={{ marginTop: 30, textAlign: 'center', background: '#f9f9f9', padding: 20, borderRadius: 8 }}>
-                <h4>Quét mã để thanh toán</h4>
-                <img
-                  src={`https://img.vietqr.io/image/${bankInfo.bankId}-${bankInfo.accountNumber}-${bankInfo.template}.png?amount=${displayAmount}&addInfo=INV${displayId}&accountName=${encodeURIComponent(bankInfo.accountName)}`}
-                  alt="VietQR"
-                  style={{ maxWidth: '200px', borderRadius: '8px', border: '1px solid #ddd', margin: '15px 0' }}
-                />
-                <p>Ngân hàng: <strong>{bankInfo.bankId}</strong></p>
-                <p>STK: <strong>{bankInfo.accountNumber}</strong></p>
-                <p>Chủ TK: <strong>{bankInfo.accountName}</strong></p>
+            {/* QR Section for Transfer OR VNPay */}
+            {['transfer', 'vnpay'].includes(paymentMethod) && (
+              <div style={{ marginTop: 30, textAlign: 'center', background: '#f9f9f9', padding: 20, borderRadius: 8, border: '1px dashed #ccc' }}>
+                <h4 style={{ marginBottom: 15, color: '#333' }}>
+                  {paymentMethod === 'vnpay' ? 'Quét mã VNPay để thanh toán' : 'Quét mã ngân hàng để thanh toán'}
+                </h4>
+
+                <div className="qr-box" style={{ background: '#fff', padding: 10, display: 'inline-block', borderRadius: 8, boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+                  {/* Mock VNPay QR by using VietQR with different params to generate unique look */}
+                  <img
+                    src={`https://img.vietqr.io/image/${bankInfo.bankId}-${bankInfo.accountNumber}-${bankInfo.template}.png?amount=${displayAmount}&addInfo=${paymentMethod === 'vnpay' ? 'VNPAY' : 'INV'}${displayId}&accountName=${encodeURIComponent(bankInfo.accountName)}`}
+                    alt="QR Code"
+                    style={{ width: '200px', height: 'auto', display: 'block' }}
+                  />
+                </div>
+
+                <div style={{ marginTop: 15 }}>
+                  <p style={{ margin: '5px 0' }}>Tổng tiền: <strong style={{ color: '#008000', fontSize: 18 }}>{formatPrice(displayAmount)} đ</strong></p>
+                  <p style={{ margin: '5px 0', fontSize: 14 }}>Nội dung chuyển khoản: <strong style={{ background: '#eee', padding: '2px 6px', borderRadius: 4 }}>{paymentMethod === 'vnpay' ? `VNPAY ${displayId}` : `INV ${displayId}`}</strong></p>
+
+                  {paymentMethod === 'vnpay' && (
+                    <p style={{ fontSize: 13, color: '#666', marginTop: 10, fontStyle: 'italic' }}>
+                      Mở ứng dụng <strong>Ví VNPAY</strong> hoặc <strong>App Ngân hàng</strong> để quét mã.
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 
@@ -199,7 +214,13 @@ const Payment = ({ user, role, onLogout }) => {
               onClick={handlePayment}
               disabled={isProcessing || redirecting}
             >
-              {redirecting ? `Đang chuyển hướng...` : (isProcessing ? 'Đang xử lý...' : 'Tiếp tục thanh toán')}
+              {redirecting
+                ? `Đang chuyển hướng...`
+                : (isProcessing
+                  ? 'Đang xử lý...'
+                  : (['vnpay', 'transfer'].includes(paymentMethod) ? 'Xác nhận đã thanh toán' : 'Tiếp tục thanh toán')
+                )
+              }
             </button>
 
             <span className="cancel-link" onClick={() => navigate(-1)}>Hủy thanh toán</span>
