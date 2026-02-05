@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Header from '../Header/Header';
+import MaintenanceHeader from '../Header/MaintenanceHeader';
 import Footer from '../Footer/Footer';
 import './MaintenanceDashboard.css';
 import { getAllRooms } from '../../services/roomAPI'; // Assuming this exists or I'll use fetch
@@ -138,7 +138,7 @@ const MaintenanceDashboard = () => {
 
     return (
         <div className="maintenance-layout">
-            <Header user={user} role={user.role} onLogout={handleLogout} />
+            <MaintenanceHeader user={user} onLogout={handleLogout} />
 
             <div className="maintenance-container">
                 <div className="maintenance-header">

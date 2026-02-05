@@ -1,0 +1,79 @@
+/* src/components/Header/MaintenanceHeader.css */
+.maintenance-header-wrapper {
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.mh-top-bar {
+    background-color: #1a1a1a;
+    color: #fff;
+    padding: 10px 0;
+}
+
+.mh-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mh-logo-text {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mh-user-actions {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    font-size: 14px;
+}
+
+.mh-logout-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.mh-logout-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #fff;
+}
+
+.mh-nav-bar {
+    border-bottom: 1px solid #eee;
+}
+
+.mh-nav {
+    display: flex;
+    gap: 30px;
+}
+
+.mh-nav a {
+    text-decoration: none;
+    color: #555;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 15px 0;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s;
+}
+
+.mh-nav a:hover,
+.mh-nav a.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+}
