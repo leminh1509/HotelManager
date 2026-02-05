@@ -228,20 +228,37 @@ const Payment = ({ user, role, onLogout }) => {
           {/* RIGHT COLUMN: Order Summary */}
           <div className="payment-right">
             <h3 className="summary-title">Tóm tắt đơn hàng</h3>
-            <div className="summary-row">
-              <span>Mã đặt phòng</span>
-              <strong>{displayId}</strong>
+
+            <div className="summary-section" style={{ marginBottom: 20, borderBottom: '1px solid #eee', paddingBottom: 15 }}>
+              <div style={{ fontWeight: 600, marginBottom: 5, color: '#333' }}>Thông tin phòng</div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
+                {room?.imgUrl && <img src={room.imgUrl} alt="" style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }} />}
+                <div>
+                  <div style={{ fontWeight: 600, color: '#007bff' }}>{displayRoomName}</div>
+                  <div style={{ fontSize: 13, color: '#555' }}>{displayNights} đêm</div>
+                </div>
+              </div>
+              {bookingData?.checkinDate && (
+                <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+                  <div>Check-in: <strong>{bookingData.checkinDate}</strong></div>
+                  <div>Check-out: <strong>{bookingData.checkoutDate}</strong></div>
+                </div>
+              )}
+            </div>
+
+            <div className="summary-section" style={{ marginBottom: 20, borderBottom: '1px solid #eee', paddingBottom: 15 }}>
+              <div style={{ fontWeight: 600, marginBottom: 5, color: '#333' }}>Thông tin khách hàng</div>
+              <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+                <div>Họ tên: <strong>{bookingData?.guestName || 'Khách'}</strong></div>
+                {bookingData?.guestPhone && <div>SĐT: {bookingData.guestPhone}</div>}
+                {bookingData?.guestEmail && <div>Email: {bookingData.guestEmail}</div>}
+                <div>Số khách: {bookingData?.guestCount || 1} người</div>
+              </div>
             </div>
 
             <div className="summary-row">
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                {room?.imgUrl && <img src={room.imgUrl} alt="" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4 }} />}
-                <div>
-                  <div style={{ fontWeight: 600, color: '#333' }}>{displayRoomName}</div>
-                  <div style={{ fontSize: 12, color: '#777' }}>x {displayNights} đêm</div>
-                </div>
-              </div>
-              <span>{formatPrice(displayAmount)} đ</span>
+              <span>Mã đặt phòng</span>
+              <strong>{displayId}</strong>
             </div>
 
             <div className="summary-total">
