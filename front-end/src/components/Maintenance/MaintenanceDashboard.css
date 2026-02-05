@@ -12,6 +12,9 @@
 
 .maintenance-header {
     margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .maintenance-header h1 {
@@ -23,6 +26,23 @@
 .maintenance-header p {
     color: #666;
     font-size: 16px;
+    margin: 0;
+}
+
+.create-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: background 0.2s;
+}
+
+.create-btn:hover {
+    background-color: #0056b3;
 }
 
 /* Stats Cards */
@@ -112,21 +132,6 @@
     margin: 0;
 }
 
-.view-all-btn {
-    background: none;
-    border: 1px solid #ddd;
-    padding: 8px 16px;
-    border-radius: 6px;
-    color: #666;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.view-all-btn:hover {
-    background: #f5f5f5;
-    color: #333;
-}
-
 .table-responsive {
     overflow-x: auto;
 }
@@ -155,19 +160,20 @@
     border-bottom: none;
 }
 
-.task-title {
-    font-weight: 600;
+.task-desc {
+    font-size: 14px;
     color: #333;
     margin-bottom: 4px;
 }
 
-.task-desc {
-    font-size: 13px;
-    color: #888;
-    max-width: 250px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.task-note {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+    background: #f9f9f9;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
 }
 
 /* Status Badges */
@@ -176,16 +182,17 @@
     border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
+    text-transform: capitalize;
 }
 
-.status-new {
-    background-color: #e3f2fd;
-    color: #1976d2;
+.status-pending {
+    background-color: #fff3e0;
+    color: #f57c00;
 }
 
 .status-progress {
-    background-color: #fff3e0;
-    color: #f57c00;
+    background-color: #e3f2fd;
+    color: #1976d2;
 }
 
 .status-completed {
@@ -193,21 +200,126 @@
     color: #388e3c;
 }
 
-.status-pending {
-    background-color: #f3e5f5;
-    color: #7b1fa2;
+.status-cancelled {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.type-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.type-badge.maintenance {
+    background: #e0f2f1;
+    color: #00695c;
+}
+
+.type-badge.cleaning {
+    background: #fce4ec;
+    color: #880e4f;
 }
 
 .action-btn {
     padding: 6px 12px;
-    background-color: #1a1a1a;
-    color: white;
-    border: none;
+    background-color: #fff;
+    color: #333;
+    border: 1px solid #ddd;
     border-radius: 6px;
     cursor: pointer;
     font-size: 13px;
+    transition: all 0.2s;
 }
 
 .action-btn:hover {
-    background-color: #333;
+    background-color: #f5f5f5;
+    border-color: #ccc;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.modal-content h2 {
+    margin: 0 0 20px;
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #555;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.modal-actions button {
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    border: none;
+}
+
+.modal-actions button[type="button"] {
+    /* Cancel */
+    background: #f5f5f5;
+    color: #333;
+}
+
+.primary-btn {
+    background: #007bff;
+    color: white;
+}
+
+.primary-btn:hover {
+    background: #0056b3;
 }
