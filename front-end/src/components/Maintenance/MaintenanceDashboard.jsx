@@ -18,6 +18,16 @@ const MaintenanceDashboard = () => {
     const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
 
+    // Search & Filter State
+    const [filters, setFilters] = useState({
+        search: '',
+        status: '',
+        type: '',
+        page: 0,
+        size: 10
+    });
+    const [totalPages, setTotalPages] = useState(0);
+
     // New Request Form State
     const [newRequest, setNewRequest] = useState({
         roomId: '',
@@ -36,21 +46,56 @@ const MaintenanceDashboard = () => {
 
     useEffect(() => {
         fetchRequests();
+    }, [filters]); // Re-fetch when filters change (including page)
+
+    useEffect(() => {
         fetchRooms();
     }, []);
 
     const fetchRequests = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get(API_URL, {
-                headers: { Authorization: `Bearer ${token}` }
+            // If using Search API
+            const params = {
+                page: filters.page,
+                size: filters.size,
+                search: filters.search || undefined,
+                status: filters.status || undefined,
+                type: filters.type || undefined
+            };
+
+            const res = await axios.get(`${API_URL}/search`, {
+                headers: { Authorization: `Bearer ${token}` },
+                params
             });
-            setRequests(res.data);
-            calculateStats(res.data);
+
+            // Backend returns Page<ServiceRequest>
+            setRequests(res.data.content);
+            setTotalPages(res.data.totalPages);
+
+            // For stats, we might need a separate call or just mock it based on current View 
+            // Better: separate endpoint for stats. For now, let's keep stats static or simple logic?
+            // Since getAllRequests was simple, let's do a quick separate fetch for full stats if feasible, 
+            // or just rely on backend to provide stats endpoint later. 
+            // To prevent breaking stats, let's fetch ALL for stats calculation once.
+            fetchAllForStats(token);
+
         } catch (error) {
             console.error("Error fetching requests", error);
         }
     };
+
+    const fetchAllForStats = async (token) => {
+        try {
+            // Optional: If backend supports simple stats endpoint, use that. 
+            // Currently fallback to fetching all for correct counts (Performance warning with large data)
+            // Temporarily fetch all just to calculate stats numbers
+            const res = await axios.get(API_URL, { headers: { Authorization: `Bearer ${token}` } });
+            calculateStats(res.data);
+        } catch (e) {
+            console.error("Stats fetch error", e);
+        }
+    }
 
     const fetchRooms = async () => {
         try {
@@ -70,6 +115,21 @@ const MaintenanceDashboard = () => {
             completed: data.filter(r => r.status === 'COMPLETED').length
         };
         setStats(s);
+    };
+
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({
+            ...prev,
+            [name]: value,
+            page: 0 // Reset to page 0 on filter change
+        }));
+    };
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 0 && newPage < totalPages) {
+            setFilters(prev => ({ ...prev, page: newPage }));
+        }
     };
 
     const handleCreateSubmit = async (e) => {
@@ -153,28 +213,28 @@ const MaintenanceDashboard = () => {
 
                 {/* Stats Row */}
                 <div className="stats-row">
-                    <div className="stat-card total">
+                    <div className="stat-card total" onClick={() => setFilters({ ...filters, status: '', page: 0 })}>
                         <div className="stat-icon">Testing</div>
                         <div className="stat-info">
                             <h3>{stats.total}</h3>
                             <span>Total Tasks</span>
                         </div>
                     </div>
-                    <div className="stat-card pending">
+                    <div className="stat-card pending" onClick={() => setFilters({ ...filters, status: 'PENDING', page: 0 })}>
                         <div className="stat-icon">⏳</div>
                         <div className="stat-info">
                             <h3>{stats.pending}</h3>
                             <span>Pending</span>
                         </div>
                     </div>
-                    <div className="stat-card progress">
+                    <div className="stat-card progress" onClick={() => setFilters({ ...filters, status: 'IN_PROGRESS', page: 0 })}>
                         <div className="stat-icon">⚙️</div>
                         <div className="stat-info">
                             <h3>{stats.inProgress}</h3>
                             <span>In Progress</span>
                         </div>
                     </div>
-                    <div className="stat-card completed">
+                    <div className="stat-card completed" onClick={() => setFilters({ ...filters, status: 'COMPLETED', page: 0 })}>
                         <div className="stat-icon">✅</div>
                         <div className="stat-info">
                             <h3>{stats.completed}</h3>
@@ -183,10 +243,33 @@ const MaintenanceDashboard = () => {
                     </div>
                 </div>
 
-                {/* Tasks Table */}
+                {/* Tasks Section */}
                 <div className="tasks-section">
-                    <div className="section-header">
+                    <div className="section-header-row">
                         <h2>Request List</h2>
+
+                        <div className="filter-bar">
+                            <input
+                                type="text"
+                                name="search"
+                                placeholder="Search desc or room..."
+                                value={filters.search}
+                                onChange={handleFilterChange}
+                                className="filter-input"
+                            />
+                            <select name="type" value={filters.type} onChange={handleFilterChange} className="filter-select">
+                                <option value="">All Types</option>
+                                <option value="MAINTENANCE">Maintenance</option>
+                                <option value="CLEANING">Cleaning</option>
+                            </select>
+                            <select name="status" value={filters.status} onChange={handleFilterChange} className="filter-select">
+                                <option value="">All Status</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="COMPLETED">Completed</option>
+                                <option value="CANCELLED">Cancelled</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div className="table-responsive">
@@ -205,14 +288,14 @@ const MaintenanceDashboard = () => {
                             </thead>
                             <tbody>
                                 {requests.length === 0 ? (
-                                    <tr><td colSpan="8" style={{ textAlign: 'center' }}>No requests found.</td></tr>
+                                    <tr><td colSpan="8" style={{ textAlign: 'center', padding: '30px' }}>No requests found.</td></tr>
                                 ) : requests.map(req => (
                                     <tr key={req.id}>
                                         <td>#{req.id}</td>
                                         <td>
                                             <span className={`type-badge ${req.type?.toLowerCase()}`}>{req.type}</span>
                                         </td>
-                                        <td>{req.room ? req.room.name : 'General'}</td>
+                                        <td>{req.room ? req.room.roomNumber : 'General'}</td>
                                         <td>
                                             <div className="task-desc">{req.description}</div>
                                             {req.resolutionNotes && <div className="task-note">Note: {req.resolutionNotes}</div>}
@@ -231,6 +314,23 @@ const MaintenanceDashboard = () => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Pagination */}
+                    <div className="pagination">
+                        <button
+                            disabled={filters.page === 0}
+                            onClick={() => handlePageChange(filters.page - 1)}
+                        >
+                            &laquo; Prev
+                        </button>
+                        <span>Page {filters.page + 1} of {totalPages || 1}</span>
+                        <button
+                            disabled={filters.page >= totalPages - 1}
+                            onClick={() => handlePageChange(filters.page + 1)}
+                        >
+                            Next &raquo;
+                        </button>
                     </div>
                 </div>
             </div>

@@ -8,11 +8,26 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 @Repository
 public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, Long> {
     List<ServiceRequest> findByStatus(ServiceRequestStatus status);
 
     List<ServiceRequest> findByType(ServiceRequestType type);
 
-    List<ServiceRequest> findByRoom_RoomId(Long roomId); // Assuming Room has roomId
+    List<ServiceRequest> findByRoom_RoomId(Integer roomId); // Updated generic ID to Integer if needed, or derived query
+                                                            // works
+
+    @Query("SELECT r FROM ServiceRequest r WHERE " +
+            "(:status IS NULL OR r.status = :status) AND " +
+            "(:type IS NULL OR r.type = :type) AND " +
+            "(:search IS NULL OR LOWER(r.description) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(r.room.roomNumber) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<ServiceRequest> searchRequests(@Param("status") ServiceRequestStatus status,
+            @Param("type") ServiceRequestType type,
+            @Param("search") String search,
+            Pageable pageable);
 }

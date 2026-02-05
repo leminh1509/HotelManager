@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @Service
 public class ServiceRequestService {
 
@@ -24,8 +27,9 @@ public class ServiceRequestService {
         return repository.findAll();
     }
 
-    public List<ServiceRequest> getRequestsByStatus(ServiceRequestStatus status) {
-        return repository.findByStatus(status);
+    public Page<ServiceRequest> searchRequests(ServiceRequestStatus status, ServiceRequestType type, String search,
+            Pageable pageable) {
+        return repository.searchRequests(status, type, search, pageable);
     }
 
     public ServiceRequest createRequest(Integer roomId, String description, ServiceRequestType type, String priority) {
