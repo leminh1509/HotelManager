@@ -90,7 +90,7 @@ export default function App() {
       <Route path="/home" element={<Home user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
 
       {/*List room */}
-      <Route path="/rooms" element={<RoomList1/>} />
+      <Route path="/rooms" element={<RoomList1 />} />
 
       {/* login/register phải truyền callback */}
       <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
@@ -99,8 +99,8 @@ export default function App() {
 
       {/* ===== BOOKING ===== */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/payment" element={<Payment />} />
-        <Route path="/payment/vnpay-return" element={<PaymentResult />} />
+        <Route path="/payment" element={<Payment user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
+        <Route path="/payment/vnpay-return" element={<PaymentResult user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
 
         {/* ===== BOOKING ===== */}
 

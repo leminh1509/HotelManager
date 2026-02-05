@@ -1,31 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import Header from "../Header/Header";
+import Footer from "../Footer/Footer";
 import './Payment.css';
 
-const Payment = () => {
+const Payment = ({ user, role, onLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get data passed from BookingConfirmation or fallback
-  const { bookingId: passedBookingId, totalAmount: passedTotalAmount } = location.state || {};
+  // 1. Get data passed from BookingForm
+  const { bookingId, totalAmount, room, bookingData, nights } = location.state || {};
 
-  // State
-  const [paymentMethod, setPaymentMethod] = useState('cash'); // cash, transfer, gateway
-  const [amountTendered, setAmountTendered] = useState('');
+  // 2. State
+  const [paymentMethod, setPaymentMethod] = useState('cash'); // cash, transfer, vnpay, momo
   const [isProcessing, setIsProcessing] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  // Defaults (in a real app, you might fetch booking details if state is missing)
-  const invoiceId = passedBookingId || 1;
-  const totalAmount = passedTotalAmount || 1250.00;
+  // Fallbacks
+  const displayId = bookingId || 'BK-TEST';
+  const displayAmount = totalAmount || 0;
+  const displayRoomName = room?.name || 'Phòng mẫu';
+  const displayNights = nights || 1;
 
-  // Bank Transfer Details
+  // Bank Info for Transfer
   const bankInfo = {
-    bankId: 'VCB', // Vietcombank ID for VietQR
+    bankId: 'VCB',
     accountNumber: '123456789000',
     accountName: 'HOTEL 36',
-    template: 'qr_only' // or 'compact'
+    template: 'qr_only'
   };
 
   const mapMethodToBackend = (method) => {
@@ -33,50 +37,14 @@ const Payment = () => {
       case 'cash': return 'Cash';
       case 'transfer': return 'BankTransfer';
       case 'vnpay': return 'VNPay';
+      case 'momo': return 'MoMo';
       default: return 'Cash';
     }
   };
 
-  const handlePayment = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (!isFormValid()) {
-      return;
-    }
-
+  const handlePayment = async () => {
     setIsProcessing(true);
-
-    // VNPay Specific Flow
-    if (paymentMethod === 'vnpay') {
-      try {
-        const response = await fetch(`http://localhost:9999/api/payments/vnpay-payment?amount=${amountTendered}&orderInfo=Payment_for_invoice_${invoiceId}`, {
-          method: 'GET',
-        });
-        if (!response.ok) throw new Error('Failed to generate VNPay URL');
-        const data = await response.text();
-        // NOTE: Controller returns just the string in ResponseEntity body? 
-        // let's check controller. returns ResponseEntity.ok(paymentUrl).
-
-        // If the controller returns raw string, data is the url.
-        // If it sends JSON, we need to parse.
-        // My controller sent: ResponseEntity.ok(paymentUrl); -> Text plain usually if just query string.
-        // Actually, Spring Boot often returns JSON string if just returning String? 
-        // Wait, usually it returns plain text unless wrapped in object. 
-        // My controller: return ResponseEntity.ok(paymentUrl);
-        // Let's assume plain text url.
-
-        window.location.href = data;
-      } catch (err) {
-        console.error(err);
-        setError('Could not redirect to VNPay.');
-        setIsProcessing(false);
-      }
-      return;
-    }
-
-    // Normal Flow (Cash/Transfer)
-    const backendMethod = mapMethodToBackend(paymentMethod);
+    setError('');
 
     try {
       const response = await fetch('http://localhost:9999/api/payments', {
@@ -86,201 +54,240 @@ const Payment = () => {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          invoiceId: invoiceId,
-          amount: parseFloat(amountTendered),
-          method: backendMethod,
-          bankName: backendMethod === 'BankTransfer' ? bankInfo.bankName : null,
-          bankAccount: backendMethod === 'BankTransfer' ? bankInfo.accountNumber : null,
+          invoiceId: displayId,
+          amount: parseFloat(displayAmount),
+          method: mapMethodToBackend(paymentMethod),
+          bankName: ['transfer'].includes(paymentMethod) ? bankInfo.bankId : null,
+          bankAccount: ['transfer'].includes(paymentMethod) ? bankInfo.accountNumber : null,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Payment failed. Please try again.');
-      }
-
+      if (!response.ok) throw new Error('Thanh toán thất bại.');
       setPaymentSuccess(true);
     } catch (err) {
       console.error(err);
-      setError(err.message || 'Payment failed. Please check your connection.');
+      setError('Thanh toán thất bại. Vui lòng thử lại.');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleAmountChange = (e) => {
-    setAmountTendered(e.target.value);
-    if (error) setError('');
+  const formatPrice = (n) => new Intl.NumberFormat("vi-VN").format(n);
+
+  const getQrTitle = () => {
+    if (paymentMethod === 'vnpay') return 'Quét mã VNPay để thanh toán';
+    if (paymentMethod === 'momo') return 'Quét mã MoMo để thanh toán';
+    return 'Quét mã ngân hàng để thanh toán';
   };
 
-  const isFormValid = () => {
-    if (!amountTendered) return false;
-    const amount = parseFloat(amountTendered);
-    return amount >= totalAmount;
-  }
+  const getQrContent = () => {
+    if (paymentMethod === 'vnpay') return `VNPAY ${displayId}`;
+    if (paymentMethod === 'momo') return `MOMO ${displayId}`;
+    return `INV ${displayId}`;
+  };
 
-  // Success View
+  const getQrNote = () => {
+    if (paymentMethod === 'vnpay') return 'Mở ứng dụng Ví VNPAY hoặc App Ngân hàng';
+    if (paymentMethod === 'momo') return 'Mở ứng dụng MoMo';
+    return 'Mở App Ngân hàng';
+  };
+
+  // Helper to render QR
+  const renderQrCode = () => {
+    // 1. Bank Transfer -> Use VietQR (renders Bank template + Logo)
+    if (paymentMethod === 'transfer') {
+      const qrUrl = `https://img.vietqr.io/image/${bankInfo.bankId}-${bankInfo.accountNumber}-${bankInfo.template}.png?amount=${displayAmount}&addInfo=${getQrContent()}&accountName=${encodeURIComponent(bankInfo.accountName)}`;
+      return <img src={qrUrl} alt="Bank QR" style={{ width: '200px', height: 'auto' }} />;
+    }
+
+    // 2. VNPay / MoMo -> Use Generic QR to avoid VCB branding
+    // Use quickchart or api.qrserver
+    const qrData = encodeURIComponent(`AMOUNT:${displayAmount}|MSG:${getQrContent()}`);
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}`;
+
+    // We can overlay a logo if we want to be fancy, but simple is better to fix the bug
+    return (
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        <img src={qrUrl} alt={`${paymentMethod} QR`} style={{ width: '200px', height: '200px' }} />
+        {/* Optional central logo overlay */}
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: '#fff',
+          padding: 4,
+          borderRadius: 4
+        }}>
+          <img
+            src={paymentMethod === 'momo'
+              ? "https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png"
+              : "https://vinadesign.vn/uploads/images/2023/05/vnpay-logo-vinadesign-25-12-57-55.jpg"}
+            alt="Logo"
+            style={{ width: 30, height: 30, objectFit: 'contain', display: 'block' }}
+          />
+        </div>
+      </div>
+    );
+  };
+
   if (paymentSuccess) {
     return (
-      <div className="payment-page">
-        <div className="payment-card">
-          <div className="success-view">
-            <div className="success-icon-wrapper">
-              <span className="success-icon">✓</span>
+      <div className="page-wrapper">
+        <Header user={user} role={role} onLogout={onLogout} />
+        <div className="payment-page">
+          <div className="payment-container" style={{ justifyContent: 'center' }}>
+            <div className="payment-left" style={{ textAlign: 'center', maxWidth: 600 }}>
+              <span className="success-icon-large">🎉</span>
+              <h2 className="success-title">Thanh toán thành công!</h2>
+              <p>Mã đặt phòng: <strong>{displayId}</strong></p>
+              <button className="btn-pay" onClick={() => navigate(`/booking/confirmation/${displayId}`)}>
+                Xem xác nhận đặt phòng
+              </button>
             </div>
-            <h2 className="success-title">Payment Successful</h2>
-            <p className="success-desc">
-              Thank you! Your payment of <strong>${parseFloat(amountTendered).toFixed(2)}</strong> has been processed.
-            </p>
-
-            <div className="conf-summary">
-              <div className="summary-row">
-                <span>Invoice ID</span>
-                <span>#{invoiceId}</span>
-              </div>
-              <div className="summary-row">
-                <span>Method</span>
-                <span>{mapMethodToBackend(paymentMethod)}</span>
-              </div>
-              <div className="summary-total">
-                <span>Total Paid</span>
-                <span>${parseFloat(amountTendered).toFixed(2)}</span>
-              </div>
-            </div>
-
-            <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => navigate(`/booking/confirmation/${invoiceId}`)}>
-              View Receipt & Details
-            </button>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="payment-page">
-      <div className="payment-card">
+    <div className="page-wrapper">
+      <Header user={user} role={role} onLogout={onLogout} />
 
-        {/* Header */}
-        <div className="card-header">
-          <h1 className="card-title">Payment Details</h1>
-          <p className="card-subtitle">Complete your transaction securely</p>
-        </div>
+      <div className="payment-page">
+        <div className="payment-container">
 
-        <div className="card-body">
-          {/* Total Amount Box */}
-          <div className="total-amount-box">
-            <span className="total-label">Total Due</span>
-            <span className="total-value">${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-          </div>
+          {/* LEFT COLUMN: Payment Methods */}
+          <div className="payment-left">
+            <h2 className="payment-title">Bạn muốn thanh toán bằng cách nào?</h2>
 
-          <form onSubmit={handlePayment}>
+            <div className="methods-grid">
+              {/* VNPay */}
+              <div
+                className={`method-card ${paymentMethod === 'vnpay' ? 'active' : ''}`}
+                onClick={() => setPaymentMethod('vnpay')}
+              >
+                <img src="https://vinadesign.vn/uploads/images/2023/05/vnpay-logo-vinadesign-25-12-57-55.jpg" alt="VNPay" className="method-logo" />
+                <span className="method-name">VNPay</span>
+              </div>
 
-            {/* Payment Methods */}
-            <div className="form-section">
-              <label className="section-label">Select Payment Method</label>
-              <div className="methods-grid">
-                {[
-                  { id: 'cash', label: 'Cash', icon: '💵' },
-                  { id: 'transfer', label: 'Transfer', icon: '🏦' },
-                  { id: 'vnpay', label: 'VNPay', icon: '💳' },
-                ].map((m) => (
-                  <div
-                    key={m.id}
-                    className={`method-option ${paymentMethod === m.id ? 'selected' : ''}`}
-                    onClick={() => setPaymentMethod(m.id)}
-                  >
-                    <span className="method-icon">{m.icon}</span>
-                    <span className="method-name">{m.label}</span>
-                  </div>
-                ))}
+              {/* MoMo */}
+              <div
+                className={`method-card ${paymentMethod === 'momo' ? 'active' : ''}`}
+                onClick={() => setPaymentMethod('momo')}
+              >
+                <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png" alt="MoMo" className="method-logo" />
+                <span className="method-name">MoMo</span>
+              </div>
+
+              {/* Bank Transfer */}
+              <div
+                className={`method-card ${paymentMethod === 'transfer' ? 'active' : ''}`}
+                onClick={() => setPaymentMethod('transfer')}
+              >
+                <span className="method-icon" style={{ fontSize: 24 }}>🏦</span>
+                <span className="method-name">Chuyển khoản</span>
+              </div>
+
+              {/* Cash */}
+              <div
+                className={`method-card ${paymentMethod === 'cash' ? 'active' : ''}`}
+                onClick={() => setPaymentMethod('cash')}
+              >
+                <span className="method-icon" style={{ fontSize: 24 }}>💵</span>
+                <span className="method-name">Tiền mặt</span>
               </div>
             </div>
 
-            {/* Dynamic Content based on Method */}
-            {paymentMethod === 'transfer' && (
-              <div className="transfer-info" style={{ textAlign: 'center' }}>
-                <div className="transfer-title">
-                  <i className="fa fa-qrcode"></i> Scan to Pay
+            {/* QR Section (Shared for Transfer, VNPay, MoMo) */}
+            {['transfer', 'vnpay', 'momo'].includes(paymentMethod) && (
+              <div style={{ marginTop: 30, textAlign: 'center', background: '#f9f9f9', padding: 20, borderRadius: 8, border: '1px dashed #ccc' }}>
+                <h4 style={{ marginBottom: 15, color: '#333' }}>
+                  {getQrTitle()}
+                </h4>
+
+                <div className="qr-box" style={{ background: '#fff', padding: 10, display: 'inline-block', borderRadius: 8, boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+                  {renderQrCode()}
                 </div>
 
-                {(!amountTendered || parseFloat(amountTendered) <= 0) ? (
-                  <p style={{ color: '#64748b' }}>Enter an amount to generate QR code</p>
-                ) : (
-                  <div style={{ margin: '1rem 0' }}>
-                    <img
-                      src={`https://img.vietqr.io/image/${bankInfo.bankId}-${bankInfo.accountNumber}-${bankInfo.template}.png?amount=${amountTendered}&addInfo=INV${invoiceId}&accountName=${encodeURIComponent(bankInfo.accountName)}`}
-                      alt="VietQR"
-                      style={{ maxWidth: '300px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                    />
-                  </div>
-                )}
+                <div style={{ marginTop: 15 }}>
+                  <p style={{ margin: '5px 0' }}>Tổng tiền: <strong style={{ color: '#008000', fontSize: 18 }}>{formatPrice(displayAmount)} đ</strong></p>
+                  <p style={{ margin: '5px 0', fontSize: 14 }}>Nội dung: <strong style={{ background: '#eee', padding: '2px 6px', borderRadius: 4 }}>{getQrContent()}</strong></p>
 
-                <div className="transfer-row">
-                  <span className="transfer-label">Bank:</span>
-                  <span className="transfer-val">{bankInfo.bankId}</span>
-                </div>
-                <div className="transfer-row">
-                  <span className="transfer-label">Account:</span>
-                  <span className="transfer-val">{bankInfo.accountNumber}</span>
-                </div>
-                <div className="transfer-row">
-                  <span className="transfer-label">Content:</span>
-                  <span className="transfer-val">INV{invoiceId}</span>
+                  <p style={{ fontSize: 13, color: '#666', marginTop: 10, fontStyle: 'italic' }}>
+                    {getQrNote()} để quét mã.
+                  </p>
                 </div>
               </div>
             )}
 
-            {/* Amount Input */}
-            <div className="input-group">
-              <label className="section-label">Amount to Pay</label>
-              <div className="amount-input-wrapper">
-                <span className="currency-symbol">$</span>
-                <input
-                  type="number"
-                  className="amount-input"
-                  placeholder="0.00"
-                  value={amountTendered}
-                  onChange={handleAmountChange}
-                  step="0.01"
-                  min="0"
-                />
+          </div>
+
+          {/* RIGHT COLUMN: Order Summary */}
+          <div className="payment-right">
+            <h3 className="summary-title">Tóm tắt đơn hàng</h3>
+
+            <div className="summary-section" style={{ marginBottom: 20, borderBottom: '1px solid #eee', paddingBottom: 15 }}>
+              <div style={{ fontWeight: 600, marginBottom: 5, color: '#333' }}>Thông tin phòng</div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
+                {room?.imgUrl && <img src={room.imgUrl} alt="" style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }} />}
+                <div>
+                  <div style={{ fontWeight: 600, color: '#007bff' }}>{displayRoomName}</div>
+                  <div style={{ fontSize: 13, color: '#555' }}>{displayNights} đêm</div>
+                </div>
               </div>
-              {error && <div className="error-msg"><i className="fa fa-exclamation-circle"></i> {error}</div>}
-              {!error && amountTendered && parseFloat(amountTendered) < totalAmount && (
-                <div className="error-msg" style={{ color: '#f59e0b' }}>
-                  <i className="fa fa-exclamation-triangle"></i> Amount must be at least ${totalAmount}
+              {bookingData?.checkinDate && (
+                <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+                  <div>Check-in: <strong>{bookingData.checkinDate}</strong></div>
+                  <div>Check-out: <strong>{bookingData.checkoutDate}</strong></div>
                 </div>
               )}
             </div>
 
-            {/* Actions */}
-            <div className="pay-actions">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => navigate(-1)}
-                disabled={isProcessing}
-              >
-                Back
-              </button>
-
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={isProcessing || !isFormValid()}
-              >
-                {isProcessing ? (
-                  <span><i className="fa fa-spinner fa-spin"></i> Processing...</span>
-                ) : (
-                  paymentMethod === 'vnpay' ? 'Pay with VNPay' : `Pay $${amountTendered ? parseFloat(amountTendered).toLocaleString() : '0.00'}`
-                )}
-              </button>
+            <div className="summary-section" style={{ marginBottom: 20, borderBottom: '1px solid #eee', paddingBottom: 15 }}>
+              <div style={{ fontWeight: 600, marginBottom: 5, color: '#333' }}>Thông tin khách hàng</div>
+              <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+                <div>Họ tên: <strong>{bookingData?.guestName || 'Khách'}</strong></div>
+                {bookingData?.guestPhone && <div>SĐT: {bookingData.guestPhone}</div>}
+                {bookingData?.guestEmail && <div>Email: {bookingData.guestEmail}</div>}
+                <div>Số khách: {bookingData?.guestCount || 1} người</div>
+              </div>
             </div>
 
-          </form>
-        </div>
+            <div className="summary-row">
+              <span>Mã đặt phòng</span>
+              <strong>{displayId}</strong>
+            </div>
 
+            <div className="summary-total">
+              <span>Tổng cộng</span>
+              <span>{formatPrice(displayAmount)} đ</span>
+            </div>
+
+            {error && <div style={{ color: 'red', marginTop: 10, fontSize: 13 }}>{error}</div>}
+
+            <button
+              className="btn-pay"
+              onClick={handlePayment}
+              disabled={isProcessing || redirecting}
+            >
+              {redirecting
+                ? `Đang chuyển hướng...`
+                : (isProcessing
+                  ? 'Đang xử lý...'
+                  : (['vnpay', 'momo', 'transfer'].includes(paymentMethod) ? 'Xác nhận đã thanh toán' : 'Tiếp tục thanh toán')
+                )
+              }
+            </button>
+
+            <span className="cancel-link" onClick={() => navigate(-1)}>Hủy thanh toán</span>
+          </div>
+
+        </div>
       </div>
+      <Footer />
     </div>
   );
 };
