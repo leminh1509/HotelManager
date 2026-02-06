@@ -1,7 +1,5 @@
 package com.example.spring_project.service;
 
-
-
 import com.example.spring_project.dto.RoomResponse;
 import com.example.spring_project.entity.Room;
 import com.example.spring_project.exception.ResourceNotFoundException;
@@ -26,20 +24,20 @@ public class RoomService {
     public RoomService(RoomRepository roomRepository) {
         this.roomRepository = roomRepository;
     }
+
     public void updateStatus(Integer roomId, Integer statusId) {
-       int updated = roomRepository.updateRoomStatus(roomId, statusId);
+        int updated = roomRepository.updateRoomStatus(roomId, statusId);
         if (updated == 0) {
             throw new ResourceNotFoundException("Room not found with id: " + roomId);
         }
     }
-    
 
     public List<RoomResponse> getAll() {
-    return roomRepository.findAll()
-            .stream()
-            .map(BookingMapper::toRoomResponse)
-            .collect(Collectors.toList());
-}
+        return roomRepository.findAll()
+                .stream()
+                .map(BookingMapper::toRoomResponse)
+                .collect(Collectors.toList());
+    }
 
     // ─────────────────────────────────────────────────────
     // Lấy 1 phòng theo ID
@@ -59,11 +57,9 @@ public class RoomService {
             int guestCount,
             Integer categoryId,
             Double minPrice,
-            Double maxPrice
-    ) {
+            Double maxPrice) {
         List<Room> rooms = roomRepository.findAvailableRoomsFiltered(
-                checkin, checkout, guestCount, categoryId, minPrice, maxPrice
-        );
+                checkin, checkout, guestCount, categoryId, minPrice, maxPrice);
 
         return rooms.stream()
                 .map(BookingMapper::toRoomResponse)

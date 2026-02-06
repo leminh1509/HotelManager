@@ -7,7 +7,7 @@ import axios from 'axios';
 
 const MaintenanceDashboard = () => {
     const userString = localStorage.getItem('user');
-    const user = userString ? JSON.parse(userString) : { firstName: 'Staff', role: 'MAINTENANCE' };
+    const user = userString ? JSON.parse(userString) : { firstName: 'Nhân viên', role: 'MAINTENANCE' };
     const ROLE_MAINTENANCE = 'MAINTENANCE';
     const ROLE_RECEPTIONIST = 'RECEPTIONIST'; // or ADMIN
 
@@ -142,10 +142,10 @@ const MaintenanceDashboard = () => {
             setCreateModalOpen(false);
             setNewRequest({ roomId: '', description: '', type: 'MAINTENANCE', priority: 'MEDIUM' });
             fetchRequests();
-            alert('Request created successfully!');
+            alert('Tạo yêu cầu thành công!');
         } catch (error) {
             console.error("Error creating request", error);
-            alert('Failed to create request');
+            alert('Tạo yêu cầu thất bại');
         }
     };
 
@@ -166,7 +166,7 @@ const MaintenanceDashboard = () => {
             fetchRequests();
         } catch (error) {
             console.error("Error updating request", error);
-            alert('Failed to update request');
+            alert('Cập nhật thất bại');
         }
     };
 
@@ -188,7 +188,15 @@ const MaintenanceDashboard = () => {
             case 'CANCELLED': className += 'status-cancelled'; break;
             default: className += 'status-pending';
         }
-        return <span className={className}>{s.replace('_', ' ')}</span>;
+        let label = s;
+        switch (s) {
+            case 'PENDING': label = 'Chờ xử lý'; break;
+            case 'IN_PROGRESS': label = 'Đang thực hiện'; break;
+            case 'COMPLETED': label = 'Hoàn thành'; break;
+            case 'CANCELLED': label = 'Đã hủy'; break;
+            default: label = s;
+        }
+        return <span className={className}>{label}</span>;
     };
 
     const handleLogout = () => {
@@ -203,11 +211,11 @@ const MaintenanceDashboard = () => {
             <div className="maintenance-container">
                 <div className="maintenance-header">
                     <div>
-                        <h1>Maintenance & Cleaning Dashboard</h1>
-                        <p>Welcome back, {user.firstName || 'Staff'}.</p>
+                        <h1>Bảng Điều Khiển Bảo Trì & Dọn Dẹp</h1>
+                        <p>Chào mừng trở lại, {user.firstName || 'Nhân viên'}.</p>
                     </div>
                     <button className="create-btn" onClick={() => setCreateModalOpen(true)}>
-                        + New Request
+                        + Yêu Cầu Mới
                     </button>
                 </div>
 
@@ -217,28 +225,28 @@ const MaintenanceDashboard = () => {
                         <div className="stat-icon">Testing</div>
                         <div className="stat-info">
                             <h3>{stats.total}</h3>
-                            <span>Total Tasks</span>
+                            <span>Tổng Công Việc</span>
                         </div>
                     </div>
                     <div className="stat-card pending" onClick={() => setFilters({ ...filters, status: 'PENDING', page: 0 })}>
                         <div className="stat-icon">⏳</div>
                         <div className="stat-info">
                             <h3>{stats.pending}</h3>
-                            <span>Pending</span>
+                            <span>Chờ Xử Lý</span>
                         </div>
                     </div>
-                    <div className="stat-card progress" onClick={() => setFilters({ ...filters, status: 'IN_PROGRESS', page: 0 })}>
+                    <div className="stat-card stat-progress" onClick={() => setFilters({ ...filters, status: 'IN_PROGRESS', page: 0 })}>
                         <div className="stat-icon">⚙️</div>
                         <div className="stat-info">
                             <h3>{stats.inProgress}</h3>
-                            <span>In Progress</span>
+                            <span>Đang Thực Hiện</span>
                         </div>
                     </div>
                     <div className="stat-card completed" onClick={() => setFilters({ ...filters, status: 'COMPLETED', page: 0 })}>
                         <div className="stat-icon">✅</div>
                         <div className="stat-info">
                             <h3>{stats.completed}</h3>
-                            <span>Completed</span>
+                            <span>Hoàn Thành</span>
                         </div>
                     </div>
                 </div>
@@ -246,28 +254,28 @@ const MaintenanceDashboard = () => {
                 {/* Tasks Section */}
                 <div className="tasks-section">
                     <div className="section-header-row">
-                        <h2>Request List</h2>
+                        <h2>Danh Sách Yêu Cầu</h2>
 
                         <div className="filter-bar">
                             <input
                                 type="text"
                                 name="search"
-                                placeholder="Search desc or room..."
+                                placeholder="Tìm kiếm mô tả hoặc phòng..."
                                 value={filters.search}
                                 onChange={handleFilterChange}
                                 className="filter-input"
                             />
                             <select name="type" value={filters.type} onChange={handleFilterChange} className="filter-select">
-                                <option value="">All Types</option>
-                                <option value="MAINTENANCE">Maintenance</option>
-                                <option value="CLEANING">Cleaning</option>
+                                <option value="">Tất cả loại</option>
+                                <option value="MAINTENANCE">Bảo trì</option>
+                                <option value="CLEANING">Dọn phòng</option>
                             </select>
                             <select name="status" value={filters.status} onChange={handleFilterChange} className="filter-select">
-                                <option value="">All Status</option>
-                                <option value="PENDING">Pending</option>
-                                <option value="IN_PROGRESS">In Progress</option>
-                                <option value="COMPLETED">Completed</option>
-                                <option value="CANCELLED">Cancelled</option>
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="PENDING">Chờ xử lý</option>
+                                <option value="IN_PROGRESS">Đang thực hiện</option>
+                                <option value="COMPLETED">Hoàn thành</option>
+                                <option value="CANCELLED">Đã hủy</option>
                             </select>
                         </div>
                     </div>
@@ -277,28 +285,28 @@ const MaintenanceDashboard = () => {
                             <thead>
                                 <tr>
                                     <th>ID</th>
-                                    <th>Type</th>
-                                    <th>Location/Room</th>
-                                    <th>Description</th>
-                                    <th>Priority</th>
-                                    <th>Status</th>
-                                    <th>Created At</th>
-                                    <th>Action</th>
+                                    <th>Loại</th>
+                                    <th>Vị Trí/Phòng</th>
+                                    <th>Mô Tả</th>
+                                    <th>Ưu Tiên</th>
+                                    <th>Trạng Thái</th>
+                                    <th>Ngày Tạo</th>
+                                    <th>Hành Động</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {requests.length === 0 ? (
-                                    <tr><td colSpan="8" style={{ textAlign: 'center', padding: '30px' }}>No requests found.</td></tr>
+                                    <tr><td colSpan="8" style={{ textAlign: 'center', padding: '30px' }}>Không tìm thấy yêu cầu nào.</td></tr>
                                 ) : requests.map(req => (
                                     <tr key={req.id}>
                                         <td>#{req.id}</td>
                                         <td>
-                                            <span className={`type-badge ${req.type?.toLowerCase()}`}>{req.type}</span>
+                                            <span className={`type-badge ${req.type?.toLowerCase()}`}>{req.type === 'MAINTENANCE' ? 'Bảo trì' : 'Dọn phòng'}</span>
                                         </td>
-                                        <td>{req.room ? req.room.roomNumber : 'General'}</td>
+                                        <td>{req.room ? req.room.roomNumber : 'Sảnh / Chung'}</td>
                                         <td>
                                             <div className="task-desc">{req.description}</div>
-                                            {req.resolutionNotes && <div className="task-note">Note: {req.resolutionNotes}</div>}
+                                            {req.resolutionNotes && <div className="task-note">Ghi chú: {req.resolutionNotes}</div>}
                                         </td>
                                         <td>
                                             <span style={{ color: getPriorityColor(req.priority), fontWeight: 'bold' }}>
@@ -308,7 +316,7 @@ const MaintenanceDashboard = () => {
                                         <td>{getStatusBadge(req.status)}</td>
                                         <td>{new Date(req.reportedAt).toLocaleDateString()}</td>
                                         <td>
-                                            <button className="action-btn" onClick={() => handleUpdateClick(req)}>Update</button>
+                                            <button className="action-btn" onClick={() => handleUpdateClick(req)}>Cập nhật</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -329,7 +337,7 @@ const MaintenanceDashboard = () => {
                             disabled={filters.page >= totalPages - 1}
                             onClick={() => handlePageChange(filters.page + 1)}
                         >
-                            Next &raquo;
+                            Sau &raquo;
                         </button>
                     </div>
                 </div>
@@ -339,54 +347,54 @@ const MaintenanceDashboard = () => {
             {isCreateModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
-                        <h2>Create New Request</h2>
+                        <h2>Tạo Yêu Cầu Mới</h2>
                         <form onSubmit={handleCreateSubmit}>
                             <div className="form-group">
-                                <label>Request Type</label>
+                                <label>Loại Yêu Cầu</label>
                                 <select
                                     value={newRequest.type}
                                     onChange={e => setNewRequest({ ...newRequest, type: e.target.value })}
                                 >
-                                    <option value="MAINTENANCE">Maintenance (Sửa chữa)</option>
-                                    <option value="CLEANING">Cleaning (Dọn phòng)</option>
+                                    <option value="MAINTENANCE">Bảo trì (Maintenance)</option>
+                                    <option value="CLEANING">Dọn phòng (Cleaning)</option>
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label>Room (Optional)</label>
+                                <label>Phòng (Tùy chọn)</label>
                                 <select
                                     value={newRequest.roomId}
                                     onChange={e => setNewRequest({ ...newRequest, roomId: e.target.value })}
                                 >
-                                    <option value="">-- General / Lobby --</option>
+                                    <option value="">-- Sảnh / Chung --</option>
                                     {rooms.map(room => (
                                         <option key={room.roomId} value={room.roomId}>{room.name}</option>
                                     ))}
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label>Priority</label>
+                                <label>Mức Độ Ưu Tiên</label>
                                 <select
                                     value={newRequest.priority}
                                     onChange={e => setNewRequest({ ...newRequest, priority: e.target.value })}
                                 >
-                                    <option value="LIGHT">Light</option>
-                                    <option value="MEDIUM">Medium</option>
-                                    <option value="HIGH">High</option>
-                                    <option value="URGENT">Urgent</option>
+                                    <option value="LIGHT">Nhẹ (Light)</option>
+                                    <option value="MEDIUM">Trung bình (Medium)</option>
+                                    <option value="HIGH">Cao (High)</option>
+                                    <option value="URGENT">Khẩn cấp (Urgent)</option>
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label>Description</label>
+                                <label>Mô Tả</label>
                                 <textarea
                                     required
                                     value={newRequest.description}
                                     onChange={e => setNewRequest({ ...newRequest, description: e.target.value })}
-                                    placeholder="Describe the issue..."
+                                    placeholder="Mô tả vấn đề..."
                                 />
                             </div>
                             <div className="modal-actions">
-                                <button type="button" onClick={() => setCreateModalOpen(false)}>Cancel</button>
-                                <button type="submit" className="primary-btn">Create Request</button>
+                                <button type="button" onClick={() => setCreateModalOpen(false)}>Hủy</button>
+                                <button type="submit" className="primary-btn">Tạo Yêu Cầu</button>
                             </div>
                         </form>
                     </div>
@@ -397,31 +405,31 @@ const MaintenanceDashboard = () => {
             {isUpdateModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
-                        <h2>Update Status #{selectedRequest?.id}</h2>
+                        <h2>Cập Nhật Trạng Thái #{selectedRequest?.id}</h2>
                         <form onSubmit={handleUpdateSubmit}>
                             <div className="form-group">
-                                <label>Status</label>
+                                <label>Trạng Thái</label>
                                 <select
                                     value={updateData.status}
                                     onChange={e => setUpdateData({ ...updateData, status: e.target.value })}
                                 >
-                                    <option value="PENDING">Pending</option>
-                                    <option value="IN_PROGRESS">In Progress</option>
-                                    <option value="COMPLETED">Completed</option>
-                                    <option value="CANCELLED">Cancelled</option>
+                                    <option value="PENDING">Chờ xử lý</option>
+                                    <option value="IN_PROGRESS">Đang thực hiện</option>
+                                    <option value="COMPLETED">Hoàn thành</option>
+                                    <option value="CANCELLED">Đã hủy</option>
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label>Resolution / Notes</label>
+                                <label>Ghi Chú / Cách Giải Quyết</label>
                                 <textarea
                                     value={updateData.notes}
                                     onChange={e => setUpdateData({ ...updateData, notes: e.target.value })}
-                                    placeholder="Work done..."
+                                    placeholder="Ghi chú công việc..."
                                 />
                             </div>
                             <div className="modal-actions">
-                                <button type="button" onClick={() => setUpdateModalOpen(false)}>Cancel</button>
-                                <button type="submit" className="primary-btn">Update</button>
+                                <button type="button" onClick={() => setUpdateModalOpen(false)}>Hủy</button>
+                                <button type="submit" className="primary-btn">Cập Nhật</button>
                             </div>
                         </form>
                     </div>

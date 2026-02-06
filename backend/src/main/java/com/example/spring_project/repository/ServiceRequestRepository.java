@@ -15,19 +15,22 @@ import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, Long> {
-    List<ServiceRequest> findByStatus(ServiceRequestStatus status);
+        List<ServiceRequest> findByStatus(ServiceRequestStatus status);
 
-    List<ServiceRequest> findByType(ServiceRequestType type);
+        List<ServiceRequest> findByType(ServiceRequestType type);
 
-    List<ServiceRequest> findByRoom_RoomId(Integer roomId); // Updated generic ID to Integer if needed, or derived query
-                                                            // works
+        List<ServiceRequest> findByRoom_RoomId(Integer roomId); // Updated generic ID to Integer if needed, or derived
+                                                                // query
+                                                                // works
 
-    @Query("SELECT r FROM ServiceRequest r WHERE " +
-            "(:status IS NULL OR r.status = :status) AND " +
-            "(:type IS NULL OR r.type = :type) AND " +
-            "(:search IS NULL OR LOWER(r.description) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(r.room.roomNumber) LIKE LOWER(CONCAT('%', :search, '%')))")
-    Page<ServiceRequest> searchRequests(@Param("status") ServiceRequestStatus status,
-            @Param("type") ServiceRequestType type,
-            @Param("search") String search,
-            Pageable pageable);
+        @Query("SELECT r FROM ServiceRequest r " +
+                        "LEFT JOIN r.room rm " +
+                        "WHERE " +
+                        "(:status IS NULL OR r.status = :status) AND " +
+                        "(:type IS NULL OR r.type = :type) AND " +
+                        "(:search IS NULL OR LOWER(r.description) LIKE LOWER(CONCAT('%', :search, '%')) OR (rm.roomNumber IS NOT NULL AND LOWER(rm.roomNumber) LIKE LOWER(CONCAT('%', :search, '%'))))")
+        Page<ServiceRequest> searchRequests(@Param("status") ServiceRequestStatus status,
+                        @Param("type") ServiceRequestType type,
+                        @Param("search") String search,
+                        Pageable pageable);
 }

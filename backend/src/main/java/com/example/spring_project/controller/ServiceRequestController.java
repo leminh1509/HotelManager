@@ -43,7 +43,15 @@ public class ServiceRequestController {
 
     @PostMapping
     public ServiceRequest createRequest(@RequestBody Map<String, Object> payload) {
-        Integer roomId = payload.get("roomId") != null ? Integer.valueOf(payload.get("roomId").toString()) : null;
+        Object roomIdObj = payload.get("roomId");
+        Integer roomId = null;
+        if (roomIdObj != null && !roomIdObj.toString().trim().isEmpty()) {
+            try {
+                roomId = Integer.valueOf(roomIdObj.toString());
+            } catch (NumberFormatException e) {
+                roomId = null; // Fallback to null (general/lobby) if invalid
+            }
+        }
         String description = (String) payload.get("description");
         String typeStr = (String) payload.get("type");
         String priority = (String) payload.get("priority");

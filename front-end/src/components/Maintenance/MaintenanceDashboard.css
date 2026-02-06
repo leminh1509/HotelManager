@@ -113,7 +113,7 @@
     color: #f57c00;
 }
 
-.stat-card.progress .stat-icon {
+.stat-card.stat-progress .stat-icon {
     background-color: #e8f5e9;
     color: #388e3c;
 }
@@ -384,6 +384,15 @@
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 14px;
+    color: #333;
+    /* Ensure text is dark */
+    background-color: #fff;
+    /* Ensure background is white */
+}
+
+.form-group select option {
+    color: #333;
+    background-color: #fff;
 }
 
 .form-group textarea {

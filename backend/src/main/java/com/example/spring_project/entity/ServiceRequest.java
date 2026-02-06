@@ -41,6 +41,7 @@ public class ServiceRequest {
     private LocalDateTime updatedAt;
 
     // Notes added by maintenance staff
+    @Column(name = "resolution_notes")
     private String resolutionNotes;
 
     @PrePersist
