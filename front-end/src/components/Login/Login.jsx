@@ -54,6 +54,7 @@ const Login = ({ onLoginSuccess }) => {
 
       const role = normalizeRole(data?.role || data?.authority || (data?.roles?.[0] ?? ''));
       localStorage.setItem('token', token);
+      console.log('token', token);
       localStorage.setItem('role', role);
 
       const userData = {

@@ -12,12 +12,15 @@ import BookingForm from "./components/Booking/BookingForm";
 import BookingConfirmation from "./components/Booking/BookingConfirmation";
 import MyBookings from "./components/Booking/MyBookings";
 import Home from "./components/Home/Home";
+import Payment from "./components/Payment/Payment";
+import PaymentResult from "./components/Payment/PaymentResult";
 import BookingList from "./components/Receptionist/BookingList";
 import ReceptionistLayout from "./components/Receptionist/ReceptionistLayout";
 import BookingDetail from "./components/Receptionist/BookingDetail";
 import RoomList from "./components/Receptionist/RoomList";
 import ReceptionistRoomDetail from "./components/Receptionist/RoomDetail";
 import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
+import RoomList1 from "./components/Room/RoomList";
 
 const Forbidden = () => (
   <div style={{ padding: 40, textAlign: "center" }}>
@@ -76,23 +79,28 @@ export default function App() {
     window.dispatchEvent(new Event("auth:changed"));
   };
 
+
+
   return (
     <Routes>
       {/* vào web -> home trước */}
       <Route path="/" element={<Navigate to="/home" replace />} />
 
       {/* Home có thể public */}
-      <Route path="/home" element={<Home user={currentUser} onLogout={handleLogout} />} />
+      <Route path="/home" element={<Home user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
+
+      {/*List room */}
+      <Route path="/rooms" element={<RoomList1 />} />
 
       {/* login/register phải truyền callback */}
       <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
       <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
-
       <Route path="/forbidden" element={<Forbidden />} />
 
       {/* ===== BOOKING ===== */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/home" element={<Home />} />
+        <Route path="/payment" element={<Payment user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
+        <Route path="/payment/vnpay-return" element={<PaymentResult user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
 
         {/* ===== BOOKING ===== */}
 

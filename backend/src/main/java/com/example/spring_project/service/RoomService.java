@@ -5,10 +5,13 @@ import com.example.spring_project.entity.Room;
 import com.example.spring_project.exception.ResourceNotFoundException;
 import com.example.spring_project.repository.RoomRepository;
 import com.example.spring_project.util.BookingMapper;
+
+import jakarta.persistence.criteria.CriteriaBuilder.In;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +28,20 @@ public class RoomService {
         this.roomStatusRepository = roomStatusRepository;
     }
 
+    public void updateStatus(Integer roomId, Integer statusId) {
+        int updated = roomRepository.updateRoomStatus(roomId, statusId);
+        if (updated == 0) {
+            throw new ResourceNotFoundException("Room not found with id: " + roomId);
+        }
+    }
+
+    public List<RoomResponse> getAll() {
+        return roomRepository.findAll()
+                .stream()
+                .map(BookingMapper::toRoomResponse)
+                .collect(Collectors.toList());
+    }
+
     // ─────────────────────────────────────────────────────
     // Lấy 1 phòng theo ID
     // ─────────────────────────────────────────────────────
@@ -38,8 +55,8 @@ public class RoomService {
     // Tìm phòng trống (search)
     // ─────────────────────────────────────────────────────
     public List<RoomResponse> search(
-            LocalDateTime checkin,
-            LocalDateTime checkout,
+            LocalDate checkin,
+            LocalDate checkout,
             int guestCount,
             Integer categoryId,
             Double minPrice,

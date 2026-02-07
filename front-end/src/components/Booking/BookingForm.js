@@ -177,7 +177,21 @@ export default function BookingForm() {
         bookingId = "BK-" + Date.now().toString().slice(-6);
       }
 
-      navigate(`/booking/confirmation/${bookingId}`);
+      // Calculate nights for passing
+      const start = new Date(bookingData.checkinDate);
+      const end = new Date(bookingData.checkoutDate);
+      const diff = end - start;
+      const nights = diff > 0 ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : 1;
+
+      navigate("/payment", {
+        state: {
+          bookingId,
+          totalAmount: totalPrice,
+          room,
+          bookingData,
+          nights
+        }
+      });
     } catch (err) {
       console.error(err);
     } finally {

@@ -8,7 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
+
+import java.time.LocalDate;
 import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Integer> {
@@ -36,8 +37,8 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
     """)
     Long countOverlapping(
             @Param("roomId")    Integer       roomId,
-            @Param("checkin")   LocalDateTime checkin,
-            @Param("checkout")  LocalDateTime checkout,
+            @Param("checkin")   LocalDate checkin,
+            @Param("checkout")  LocalDate checkout,
             @Param("cancelled") Status        cancelled
     );
 

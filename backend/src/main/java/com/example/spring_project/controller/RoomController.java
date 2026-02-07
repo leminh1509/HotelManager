@@ -1,12 +1,14 @@
 package com.example.spring_project.controller;
 
+
+import com.example.spring_project.entity.Room;
 import com.example.spring_project.dto.RoomResponse;
 import com.example.spring_project.service.RoomService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -17,6 +19,11 @@ public class RoomController {
 
     public RoomController(RoomService roomService) {
         this.roomService = roomService;
+    }
+    @GetMapping("")
+    public ResponseEntity<List<RoomResponse>> getAll() {
+        List<RoomResponse>  room = roomService.getAll();
+        return ResponseEntity.ok(room);
     }
 
     @GetMapping
@@ -32,8 +39,8 @@ public class RoomController {
 
     @GetMapping("/search")
     public ResponseEntity<List<RoomResponse>> search(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime checkin,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime checkout,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate checkin,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate checkout,
             @RequestParam(defaultValue = "1") int guests,
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) Double minPrice,

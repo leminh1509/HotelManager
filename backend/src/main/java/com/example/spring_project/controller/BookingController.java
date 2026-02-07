@@ -2,7 +2,10 @@ package com.example.spring_project.controller;
 
 import com.example.spring_project.dto.BookingCreateRequest;
 import com.example.spring_project.dto.BookingResponse;
+import com.example.spring_project.entity.User;
 import com.example.spring_project.service.BookingService;
+
+import jakarta.persistence.criteria.CriteriaBuilder.In;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,16 +36,8 @@ public class BookingController {
         if (auth == null || auth.getPrincipal() == null) {
             throw new RuntimeException("Not authenticated");
         }
-        // ── adjust theo cách project bạn store userId ──
-        // Option A: principal là Integer trực tiếp
-        // return (Integer) auth.getPrincipal();
-
-        // Option B: principal là custom UserDetails
-        // return ((com.example.hotelmanager.model.CustomUserDetails)
-        // auth.getPrincipal()).getUserId();
-
-        // Option C: fallback generic (dùng tạm)
-        return (Integer) auth.getPrincipal();
+        User user = (User) auth.getPrincipal(); 
+        return user.getUserId();                
     }
 
     @GetMapping

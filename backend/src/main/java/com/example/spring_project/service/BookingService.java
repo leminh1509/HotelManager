@@ -46,6 +46,7 @@ public class BookingService {
 
         // 2) load room (validate tồn tại)
         Room room = roomService.getEntityById(req.getRoomId());
+        roomService.updateStatus(req.getRoomId(), 2);
 
         // 3) validate capacity
         if (req.getGuestCount() > room.getCapacity()) {
@@ -71,8 +72,9 @@ public class BookingService {
 
         // 6) tính giá: price × số đêm
         long nights = ChronoUnit.DAYS.between(
-                req.getCheckinTime().toLocalDate(),
-                req.getCheckoutTime().toLocalDate());
+                req.getCheckinTime(),
+                req.getCheckoutTime()
+        );
         double totalPrice = room.getPrice() * Math.max(nights, 1);
 
         // 7) build entity
@@ -153,6 +155,8 @@ public class BookingService {
         }
 
         booking.setStatus(Status.Cancelled);
+        roomService.updateStatus(booking.getRoom().getRoomId(), 1);
+        
         booking.setUpdatedAt(LocalDateTime.now());
 
         Booking updated = bookingRepo.save(booking);

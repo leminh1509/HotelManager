@@ -131,8 +131,8 @@ CREATE TABLE booking (
   early_checkin BOOLEAN NOT NULL DEFAULT FALSE,
   late_checkout BOOLEAN NOT NULL DEFAULT FALSE,
 
-  checkin_time DATETIME NOT NULL,
-  checkout_time DATETIME NOT NULL,
+  checkin_time DATE NOT NULL,
+  checkout_time DATE NOT NULL,
 
   status ENUM('Pending','Confirmed','Checked-in','Checked-out','Cancelled') NOT NULL DEFAULT 'Pending',
   total_price DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -329,3 +329,165 @@ INSERT INTO users (role_id, email, password, first_name, last_name, mobile_phone
 -- Password: Maintenance@2026
 INSERT INTO users (role_id, email, password, first_name, last_name, mobile_phone, is_active, created_at) VALUES
 (4, 'maintenance@36hotel.com', '$2a$10$Ab9Papng2muU9q.YWMkkieEZ6Ni6/TCM0l1325W6uaKaBoqfmTYWa', 'Le', 'Banh', '0901234578', TRUE, NOW());
+INSERT INTO category (name, description, img_url) VALUES 
+('Standard Single', 'Phòng đơn tiêu chuẩn từ tầng 3-6', 'https://example.com/std-single.jpg'),
+('Standard Double', 'Phòng đôi tiêu chuẩn từ tầng 3-6', 'https://example.com/std-double.jpg'),
+('Deluxe Single', 'Phòng đơn sang trọng từ tầng 7-9', 'https://example.com/del-single.jpg'),
+('Deluxe Double', 'Phòng đôi sang trọng từ tầng 7-9', 'https://example.com/del-double.jpg'),
+('President Suite', 'Phòng tổng thống tầng 10', 'https://example.com/pres-suite.jpg');
+    -- TẦNG 3
+INSERT INTO room (room_number, category_id, status_id, price, capacity, floor, size_m2, bed_configuration, cancellation_policy, description, img_url) VALUES
+('P.301', 1, 1, 600000, 1, 3, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 3', 'url_p301'),
+('P.302', 1, 1, 600000, 1, 3, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 3', 'url_p302'),
+('P.303', 1, 1, 600000, 1, 3, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 3', 'url_p303'),
+('P.304', 1, 1, 600000, 1, 3, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 3', 'url_p304'),
+('P.305', 1, 1, 600000, 1, 3, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 3', 'url_p305'),
+('P.306', 1, 1, 600000, 1, 3, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 3', 'url_p306'),
+('P.307', 2, 1, 900000, 2, 3, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 3', 'url_p307'),
+('P.308', 2, 1, 900000, 2, 3, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 3', 'url_p308'),
+('P.309', 2, 1, 900000, 2, 3, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 3', 'url_p309'),
+('P.310', 2, 1, 900000, 2, 3, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 3', 'url_p310'),
+('P.311', 2, 1, 900000, 2, 3, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 3', 'url_p311'),
+('P.312', 2, 1, 900000, 2, 3, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 3', 'url_p312'),
+('P.313', 2, 1, 900000, 2, 3, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 3', 'url_p313'),
+('P.314', 2, 1, 900000, 2, 3, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 3', 'url_p314'),
+('P.315', 2, 1, 900000, 2, 3, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 3', 'url_p315'),
+('P.316', 2, 1, 900000, 2, 3, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 3', 'url_p316'),
+('P.317', 2, 1, 900000, 2, 3, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 3', 'url_p317'),
+('P.318', 2, 1, 900000, 2, 3, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 3', 'url_p318');
+
+-- TẦNG 4
+INSERT INTO room (room_number, category_id, status_id, price, capacity, floor, size_m2, bed_configuration, cancellation_policy, description, img_url) VALUES
+('P.401', 1, 1, 600000, 1, 4, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 4', 'url_p401'),
+('P.402', 1, 1, 600000, 1, 4, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 4', 'url_p402'),
+('P.403', 1, 1, 600000, 1, 4, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 4', 'url_p403'),
+('P.404', 1, 1, 600000, 1, 4, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 4', 'url_p404'),
+('P.405', 1, 1, 600000, 1, 4, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 4', 'url_p405'),
+('P.406', 1, 1, 600000, 1, 4, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 4', 'url_p406'),
+('P.407', 2, 1, 900000, 2, 4, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 4', 'url_p407'),
+('P.408', 2, 1, 900000, 2, 4, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 4', 'url_p408'),
+('P.409', 2, 1, 900000, 2, 4, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 4', 'url_p409'),
+('P.410', 2, 1, 900000, 2, 4, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 4', 'url_p410'),
+('P.411', 2, 1, 900000, 2, 4, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 4', 'url_p411'),
+('P.412', 2, 1, 900000, 2, 4, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 4', 'url_p412'),
+('P.413', 2, 1, 900000, 2, 4, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 4', 'url_p413'),
+('P.414', 2, 1, 900000, 2, 4, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 4', 'url_p414'),
+('P.415', 2, 1, 900000, 2, 4, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 4', 'url_p415'),
+('P.416', 2, 1, 900000, 2, 4, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 4', 'url_p416'),
+('P.417', 2, 1, 900000, 2, 4, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 4', 'url_p417'),
+('P.418', 2, 1, 900000, 2, 4, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 4', 'url_p418');
+
+-- TẦNG 5
+INSERT INTO room (room_number, category_id, status_id, price, capacity, floor, size_m2, bed_configuration, cancellation_policy, description, img_url) VALUES
+('P.501', 1, 1, 600000, 1, 5, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 5', 'url_p501'),
+('P.502', 1, 1, 600000, 1, 5, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 5', 'url_p502'),
+('P.503', 1, 1, 600000, 1, 5, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 5', 'url_p503'),
+('P.504', 1, 1, 600000, 1, 5, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 5', 'url_p504'),
+('P.505', 1, 1, 600000, 1, 5, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 5', 'url_p505'),
+('P.506', 1, 1, 600000, 1, 5, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 5', 'url_p506'),
+('P.507', 2, 1, 900000, 2, 5, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 5', 'url_p507'),
+('P.508', 2, 1, 900000, 2, 5, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 5', 'url_p508'),
+('P.509', 2, 1, 900000, 2, 5, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 5', 'url_p509'),
+('P.510', 2, 1, 900000, 2, 5, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 5', 'url_p510'),
+('P.511', 2, 1, 900000, 2, 5, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 5', 'url_p511'),
+('P.512', 2, 1, 900000, 2, 5, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 5', 'url_p512'),
+('P.513', 2, 1, 900000, 2, 5, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 5', 'url_p513'),
+('P.514', 2, 1, 900000, 2, 5, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 5', 'url_p514'),
+('P.515', 2, 1, 900000, 2, 5, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 5', 'url_p515'),
+('P.516', 2, 1, 900000, 2, 5, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 5', 'url_p516'),
+('P.517', 2, 1, 900000, 2, 5, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 5', 'url_p517'),
+('P.518', 2, 1, 900000, 2, 5, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 5', 'url_p518');
+
+-- TẦNG 6
+INSERT INTO room (room_number, category_id, status_id, price, capacity, floor, size_m2, bed_configuration, cancellation_policy, description, img_url) VALUES
+('P.601', 1, 1, 600000, 1, 6, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 6', 'url_p601'),
+('P.602', 1, 1, 600000, 1, 6, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 6', 'url_p602'),
+('P.603', 1, 1, 600000, 1, 6, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 6', 'url_p603'),
+('P.604', 1, 1, 600000, 1, 6, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 6', 'url_p604'),
+('P.605', 1, 1, 600000, 1, 6, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 6', 'url_p605'),
+('P.606', 1, 1, 600000, 1, 6, 22, '1 Single Bed', 'Hoàn tiền trước 24h', 'Phòng đơn tiêu chuẩn tầng 6', 'url_p606'),
+('P.607', 2, 1, 900000, 2, 6, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 6', 'url_p607'),
+('P.608', 2, 1, 900000, 2, 6, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 6', 'url_p608'),
+('P.609', 2, 1, 900000, 2, 6, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 6', 'url_p609'),
+('P.610', 2, 1, 900000, 2, 6, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 6', 'url_p610'),
+('P.611', 2, 1, 900000, 2, 6, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 6', 'url_p611'),
+('P.612', 2, 1, 900000, 2, 6, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 6', 'url_p612'),
+('P.613', 2, 1, 900000, 2, 6, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 6', 'url_p613'),
+('P.614', 2, 1, 900000, 2, 6, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 6', 'url_p614'),
+('P.615', 2, 1, 900000, 2, 6, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 6', 'url_p615'),
+('P.616', 2, 1, 900000, 2, 6, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 6', 'url_p616'),
+('P.617', 2, 1, 900000, 2, 6, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 6', 'url_p617'),
+('P.618', 2, 1, 900000, 2, 6, 32, '1 Double Bed', 'Hoàn tiền trước 24h', 'Phòng đôi tiêu chuẩn tầng 6', 'url_p618');
+
+-- TẦNG 7
+INSERT INTO room (room_number, category_id, status_id, price, capacity, floor, size_m2, bed_configuration, cancellation_policy, description, img_url) VALUES
+('P.701', 3, 1, 1500000, 1, 7, 40, '1 King Bed', 'Hoàn tiền trước 48h', 'Phòng đơn Deluxe tầng 7', 'url_p701'),
+('P.702', 3, 1, 1500000, 1, 7, 40, '1 King Bed', 'Hoàn tiền trước 48h', 'Phòng đơn Deluxe tầng 7', 'url_p702'),
+('P.703', 3, 1, 1500000, 1, 7, 40, '1 King Bed', 'Hoàn tiền trước 48h', 'Phòng đơn Deluxe tầng 7', 'url_p703'),
+('P.704', 4, 1, 2200000, 2, 7, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 7', 'url_p704'),
+('P.705', 4, 1, 2200000, 2, 7, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 7', 'url_p705'),
+('P.706', 4, 1, 2200000, 2, 7, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 7', 'url_p706'),
+('P.707', 4, 1, 2200000, 2, 7, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 7', 'url_p707'),
+('P.708', 4, 1, 2200000, 2, 7, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 7', 'url_p708'),
+('P.709', 4, 1, 2200000, 2, 7, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 7', 'url_p709'),
+('P.710', 4, 1, 2200000, 2, 7, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 7', 'url_p710');
+
+-- TẦNG 8
+INSERT INTO room (room_number, category_id, status_id, price, capacity, floor, size_m2, bed_configuration, cancellation_policy, description, img_url) VALUES
+('P.801', 3, 1, 1500000, 1, 8, 40, '1 King Bed', 'Hoàn tiền trước 48h', 'Phòng đơn Deluxe tầng 8', 'url_p801'),
+('P.802', 3, 1, 1500000, 1, 8, 40, '1 King Bed', 'Hoàn tiền trước 48h', 'Phòng đơn Deluxe tầng 8', 'url_p802'),
+('P.803', 3, 1, 1500000, 1, 8, 40, '1 King Bed', 'Hoàn tiền trước 48h', 'Phòng đơn Deluxe tầng 8', 'url_p803'),
+('P.804', 4, 1, 2200000, 2, 8, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 8', 'url_p804'),
+('P.805', 4, 1, 2200000, 2, 8, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 8', 'url_p805'),
+('P.806', 4, 1, 2200000, 2, 8, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 8', 'url_p806'),
+('P.807', 4, 1, 2200000, 2, 8, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 8', 'url_p807'),
+('P.808', 4, 1, 2200000, 2, 8, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 8', 'url_p808'),
+('P.809', 4, 1, 2200000, 2, 8, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 8', 'url_p809'),
+('P.810', 4, 1, 2200000, 2, 8, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 8', 'url_p810');
+
+-- TẦNG 9
+INSERT INTO room (room_number, category_id, status_id, price, capacity, floor, size_m2, bed_configuration, cancellation_policy, description, img_url) VALUES
+('P.901', 3, 1, 1500000, 1, 9, 40, '1 King Bed', 'Hoàn tiền trước 48h', 'Phòng đơn Deluxe tầng 9', 'url_p901'),
+('P.902', 3, 1, 1500000, 1, 9, 40, '1 King Bed', 'Hoàn tiền trước 48h', 'Phòng đơn Deluxe tầng 9', 'url_p902'),
+('P.903', 3, 1, 1500000, 1, 9, 40, '1 King Bed', 'Hoàn tiền trước 48h', 'Phòng đơn Deluxe tầng 9', 'url_p903'),
+('P.904', 4, 1, 2200000, 2, 9, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 9', 'url_p904'),
+('P.905', 4, 1, 2200000, 2, 9, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 9', 'url_p905'),
+('P.906', 4, 1, 2200000, 2, 9, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 9', 'url_p906'),
+('P.907', 4, 1, 2200000, 2, 9, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 9', 'url_p907'),
+('P.908', 4, 1, 2200000, 2, 9, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 9', 'url_p908'),
+('P.909', 4, 1, 2200000, 2, 9, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 9', 'url_p909'),
+('P.910', 4, 1, 2200000, 2, 9, 55, '1 Super King Bed', 'Hoàn tiền trước 48h', 'Phòng đôi Deluxe tầng 9', 'url_p910');
+
+-- TẦNG 10
+INSERT INTO room (room_number, category_id, status_id, price, capacity, floor, size_m2, bed_configuration, cancellation_policy, description, img_url) VALUES
+('P.1001', 5, 1, 10000000, 2, 10, 120, '1 Royal Bed', 'Không hoàn trả', 'President Suite - View panorama', 'url_p1001'),
+('P.1002', 5, 1, 10000000, 2, 10, 120, '1 Royal Bed', 'Không hoàn trả', 'President Suite - Dịch vụ 24/7', 'url_p1002'),
+('P.1003', 5, 1, 10000000, 2, 10, 120, '1 Royal Bed', 'Không hoàn trả', 'President Suite - Nội thất cao cấp', 'url_p1003'),
+('P.1004', 5, 1, 10000000, 2, 10, 120, '1 Royal Bed', 'Không hoàn trả', 'President Suite - Sang trọng bậc nhất', 'url_p1004'),
+('P.1005', 5, 1, 10000000, 2, 10, 120, '1 Royal Bed', 'Không hoàn trả', 'President Suite - Tiện nghi tối tân', 'url_p1005');
+
+-- Service Requests (For Maintenance/Cleaning)
+CREATE TABLE service_requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  room_id INT NULL,
+  
+  type VARCHAR(50) NULL, -- MAINTENANCE, CLEANING
+  description VARCHAR(500) NULL,
+  
+  items_image VARCHAR(500) NULL,
+  
+  priority VARCHAR(20) NULL, -- LIGHT, MEDIUM, HIGH, URGENT
+  status VARCHAR(20) NULL, -- PENDING, IN_PROGRESS, COMPLETED, CANCELLED
+  
+  resolution_notes VARCHAR(1000) NULL,
+  
+  reported_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_sr_room 
+    FOREIGN KEY (room_id) REFERENCES room(room_id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+INSERT INTO service_requests (room_id, type, description, priority, status, reported_at) VALUES 
+(1, 'MAINTENANCE', 'Air conditioner leaking water', 'HIGH', 'PENDING', NOW()),
+(2, 'CLEANING', 'Room needs deep cleaning', 'MEDIUM', 'IN_PROGRESS', NOW());
