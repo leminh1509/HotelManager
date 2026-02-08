@@ -25,6 +25,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
+
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -40,16 +44,17 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/public/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/receptionist/**").hasAnyRole("RECEPTIONIST", "ADMIN")
-                        .requestMatchers("/api/customer/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/public/**")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/admin/**")).hasRole("ADMIN")
+                        .requestMatchers(new AntPathRequestMatcher("/api/receptionist/**"))
+                        .hasAnyRole("RECEPTIONIST", "ADMIN")
+                        .requestMatchers(new AntPathRequestMatcher("/api/customer/**")).hasAnyRole("CUSTOMER", "ADMIN")
                         // Cho phép xem phòng mà không cần login
-                        .requestMatchers(HttpMethod.GET, "/api/rooms/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/rooms/**", "GET")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/categories/**", "GET")).permitAll()
                         // Các API liên quan đến Booking bắt buộc phải có Token (Authenticated)
-                        .requestMatchers("/api/bookings/**").authenticated()
+                        .requestMatchers(new AntPathRequestMatcher("/api/bookings/**")).authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

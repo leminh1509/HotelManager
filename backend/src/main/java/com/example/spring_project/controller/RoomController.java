@@ -1,6 +1,5 @@
 package com.example.spring_project.controller;
 
-
 import com.example.spring_project.entity.Room;
 import com.example.spring_project.dto.RoomResponse;
 import com.example.spring_project.service.RoomService;
@@ -19,11 +18,6 @@ public class RoomController {
 
     public RoomController(RoomService roomService) {
         this.roomService = roomService;
-    }
-    @GetMapping("")
-    public ResponseEntity<List<RoomResponse>> getAll() {
-        List<RoomResponse>  room = roomService.getAll();
-        return ResponseEntity.ok(room);
     }
 
     @GetMapping
