@@ -73,8 +73,7 @@ public class BookingService {
         // 6) tính giá: price × số đêm
         long nights = ChronoUnit.DAYS.between(
                 req.getCheckinTime(),
-                req.getCheckoutTime()
-        );
+                req.getCheckoutTime());
         double totalPrice = room.getPrice() * Math.max(nights, 1);
 
         // 7) build entity
@@ -156,7 +155,7 @@ public class BookingService {
 
         booking.setStatus(Status.Cancelled);
         roomService.updateStatus(booking.getRoom().getRoomId(), 1);
-        
+
         booking.setUpdatedAt(LocalDateTime.now());
 
         Booking updated = bookingRepo.save(booking);
@@ -187,6 +186,16 @@ public class BookingService {
                 newStatus = Status.valueOf(statusStr);
             } catch (IllegalArgumentException ex) {
                 throw new ConflictException("Invalid status: " + statusStr);
+            }
+        }
+
+        if (newStatus == Status.CheckedIn) {
+            Room room = booking.getRoom();
+            String roomStatusName = room.getStatus().getName();
+            // Assuming "Available" is the standard status for ready rooms
+            if (!"Available".equalsIgnoreCase(roomStatusName)) {
+                throw new ConflictException("Room " + room.getRoomNumber()
+                        + " is not ready for check-in. Current status: " + roomStatusName);
             }
         }
 

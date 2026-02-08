@@ -51,7 +51,8 @@ export default function BookingDetail() {
             fetchDetail();
         } catch (err) {
             console.error(err);
-            alert("Failed to update status");
+            const msg = err.response?.data?.message || err.message || "Failed to update status";
+            alert(msg);
         } finally {
             setUpdating(false);
         }
