@@ -367,7 +367,7 @@ const MaintenanceDashboard = () => {
                                 >
                                     <option value="">-- Sảnh / Chung --</option>
                                     {rooms.map(room => (
-                                        <option key={room.roomId} value={room.roomId}>{room.name}</option>
+                                        <option key={room.roomId} value={room.roomId}>{room.roomNumber}</option>
                                     ))}
                                 </select>
                             </div>
