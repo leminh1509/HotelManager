@@ -11,6 +11,8 @@ export default function BookingDetail() {
     const [error, setError] = useState(null);
     const [updating, setUpdating] = useState(false);
 
+    const [showCheckInModal, setShowCheckInModal] = useState(false);
+
     useEffect(() => {
         fetchDetail();
     }, [id]);
@@ -30,8 +32,8 @@ export default function BookingDetail() {
         }
     };
 
-    const handleStatusChange = async (newStatus) => {
-        if (!window.confirm(`Are you sure you want to change status to ${newStatus}?`)) return;
+    const handleStatusChange = async (newStatus, skipConfirm = false) => {
+        if (!skipConfirm && !window.confirm(`Are you sure you want to change status to ${newStatus}?`)) return;
 
         setUpdating(true);
         try {
@@ -58,6 +60,11 @@ export default function BookingDetail() {
     if (loading) return <div>Loading...</div>;
     if (error) return <div className="text-danger">{error}</div>;
     if (!booking) return <div>Booking not found</div>;
+
+    const handleConfirmCheckIn = () => {
+        setShowCheckInModal(false);
+        handleStatusChange("Checked-in", true);
+    };
 
     return (
         <div className="container mt-4">
@@ -107,7 +114,7 @@ export default function BookingDetail() {
                             <button
                                 className="btn btn-success"
                                 disabled={updating}
-                                onClick={() => handleStatusChange("Checked-in")}
+                                onClick={() => setShowCheckInModal(true)}
                             >
                                 Check In
                             </button>
@@ -135,6 +142,66 @@ export default function BookingDetail() {
                     </div>
                 </div>
             </div>
+
+            {/* Check-in Verification Modal */}
+            {showCheckInModal && (
+                <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+                    <div className="modal-dialog modal-lg">
+                        <div className="modal-content">
+                            <div className="modal-header bg-success text-white">
+                                <h5 className="modal-title">Verify Check-In Information</h5>
+                                <button type="button" className="btn-close" onClick={() => setShowCheckInModal(false)}></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="alert alert-info">
+                                    Please verify the guest and booking information before proceeding.
+                                </div>
+                                <div className="row">
+                                    <div className="col-md-6">
+                                        <h6 className="border-bottom pb-2">Guest Details</h6>
+                                        <table className="table table-sm table-borderless">
+                                            <tbody>
+                                                <tr><td><strong>Name:</strong></td><td>{booking.guestName}</td></tr>
+                                                <tr><td><strong>ID Number:</strong></td><td>{booking.guestIdNumber}</td></tr>
+                                                <tr><td><strong>Phone:</strong></td><td>{booking.guestPhone}</td></tr>
+                                                <tr><td><strong>Nationality:</strong></td><td>{booking.guestNationality}</td></tr>
+                                                <tr><td><strong>Special Request:</strong></td><td>{booking.specialRequest || "None"}</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div className="col-md-6">
+                                        <h6 className="border-bottom pb-2">Booking Details</h6>
+                                        <table className="table table-sm table-borderless">
+                                            <tbody>
+                                                <tr><td><strong>Room:</strong></td><td>{booking.roomNumber} ({booking.roomName})</td></tr>
+                                                <tr><td><strong>Check-In Date:</strong></td><td>{new Date(booking.checkinTime).toLocaleDateString()}</td></tr>
+                                                <tr><td><strong>Check-Out Date:</strong></td><td>{new Date(booking.checkoutTime).toLocaleDateString()}</td></tr>
+                                                <tr><td><strong>Guests:</strong></td><td>{booking.guestCount}</td></tr>
+                                                <tr><td><strong>Price:</strong></td><td className="text-danger fw-bold">${booking.totalPrice}</td></tr>
+                                                <tr>
+                                                    <td><strong>Payment (Prepaid):</strong></td>
+                                                    <td>
+                                                        {/* Assuming simple logic for now, or fetch from payment status if available */}
+                                                        <span className="badge bg-secondary">Pending Check</span>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowCheckInModal(false)}>
+                                    Cancel
+                                </button>
+                                <button type="button" className="btn btn-success" onClick={handleConfirmCheckIn} disabled={updating}>
+                                    {updating ? "Processing..." : "Confirm & Check In"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
