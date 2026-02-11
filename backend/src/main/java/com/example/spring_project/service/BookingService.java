@@ -14,6 +14,7 @@ import com.example.spring_project.util.BookingMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -200,6 +201,50 @@ public class BookingService {
         }
 
         booking.setStatus(newStatus);
+        booking.setUpdatedAt(LocalDateTime.now());
+
+        Booking saved = bookingRepo.save(booking);
+        return BookingMapper.toBookingResponse(saved);
+    }
+
+    @Transactional
+    public BookingResponse updateCheckoutDate(Integer bookingId, LocalDate newCheckoutDate) {
+        Booking booking = bookingRepo.findByIdWithDetails(bookingId);
+        if (booking == null) {
+            throw new ResourceNotFoundException("Booking not found: " + bookingId);
+        }
+
+        if (booking.getStatus() == Status.Cancelled || booking.getStatus() == Status.CheckedOut) {
+            throw new ConflictException("Cannot update checkout date for Cancelled or Checked-out bookings");
+        }
+
+        if (!newCheckoutDate.isAfter(booking.getCheckinTime())) {
+            throw new ConflictException(
+                    "New checkout date must be after check-in date (" + booking.getCheckinTime() + ")");
+        }
+
+        // Check availability if extending or changing dates (safest is to always check
+        // excluding self)
+        long overlap = bookingRepo.countOverlappingExcludingBooking(
+                booking.getRoom().getRoomId(),
+                booking.getCheckinTime(),
+                newCheckoutDate,
+                Status.Cancelled,
+                bookingId);
+
+        if (overlap > 0) {
+            throw new ConflictException("Room is not available for the selected dates");
+        }
+
+        // Recalculate price
+        long nights = ChronoUnit.DAYS.between(booking.getCheckinTime(), newCheckoutDate);
+        if (nights < 1)
+            nights = 1; // Minimum 1 night
+
+        double newTotalPrice = booking.getRoom().getPrice() * nights;
+
+        booking.setCheckoutTime(newCheckoutDate);
+        booking.setTotalPrice(newTotalPrice);
         booking.setUpdatedAt(LocalDateTime.now());
 
         Booking saved = bookingRepo.save(booking);

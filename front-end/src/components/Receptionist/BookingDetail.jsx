@@ -12,6 +12,8 @@ export default function BookingDetail() {
     const [updating, setUpdating] = useState(false);
 
     const [showCheckInModal, setShowCheckInModal] = useState(false);
+    const [showExtendModal, setShowExtendModal] = useState(false);
+    const [newCheckoutDate, setNewCheckoutDate] = useState("");
 
     useEffect(() => {
         fetchDetail();
@@ -24,6 +26,10 @@ export default function BookingDetail() {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setBooking(res.data);
+            // Preset newCheckoutDate with current checkout date
+            if (res.data.checkoutTime) {
+                setNewCheckoutDate(res.data.checkoutTime);
+            }
         } catch (err) {
             console.error(err);
             setError("Failed to load booking details");
@@ -52,6 +58,30 @@ export default function BookingDetail() {
         } catch (err) {
             console.error(err);
             const msg = err.response?.data?.message || err.message || "Failed to update status";
+            alert(msg);
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleExtendStay = async () => {
+        if (!newCheckoutDate) return;
+        if (!window.confirm(`Confirm change check-out date to ${newCheckoutDate}? Total price will be updated.`)) return;
+
+        setUpdating(true);
+        try {
+            const token = localStorage.getItem("token");
+            await axios.patch(
+                `http://localhost:9999/api/bookings/${id}/checkout`,
+                { checkoutDate: newCheckoutDate },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            alert("Check-out date updated successfully!");
+            setShowExtendModal(false);
+            fetchDetail();
+        } catch (err) {
+            console.error(err);
+            const msg = err.response?.data?.message || err.message || "Failed to update check-out date";
             alert(msg);
         } finally {
             setUpdating(false);
@@ -100,7 +130,7 @@ export default function BookingDetail() {
 
                     <hr />
 
-                    <div className="d-flex gap-2">
+                    <div className="d-flex gap-2 flex-wrap">
                         {booking.status === "Pending" && (
                             <button
                                 className="btn btn-primary"
@@ -122,13 +152,22 @@ export default function BookingDetail() {
                         )}
 
                         {booking.status === "Checked-in" && (
-                            <button
-                                className="btn btn-warning"
-                                disabled={updating}
-                                onClick={() => handleStatusChange("Checked-out")}
-                            >
-                                Check Out
-                            </button>
+                            <>
+                                <button
+                                    className="btn btn-warning"
+                                    disabled={updating}
+                                    onClick={() => handleStatusChange("Checked-out")}
+                                >
+                                    Check Out
+                                </button>
+                                <button
+                                    className="btn btn-info text-white"
+                                    disabled={updating}
+                                    onClick={() => setShowExtendModal(true)}
+                                >
+                                    Extend Stay / Change Dates
+                                </button>
+                            </>
                         )}
 
                         {(booking.status === "Pending" || booking.status === "Confirmed") && (
@@ -197,6 +236,44 @@ export default function BookingDetail() {
                                 </button>
                                 <button type="button" className="btn btn-success" onClick={handleConfirmCheckIn} disabled={updating}>
                                     {updating ? "Processing..." : "Confirm & Check In"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Extend Stay Modal */}
+            {showExtendModal && (
+                <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+                    <div className="modal-dialog">
+                        <div className="modal-content">
+                            <div className="modal-header bg-info text-white">
+                                <h5 className="modal-title">Extend Stay / Change Check-out</h5>
+                                <button type="button" className="btn-close" onClick={() => setShowExtendModal(false)}></button>
+                            </div>
+                            <div className="modal-body">
+                                <p>Current Check-out: <strong>{booking.checkoutTime}</strong></p>
+                                <div className="mb-3">
+                                    <label className="form-label">New Check-out Date</label>
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        value={newCheckoutDate}
+                                        min={booking.checkinTime}
+                                        onChange={(e) => setNewCheckoutDate(e.target.value)}
+                                    />
+                                </div>
+                                <div className="alert alert-warning">
+                                    Changing the date will automatically check room availability and recalculate the total price.
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowExtendModal(false)}>
+                                    Cancel
+                                </button>
+                                <button type="button" className="btn btn-primary" onClick={handleExtendStay} disabled={updating}>
+                                    {updating ? "Updating..." : "Update Date & Price"}
                                 </button>
                             </div>
                         </div>

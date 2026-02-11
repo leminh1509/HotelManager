@@ -39,6 +39,24 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                         @Param("cancelled") Status cancelled);
 
         /**
+         * Kiểm tra overlap trừ booking hiện tại (dùng khi update booking).
+         */
+        @Query("""
+                                SELECT COUNT(b) FROM Booking b
+                                WHERE b.room.roomId    = :roomId
+                                  AND b.bookingId     <> :excludeBookingId
+                                  AND b.status        <> :cancelled
+                                  AND b.checkinTime   < :checkout
+                                  AND b.checkoutTime  > :checkin
+                        """)
+        Long countOverlappingExcludingBooking(
+                        @Param("roomId") Integer roomId,
+                        @Param("checkin") LocalDate checkin,
+                        @Param("checkout") LocalDate checkout,
+                        @Param("cancelled") Status cancelled,
+                        @Param("excludeBookingId") Integer excludeBookingId);
+
+        /**
          * Lấy booking kèm fetch eager room + category để map DTO.
          */
         @Query("""
