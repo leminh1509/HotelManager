@@ -68,4 +68,6 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                                 WHERE b.bookingId = :id
                         """)
         Booking findByIdWithDetails(@Param("id") Integer id);
+
+        List<Booking> findByStatus(Status status);
 }

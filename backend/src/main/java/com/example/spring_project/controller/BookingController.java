@@ -42,7 +42,10 @@ public class BookingController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BookingResponse>> getAllBookings() {
+    public ResponseEntity<List<BookingResponse>> getAllBookings(@RequestParam(required = false) String status) {
+        if (status != null && !status.isEmpty()) {
+            return ResponseEntity.ok(bookingService.getBookingsByStatus(status));
+        }
         return ResponseEntity.ok(bookingService.getAllBookings());
     }
 

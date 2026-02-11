@@ -164,6 +164,26 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
+    public List<BookingResponse> getBookingsByStatus(String statusStr) {
+        Status status;
+        try {
+            status = Status.fromString(statusStr);
+        } catch (IllegalArgumentException e) {
+            try {
+                status = Status.valueOf(statusStr);
+            } catch (IllegalArgumentException ex) {
+                throw new ConflictException("Invalid status: " + statusStr);
+            }
+        }
+
+        List<Booking> bookings = bookingRepo.findByStatus(status);
+        return bookings.stream()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .map(BookingMapper::toBookingResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public List<BookingResponse> getAllBookings() {
         List<Booking> list = bookingRepo.findAll();
         return list.stream()
