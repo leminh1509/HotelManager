@@ -16,7 +16,9 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Integer> {
 
     Optional<User> findByEmail(String email);
+
     Boolean existsByEmail(String email);
+
     Boolean existsByMobilePhone(String mobilePhone);
 
     // ✅ Tìm users theo role name
@@ -40,10 +42,16 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     // ✅ Tìm active users
     List<User> findByIsActiveTrue();
 
-    // ✅ Custom query với nhiều điều kiện
-    @Query("SELECT u FROM User u WHERE u.role.name = :roleName AND u.isActive = :isActive")
-    List<User> findByRoleNameAndActiveStatus(
+    // ✅ Search with filter and pagination
+    @Query("SELECT u FROM User u WHERE " +
+            "(:roleName IS NULL OR u.role.name = :roleName) AND " +
+            "(:keyword IS NULL OR " +
+            " LOWER(u.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            " LOWER(u.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            " LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            " LOWER(u.mobilePhone) LIKE LOWER(CONCAT('%', :keyword, '%'))) ")
+    Page<User> searchUsers(
             @Param("roleName") String roleName,
-            @Param("isActive") Boolean isActive
-    );
+            @Param("keyword") String keyword,
+            Pageable pageable);
 }
