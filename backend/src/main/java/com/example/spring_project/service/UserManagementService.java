@@ -24,9 +24,15 @@ public class UserManagementService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
 
-    // ✅ TỐI ƯU: Dùng pagination
-    public Page<UserResponse> getAllUsers(Pageable pageable) {
-        return userRepository.findAll(pageable)
+    // ✅ Optimized Search with Pagination
+    public Page<UserResponse> getAllUsers(String keyword, String roleName, Pageable pageable) {
+        // Handle empty strings as null
+        if (keyword != null && keyword.trim().isEmpty())
+            keyword = null;
+        if (roleName != null && (roleName.trim().isEmpty() || roleName.equals("all")))
+            roleName = null;
+
+        return userRepository.searchUsers(roleName, keyword, pageable)
                 .map(this::convertToUserResponse);
     }
 
