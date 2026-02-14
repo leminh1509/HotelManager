@@ -25,7 +25,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:5173"})
+@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:3001", "http://localhost:5173" })
 @PreAuthorize("hasRole('ADMIN')")
 @Slf4j
 public class UserManagementController {
@@ -41,21 +41,27 @@ public class UserManagementController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "userId") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir
-    ) {
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String role) {
         try {
             Sort sort = sortDir.equalsIgnoreCase("asc")
                     ? Sort.by(sortBy).ascending()
                     : Sort.by(sortBy).descending();
 
             Pageable pageable = PageRequest.of(page, size, sort);
-            Page<UserResponse> users = userManagementService.getAllUsers(pageable);
+            Page<UserResponse> users = userManagementService.getAllUsers(keyword, role, pageable);
 
+            // Response with search criteria
             Map<String, Object> response = new HashMap<>();
             response.put("users", users.getContent());
             response.put("currentPage", users.getNumber());
             response.put("totalItems", users.getTotalElements());
             response.put("totalPages", users.getTotalPages());
+            if (keyword != null)
+                response.put("keyword", keyword);
+            if (role != null)
+                response.put("role", role);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -120,8 +126,7 @@ public class UserManagementController {
     @PutMapping("/{userId}")
     public ResponseEntity<?> updateUser(
             @PathVariable Integer userId,
-            @Valid @RequestBody UpdateUserRequest request
-    ) {
+            @Valid @RequestBody UpdateUserRequest request) {
         try {
             log.info("Updating user: {}", userId);
             UserResponse updatedUser = userManagementService.updateUser(userId, request);
@@ -145,8 +150,7 @@ public class UserManagementController {
     @PatchMapping("/{userId}/role")
     public ResponseEntity<?> changeUserRole(
             @PathVariable Integer userId,
-            @RequestBody Map<String, Integer> payload
-    ) {
+            @RequestBody Map<String, Integer> payload) {
         try {
             Integer roleId = payload.get("roleId");
 
