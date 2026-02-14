@@ -150,8 +150,10 @@ public class BookingService {
             throw new ConflictException("You can only cancel your own bookings");
         }
 
-        if (booking.getStatus() == Status.Cancelled) {
-            throw new ConflictException("Booking is already cancelled");
+        if (booking.getStatus() == Status.Cancelled ||
+                booking.getStatus() == Status.CheckedIn ||
+                booking.getStatus() == Status.CheckedOut) {
+            throw new ConflictException("Cannot cancel a booking that is " + booking.getStatus());
         }
 
         booking.setStatus(Status.Cancelled);
