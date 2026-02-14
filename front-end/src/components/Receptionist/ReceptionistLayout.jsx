@@ -58,6 +58,13 @@ export default function ReceptionistLayout() {
             <i className="fa fa-credit-card"></i> Payment Status
           </NavLink>
 
+          <NavLink
+            to="/receptionist/maintenance"
+            className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
+          >
+            <i className="fa fa-wrench"></i> Maintenance
+          </NavLink>
+
           {/* Add more links if needed */}
 
           <button onClick={handleLogout} className="nav-item logout-btn">
