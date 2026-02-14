@@ -65,6 +65,13 @@ export default function ReceptionistLayout() {
             <i className="fa fa-wrench"></i> Maintenance
           </NavLink>
 
+          <NavLink
+            to="/receptionist/cleaning"
+            className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
+          >
+            <i className="fa fa-paint-brush"></i> Cleaning
+          </NavLink>
+
           {/* Add more links if needed */}
 
           <button onClick={handleLogout} className="nav-item logout-btn">
