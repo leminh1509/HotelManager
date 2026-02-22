@@ -24,6 +24,7 @@ import RoomList from "./components/Receptionist/RoomList";
 import ReceptionistRoomDetail from "./components/Receptionist/RoomDetail";
 import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
 import RoomList1 from "./components/Room/RoomList";
+import BookingList1 from"./components/Booking/BookingList";
 
 const Forbidden = () => (
   <div style={{ padding: 40, textAlign: "center" }}>
@@ -95,6 +96,7 @@ export default function App() {
       {/*List room */}
       <Route path="/rooms" element={<RoomList1 />} />
 
+      
       {/* login/register phải truyền callback */}
       <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
       <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
@@ -108,6 +110,7 @@ export default function App() {
         {/* ===== BOOKING ===== */}
 
         <Route path="/rooms/:roomId" element={<RoomDetail />} />
+        <Route path="/booking/list" element={<BookingList1 />} />
         <Route path="/booking/new/:roomId" element={<BookingForm />} />
         <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmation />} />
         <Route path="/my-bookings" element={<MyBookings />} />

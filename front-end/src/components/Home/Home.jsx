@@ -142,7 +142,17 @@ export default function Home({ user, role, onLogout }) {
           <i className="fa fa-chevron-right" />
         </button>
 
-       
+       <div className="hero-cta">
+  <h1>Find Your Perfect Stay</h1>
+  <p>Luxury rooms – Best price – Instant booking</p>
+
+  <button
+    className="hero-book-btn"
+    onClick={() => navigate("/booking/list")}
+  >
+    Đặt phòng ngay
+  </button>
+</div>
       </section>
 
       {/* spacer so search bar doesn't overlap next section */}

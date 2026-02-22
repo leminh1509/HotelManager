@@ -70,6 +70,16 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
+      // ─────────────────────────────────────────────────────
+    // GET /api/bookings/all
+    // Lấy danh sách booking
+    // ─────────────────────────────────────────────────────
+    @GetMapping("/all")
+    public ResponseEntity<List<BookingResponse>> getAll() {
+         List<BookingResponse> response = bookingService.getAllBookings();
+        return ResponseEntity.ok(response);
+    }
+
     // ─────────────────────────────────────────────────────
     // GET /api/bookings/me
     // Lấy tất cả bookings của user đang login
