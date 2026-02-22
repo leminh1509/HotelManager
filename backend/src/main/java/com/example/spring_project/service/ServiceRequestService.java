@@ -51,6 +51,11 @@ public class ServiceRequestService {
 
     public ServiceRequest updateStatus(Long id, ServiceRequestStatus status, String notes) {
         ServiceRequest request = repository.findById(id).orElseThrow(() -> new RuntimeException("Request not found"));
+
+        if (request.getStatus() == ServiceRequestStatus.COMPLETED) {
+            throw new IllegalArgumentException("Không thể thay đổi trạng thái của yêu cầu đã hoàn thành");
+        }
+
         request.setStatus(status);
         if (notes != null && !notes.isEmpty()) {
             request.setResolutionNotes(notes);

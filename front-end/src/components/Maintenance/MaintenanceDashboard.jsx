@@ -316,7 +316,15 @@ const MaintenanceDashboard = () => {
                                         <td>{getStatusBadge(req.status)}</td>
                                         <td>{new Date(req.reportedAt).toLocaleDateString()}</td>
                                         <td>
-                                            <button className="action-btn" onClick={() => handleUpdateClick(req)}>Cập nhật</button>
+                                            <button
+                                                className="action-btn"
+                                                onClick={() => handleUpdateClick(req)}
+                                                disabled={req.status === 'COMPLETED'}
+                                                style={req.status === 'COMPLETED' ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                                                title={req.status === 'COMPLETED' ? 'Không thể cập nhật yêu cầu đã hoàn thành' : ''}
+                                            >
+                                                Cập nhật
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
