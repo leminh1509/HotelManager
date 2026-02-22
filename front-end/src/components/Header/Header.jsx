@@ -53,7 +53,7 @@ export default function Header({
                   <i className="fa fa-phone" /> (84) 359 797 703
                 </li>
                 <li>
-                  <i className="fa fa-envelope" /> 36hotel@gmail.com
+                  <i className="fa fa-envelope" /> 37hotel@gmail.com
                 </li>
               </ul>
             </div>
@@ -73,7 +73,7 @@ export default function Header({
                   <>
                     <div className="user-nav-link user-welcome">
                       <NavLink to="/profile">
-                        <i className="fa fa-user-circle-o" /> Hi, {user.firstName+" "+user.lastName}
+                        <i className="fa fa-user-circle-o" /> Hi, {user.firstName + " " + user.lastName}
                       </NavLink>
                     </div>
 
