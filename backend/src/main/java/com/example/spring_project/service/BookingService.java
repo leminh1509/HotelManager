@@ -172,6 +172,7 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
+
     @Transactional
     public BookingResponse updateStatus(Integer bookingId, String statusStr) {
         Booking booking = bookingRepo.findByIdWithDetails(bookingId);

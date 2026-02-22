@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation  } from "react-router-dom";
 import { useBooking } from "../../context/BookingContext";
-import { getRoomById, createBooking } from "../../services/bookingAPI";
+import { getRoomById, createBooking, getBookingById } from "../../services/bookingAPI";
 import "./BookingForm.css";
 
 // ─── Mock room fallback (xóa khi API thật sẵn sàng) ────
@@ -96,6 +96,11 @@ export default function BookingForm() {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
+  const location = useLocation();
+
+  const [dateConflict, setDateConflict] = useState(false);
+  const [checkingDate, setCheckingDate] = useState(false);
+
   // Fetch room nếu chưa có trong context
   useEffect(() => {
     if (room) return;
@@ -117,7 +122,87 @@ export default function BookingForm() {
     fetch();
   }, [roomId, room, setSelectedRoom, navigate]);
 
+  // ─── Auto fill date từ query params ───
+useEffect(() => {
+  const params = new URLSearchParams(location.search);
+
+  const checkIn = params.get("checkIn");
+  const checkOut = params.get("checkOut");
+
+  // chỉ set khi bookingData chưa có (tránh overwrite khi user sửa tay)
+  const updateData = {};
+
+  if (checkIn && !bookingData.checkinDate) {
+    updateData.checkinDate = checkIn;
+  }
+
+  if (checkOut && !bookingData.checkoutDate) {
+    updateData.checkoutDate = checkOut;
+  }
+
+  if (Object.keys(updateData).length > 0) {
+    updateBookingData(updateData);
+  }
+}, [location.search]);
+
+// ─── Check booking conflict ───
+useEffect(() => {
+  async function checkConflict() {
+    if (!bookingData.checkinDate || !bookingData.checkoutDate || !room)
+      return;
+
+    setCheckingDate(true);
+
+    try {
+      // giả sử API trả về list booking của room
+      const res = await getBookingById(room.roomId);
+      console.log('res',res.data);
+      // normalize API response
+let bookings = [];
+
+if (Array.isArray(res.data)) {
+  bookings = res.data;
+} else if (res.data && typeof res.data === "object") {
+  bookings = [res.data];
+}
+
+      let conflict = false;
+
+      for (const b of bookings) {
+        const bookedCheckin = b.checkinTime.split("T")[0];
+        const bookedCheckout = b.checkoutTime.split("T")[0];
+
+        if (
+          isOverlap(
+            bookingData.checkinDate,
+            bookingData.checkoutDate,
+            bookedCheckin,
+            bookedCheckout
+          )
+        ) {
+          conflict = true;
+          break;
+        }
+      }
+
+      setDateConflict(conflict);
+    } catch (err) {
+      console.error("Check booking conflict error:", err);
+      setDateConflict(false);
+    } finally {
+      setCheckingDate(false);
+    }
+  }
+
+  checkConflict();
+}, [bookingData.checkinDate, bookingData.checkoutDate, room]);
+
   // ─── Validation ──
+  // kiểm tra overlap date
+  const isOverlap = (start1, end1, start2, end2) => {
+    return new Date(start1) < new Date(end2) &&
+           new Date(end1) > new Date(start2);
+};
   const validateStep = (s) => {
     const errs = {};
     if (s === 0) {
@@ -135,8 +220,53 @@ export default function BookingForm() {
       if (!bookingData.guestPhone?.trim()) errs.guestPhone = "Nhập số điện thoại";
       if (!bookingData.guestIdNumber?.trim()) errs.guestIdNumber = "Nhập số CMND/Hộ chiếu";
     }
+    if (dateConflict) {
+      errs.checkoutDate = "Khoảng ngày này đã có người đặt";
+    }
     return errs;
   };
+
+  const validateStep2 = () => {
+  // số điện thoại VN (9–11 số)
+const phoneRegex = /^[0-9]{9,11}$/;
+
+// CMND/CCCD (9 hoặc 12 số)
+const idRegex = /^[0-9]{9}$|^[0-9]{12}$/;
+
+// email cơ bản
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const errs = {};
+
+  // tên
+  if (!bookingData.customerName?.trim()) {
+    errs.customerName = "Vui lòng nhập họ tên";
+  }
+
+  // email
+  if (!bookingData.email) {
+    errs.email = "Vui lòng nhập email";
+  } else if (!emailRegex.test(bookingData.email)) {
+    errs.email = "Email không hợp lệ";
+  }
+
+  // số điện thoại
+  if (!bookingData.phone) {
+    errs.phone = "Vui lòng nhập số điện thoại";
+  } else if (!phoneRegex.test(bookingData.phone)) {
+    errs.phone = "Số điện thoại phải là 9–11 chữ số";
+  }
+
+  // CMND / CCCD
+  if (!bookingData.identityNumber) {
+    errs.identityNumber = "Vui lòng nhập CMND/CCCD";
+  } else if (!idRegex.test(bookingData.identityNumber)) {
+    errs.identityNumber = "CMND/CCCD phải gồm 9 hoặc 12 số";
+  }
+
+  setErrors(errs);
+
+  return Object.keys(errs).length === 0;
+};
 
   const handleNext = () => {
     const errs = validateStep(step);
@@ -145,6 +275,9 @@ export default function BookingForm() {
       return;
     }
     setErrors({});
+     if (step === 2) {
+     if (!validateStep2()) return;
+    }
     setStep((s) => s + 1);
   };
 
@@ -183,7 +316,7 @@ export default function BookingForm() {
       const diff = end - start;
       const nights = diff > 0 ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : 1;
 
-      navigate("/payment", {
+      navigate(`/booking/confirmation/${bookingId}`, {
         state: {
           bookingId,
           totalAmount: totalPrice,
@@ -244,6 +377,11 @@ export default function BookingForm() {
                     {errors.checkoutDate && <span className="bf-error">{errors.checkoutDate}</span>}
                   </div>
                 </div>
+                {dateConflict && (
+                    <div className="bf-error" style={{marginTop: "10px"}}>
+                        ❌ Khoảng thời gian này phòng đã được đặt. Vui lòng chọn ngày khác.
+                    </div>
+)}
 
                 <div className="bf-field">
                   <label>Số khách <span className="bf-req">*</span></label>
@@ -260,7 +398,13 @@ export default function BookingForm() {
                 </div>
 
                 <div className="bf-actions">
-                  <button onClick={handleNext} className="bf-btn-next">Tiếp tục →</button>
+                 <button
+                    onClick={handleNext}
+                    disabled={dateConflict || checkingDate}
+                    className="bf-btn-next"
+                >
+                  {checkingDate ? "Đang kiểm tra..." : "Tiếp tục →"}
+                </button>
                 </div>
               </div>
             )}
