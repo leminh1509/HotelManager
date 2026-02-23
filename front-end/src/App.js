@@ -17,6 +17,9 @@ import PaymentResult from "./components/Payment/PaymentResult";
 import BookingList from "./components/Receptionist/BookingList";
 import ReceptionistLayout from "./components/Receptionist/ReceptionistLayout";
 import BookingDetail from "./components/Receptionist/BookingDetail";
+import PaymentList from "./components/Receptionist/PaymentList";
+import MaintenanceRequestList from "./components/Receptionist/MaintenanceRequestList";
+import CleaningRequestList from "./components/Receptionist/CleaningRequestList";
 import RoomList from "./components/Receptionist/RoomList";
 import ReceptionistRoomDetail from "./components/Receptionist/RoomDetail";
 import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
@@ -127,6 +130,9 @@ export default function App() {
         <Route element={<RequireRole allowed={["RECEPTIONIST"]} />}>
           <Route path="/receptionist" element={<ReceptionistLayout />}>
             <Route index element={<BookingList />} />
+            <Route path="payments" element={<PaymentList />} />
+            <Route path="maintenance" element={<MaintenanceRequestList />} />
+            <Route path="cleaning" element={<CleaningRequestList />} />
             <Route path="bookings/:id" element={<BookingDetail />} />
             <Route path="rooms" element={<RoomList />} />
             <Route path="rooms/:id" element={<ReceptionistRoomDetail />} />

@@ -170,6 +170,24 @@ const MaintenanceDashboard = () => {
         }
     };
 
+    const handleQuickStatusUpdate = async (req, newStatus) => {
+        try {
+            const token = localStorage.getItem('token');
+            let notes = '';
+            if (newStatus === 'CANCELLED') {
+                notes = window.prompt("Vui lòng nhập lý do từ chối (Ghi chú):");
+                if (notes === null) return; // User cancelled
+            }
+            await axios.put(`${API_URL}/${req.id}/status`, { status: newStatus, notes: notes }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchRequests();
+        } catch (error) {
+            console.error("Error quick updating request", error);
+            alert('Cập nhật thất bại');
+        }
+    };
+
     const getPriorityColor = (p) => {
         switch (p) {
             case 'URGENT': return 'red';
@@ -315,8 +333,34 @@ const MaintenanceDashboard = () => {
                                         </td>
                                         <td>{getStatusBadge(req.status)}</td>
                                         <td>{new Date(req.reportedAt).toLocaleDateString()}</td>
-                                        <td>
-                                            <button className="action-btn" onClick={() => handleUpdateClick(req)}>Cập nhật</button>
+                                        <td style={{ display: 'flex', gap: '8px', minWidth: '200px' }}>
+                                            {req.status === 'PENDING' && (
+                                                <>
+                                                    <button
+                                                        className="action-btn"
+                                                        style={{ backgroundColor: '#e3f2fd', color: '#1976d2', borderColor: '#1976d2' }}
+                                                        onClick={() => handleQuickStatusUpdate(req, 'IN_PROGRESS')}
+                                                    >
+                                                        Nhận
+                                                    </button>
+                                                    <button
+                                                        className="action-btn"
+                                                        style={{ backgroundColor: '#ffebee', color: '#c62828', borderColor: '#c62828' }}
+                                                        onClick={() => handleQuickStatusUpdate(req, 'CANCELLED')}
+                                                    >
+                                                        Từ chối
+                                                    </button>
+                                                </>
+                                            )}
+                                            <button
+                                                className="action-btn"
+                                                onClick={() => handleUpdateClick(req)}
+                                                disabled={req.status === 'COMPLETED'}
+                                                style={req.status === 'COMPLETED' ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                                                title={req.status === 'COMPLETED' ? 'Không thể cập nhật yêu cầu đã hoàn thành' : ''}
+                                            >
+                                                Cập nhật
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}

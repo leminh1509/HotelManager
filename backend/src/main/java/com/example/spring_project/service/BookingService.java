@@ -14,6 +14,7 @@ import com.example.spring_project.util.BookingMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -73,8 +74,7 @@ public class BookingService {
         // 6) tính giá: price × số đêm
         long nights = ChronoUnit.DAYS.between(
                 req.getCheckinTime(),
-                req.getCheckoutTime()
-        );
+                req.getCheckoutTime());
         double totalPrice = room.getPrice() * Math.max(nights, 1);
 
         // 7) build entity
@@ -160,17 +160,39 @@ public class BookingService {
             throw new ConflictException("You can only cancel your own bookings");
         }
 
-        if (booking.getStatus() == Status.Cancelled) {
-            throw new ConflictException("Booking is already cancelled");
+        if (booking.getStatus() == Status.Cancelled ||
+                booking.getStatus() == Status.CheckedIn ||
+                booking.getStatus() == Status.CheckedOut) {
+            throw new ConflictException("Cannot cancel a booking that is " + booking.getStatus());
         }
 
         booking.setStatus(Status.Cancelled);
         roomService.updateStatus(booking.getRoom().getRoomId(), 1);
-        
+
         booking.setUpdatedAt(LocalDateTime.now());
 
         Booking updated = bookingRepo.save(booking);
         return BookingMapper.toBookingResponse(updated);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getBookingsByStatus(String statusStr) {
+        Status status;
+        try {
+            status = Status.fromString(statusStr);
+        } catch (IllegalArgumentException e) {
+            try {
+                status = Status.valueOf(statusStr);
+            } catch (IllegalArgumentException ex) {
+                throw new ConflictException("Invalid status: " + statusStr);
+            }
+        }
+
+        List<Booking> bookings = bookingRepo.findByStatus(status);
+        return bookings.stream()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .map(BookingMapper::toBookingResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -201,7 +223,61 @@ public class BookingService {
             }
         }
 
+        if (newStatus == Status.CheckedIn) {
+            Room room = booking.getRoom();
+            String roomStatusName = room.getStatus().getName();
+            // Assuming "Available" is the standard status for ready rooms
+            if (!"Available".equalsIgnoreCase(roomStatusName)) {
+                throw new ConflictException("Room " + room.getRoomNumber()
+                        + " is not ready for check-in. Current status: " + roomStatusName);
+            }
+        }
+
         booking.setStatus(newStatus);
+        booking.setUpdatedAt(LocalDateTime.now());
+
+        Booking saved = bookingRepo.save(booking);
+        return BookingMapper.toBookingResponse(saved);
+    }
+
+    @Transactional
+    public BookingResponse updateCheckoutDate(Integer bookingId, LocalDate newCheckoutDate) {
+        Booking booking = bookingRepo.findByIdWithDetails(bookingId);
+        if (booking == null) {
+            throw new ResourceNotFoundException("Booking not found: " + bookingId);
+        }
+
+        if (booking.getStatus() == Status.Cancelled || booking.getStatus() == Status.CheckedOut) {
+            throw new ConflictException("Cannot update checkout date for Cancelled or Checked-out bookings");
+        }
+
+        if (!newCheckoutDate.isAfter(booking.getCheckinTime())) {
+            throw new ConflictException(
+                    "New checkout date must be after check-in date (" + booking.getCheckinTime() + ")");
+        }
+
+        // Check availability if extending or changing dates (safest is to always check
+        // excluding self)
+        long overlap = bookingRepo.countOverlappingExcludingBooking(
+                booking.getRoom().getRoomId(),
+                booking.getCheckinTime(),
+                newCheckoutDate,
+                Status.Cancelled,
+                bookingId);
+
+        if (overlap > 0) {
+            throw new ConflictException("Room is not available for the selected dates");
+        }
+
+        // Recalculate price
+        long nights = ChronoUnit.DAYS.between(booking.getCheckinTime(), newCheckoutDate);
+        if (nights < 1)
+            nights = 1; // Minimum 1 night
+
+        double newTotalPrice = booking.getRoom().getPrice() * nights;
+
+        booking.setCheckoutTime(newCheckoutDate);
+        booking.setTotalPrice(newTotalPrice);
         booking.setUpdatedAt(LocalDateTime.now());
 
         Booking saved = bookingRepo.save(booking);

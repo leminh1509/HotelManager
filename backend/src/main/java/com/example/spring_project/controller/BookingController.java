@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -36,12 +37,15 @@ public class BookingController {
         if (auth == null || auth.getPrincipal() == null) {
             throw new RuntimeException("Not authenticated");
         }
-        User user = (User) auth.getPrincipal(); 
-        return user.getUserId();                
+        User user = (User) auth.getPrincipal();
+        return user.getUserId();
     }
 
     @GetMapping
-    public ResponseEntity<List<BookingResponse>> getAllBookings() {
+    public ResponseEntity<List<BookingResponse>> getAllBookings(@RequestParam(required = false) String status) {
+        if (status != null && !status.isEmpty()) {
+            return ResponseEntity.ok(bookingService.getBookingsByStatus(status));
+        }
         return ResponseEntity.ok(bookingService.getAllBookings());
     }
 
@@ -101,6 +105,18 @@ public class BookingController {
     // PUT /api/bookings/{bookingId}/cancel
     // Hủy booking
     // ─────────────────────────────────────────────────────
+    @PatchMapping("/{bookingId}/checkout")
+    public ResponseEntity<BookingResponse> updateCheckoutDate(
+            @PathVariable Integer bookingId,
+            @RequestBody java.util.Map<String, String> body) {
+        String dateStr = body.get("checkoutDate");
+        if (dateStr == null) {
+            throw new IllegalArgumentException("checkoutDate is required");
+        }
+        LocalDate newDate = LocalDate.parse(dateStr);
+        return ResponseEntity.ok(bookingService.updateCheckoutDate(bookingId, newDate));
+    }
+
     @PutMapping("/{bookingId}/cancel")
     public ResponseEntity<BookingResponse> cancel(@PathVariable Integer bookingId) {
         Integer userId = getCurrentUserId();

@@ -41,6 +41,25 @@ public class ServiceRequestController {
         return service.getAllRequests();
     }
 
+    @GetMapping("/cleaning")
+    public Page<ServiceRequest> getCleaningRequests(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        ServiceRequestStatus statusEnum = status != null && !status.isEmpty() ? ServiceRequestStatus.valueOf(status)
+                : null;
+        Pageable pageable = PageRequest.of(page, size, Sort.by("reportedAt").descending());
+        return service.searchRequests(statusEnum, ServiceRequestType.CLEANING, search, pageable);
+    }
+
+    @PostMapping("/cleaning")
+    public ServiceRequest createCleaningRequest(@RequestBody Map<String, Object> payload) {
+        // Reuse logic but force type
+        payload.put("type", "CLEANING");
+        return createRequest(payload);
+    }
+
     @PostMapping
     public ServiceRequest createRequest(@RequestBody Map<String, Object> payload) {
         Object roomIdObj = payload.get("roomId");
