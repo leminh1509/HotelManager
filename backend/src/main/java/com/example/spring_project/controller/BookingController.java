@@ -66,6 +66,16 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
+    // ─────────────────────────────────────────────────────
+    // GET /api/rooms/{roomId}
+    // Lấy chi tiết 1 booking
+    // ─────────────────────────────────────────────────────
+    
+    @GetMapping("/rooms/{roomId}")
+    public ResponseEntity<List<BookingResponse>> getByRoomId(@PathVariable Integer roomId) {
+         List<BookingResponse> response = bookingService.getByRoomId(roomId);
+        return ResponseEntity.ok(response);
+    }
       // ─────────────────────────────────────────────────────
     // GET /api/bookings/all
     // Lấy danh sách booking

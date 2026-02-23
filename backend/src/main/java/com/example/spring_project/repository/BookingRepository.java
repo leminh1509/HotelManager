@@ -24,6 +24,16 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
     """)
     List<Booking> findByUserId(@Param("userId") Integer userId);
 
+     /**
+     * Lấy tất cả bookings của một room, sắp xếp mới nhất trước.
+     */
+    @Query("""
+            SELECT b FROM Booking b
+            WHERE b.room.roomId = :roomId
+            ORDER BY b.createdAt DESC
+    """)
+    List<Booking> findByRoomId(@Param("roomId") Integer roomId);
+
     /**
      * Kiểm tra xem phòng có booking overlap không (trừ Cancelled).
      * Dùng trước khi confirm booking mới.
