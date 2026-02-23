@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link, useLocation  } from "react-router-dom";
 import { useBooking } from "../../context/BookingContext";
-import { getRoomById, createBooking, getBookingById } from "../../services/bookingAPI";
+import { getRoomById, createBooking, getBookingByRoomId } from "../../services/bookingAPI";
 import "./BookingForm.css";
 
 // ─── Mock room fallback (xóa khi API thật sẵn sàng) ────
@@ -97,7 +97,6 @@ export default function BookingForm() {
   const [errors, setErrors] = useState({});
 
   const location = useLocation();
-
   const [dateConflict, setDateConflict] = useState(false);
   const [checkingDate, setCheckingDate] = useState(false);
 
@@ -145,6 +144,7 @@ useEffect(() => {
   }
 }, [location.search]);
 
+ 
 // ─── Check booking conflict ───
 useEffect(() => {
   async function checkConflict() {
@@ -155,7 +155,7 @@ useEffect(() => {
 
     try {
       // giả sử API trả về list booking của room
-      const res = await getBookingById(room.roomId);
+      const res = await getBookingByRoomId(room.roomId);
       console.log('res',res.data);
       // normalize API response
 let bookings = [];
@@ -200,6 +200,7 @@ if (Array.isArray(res.data)) {
   // ─── Validation ──
   // kiểm tra overlap date
   const isOverlap = (start1, end1, start2, end2) => {
+    console.log(start1, end1, start2, end2);
     return new Date(start1) < new Date(end2) &&
            new Date(end1) > new Date(start2);
 };
@@ -238,29 +239,29 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const errs = {};
 
   // tên
-  if (!bookingData.customerName?.trim()) {
-    errs.customerName = "Vui lòng nhập họ tên";
+  if (!bookingData.guestName?.trim()) {
+    errs.guestName = "Vui lòng nhập họ tên";
   }
 
   // email
-  if (!bookingData.email) {
-    errs.email = "Vui lòng nhập email";
-  } else if (!emailRegex.test(bookingData.email)) {
-    errs.email = "Email không hợp lệ";
-  }
+  // if (!bookingData.guestEmail) {
+  //   errs.email = "Vui lòng nhập email";
+  // } else if (!emailRegex.test(bookingData.guestEmail)) {
+  //   errs.email = "Email không hợp lệ";
+  // }
 
   // số điện thoại
-  if (!bookingData.phone) {
-    errs.phone = "Vui lòng nhập số điện thoại";
-  } else if (!phoneRegex.test(bookingData.phone)) {
-    errs.phone = "Số điện thoại phải là 9–11 chữ số";
+  if (!bookingData.guestPhone) {
+    errs.guestPhone = "Vui lòng nhập số điện thoại";
+  } else if (!phoneRegex.test(bookingData.guestPhone)) {
+    errs.guestPhone = "Số điện thoại phải là 9–11 chữ số";
   }
 
   // CMND / CCCD
-  if (!bookingData.identityNumber) {
-    errs.identityNumber = "Vui lòng nhập CMND/CCCD";
-  } else if (!idRegex.test(bookingData.identityNumber)) {
-    errs.identityNumber = "CMND/CCCD phải gồm 9 hoặc 12 số";
+  if (!bookingData.guestIdNumber) {
+    errs.guestIdNumber = "Vui lòng nhập CMND/CCCD";
+  } else if (!idRegex.test(bookingData.guestIdNumber)) {
+    errs.guestIdNumber = "CMND/CCCD phải gồm 9 hoặc 12 số";
   }
 
   setErrors(errs);
@@ -275,7 +276,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return;
     }
     setErrors({});
-     if (step === 2) {
+     if (step === 1) {
      if (!validateStep2()) return;
     }
     setStep((s) => s + 1);
@@ -443,6 +444,8 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                     <label>Số điện thoại <span className="bf-req">*</span></label>
                     <input
                       type="tel"
+                      pattern="[0-9]{10}" 
+                      title="Vui lòng nhập đúng 10 chữ số"
                       placeholder="0xx xxx xxxx"
                       value={bookingData.guestPhone}
                       onChange={(e) => updateBookingData({ guestPhone: e.target.value })}
@@ -454,6 +457,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                     <label>CMND / Hộ chiếu <span className="bf-req">*</span></label>
                     <input
                       type="text"
+                      pattern="[0-9]{12}"
                       placeholder="12 chữ số CMND hoặc số hộ chiếu"
                       value={bookingData.guestIdNumber}
                       onChange={(e) => updateBookingData({ guestIdNumber: e.target.value })}

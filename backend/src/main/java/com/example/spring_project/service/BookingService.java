@@ -119,6 +119,16 @@ public class BookingService {
     }
 
     // ─────────────────────────────────────────────────────
+    // Lấy booking theo ID phòng
+    // ─────────────────────────────────────────────────────
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getByRoomId(Integer roomId) {
+        List<Booking> bookings = bookingRepo.findByRoomId(roomId);
+        return bookings.stream()
+                .map(BookingMapper::toBookingResponse)
+                .collect(Collectors.toList());
+    }
+    // ─────────────────────────────────────────────────────
     // Lấy tất cả bookings của user đang login
     // ─────────────────────────────────────────────────────
     @Transactional(readOnly = true)

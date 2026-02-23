@@ -44,7 +44,11 @@ export const getMyBookings = () => api.get("/bookings/me");
 // GET /bookings/:bookingId  → chi tiết 1 booking
 export const getBookingById = (bookingId) => api.get(`/bookings/${bookingId}`);
 
-// Get /bookings/statuses
+// GET /bookings/rooms/:roomId
+export const getBookingByRoomId = (roomId) =>
+  api.get(`/bookings/rooms/${roomId}`);
+
+// Get /bookings/all
 export const getAllBooking = () => api.get("/bookings/all");
 
 // PUT /bookings/:bookingId/cancel
