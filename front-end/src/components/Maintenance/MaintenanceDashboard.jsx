@@ -232,9 +232,6 @@ const MaintenanceDashboard = () => {
                         <h1>Bảng Điều Khiển Bảo Trì & Dọn Dẹp</h1>
                         <p>Chào mừng trở lại, {user.firstName || 'Nhân viên'}.</p>
                     </div>
-                    <button className="create-btn" onClick={() => setCreateModalOpen(true)}>
-                        + Yêu Cầu Mới
-                    </button>
                 </div>
 
                 {/* Stats Row */}
@@ -387,63 +384,7 @@ const MaintenanceDashboard = () => {
                 </div>
             </div>
 
-            {/* Create Request Modal */}
-            {isCreateModalOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h2>Tạo Yêu Cầu Mới</h2>
-                        <form onSubmit={handleCreateSubmit}>
-                            <div className="form-group">
-                                <label>Loại Yêu Cầu</label>
-                                <select
-                                    value={newRequest.type}
-                                    onChange={e => setNewRequest({ ...newRequest, type: e.target.value })}
-                                >
-                                    <option value="MAINTENANCE">Bảo trì (Maintenance)</option>
-                                    <option value="CLEANING">Dọn phòng (Cleaning)</option>
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label>Phòng (Tùy chọn)</label>
-                                <select
-                                    value={newRequest.roomId}
-                                    onChange={e => setNewRequest({ ...newRequest, roomId: e.target.value })}
-                                >
-                                    <option value="">-- Sảnh / Chung --</option>
-                                    {rooms.map(room => (
-                                        <option key={room.roomId} value={room.roomId}>{room.roomNumber}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label>Mức Độ Ưu Tiên</label>
-                                <select
-                                    value={newRequest.priority}
-                                    onChange={e => setNewRequest({ ...newRequest, priority: e.target.value })}
-                                >
-                                    <option value="LIGHT">Nhẹ (Light)</option>
-                                    <option value="MEDIUM">Trung bình (Medium)</option>
-                                    <option value="HIGH">Cao (High)</option>
-                                    <option value="URGENT">Khẩn cấp (Urgent)</option>
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label>Mô Tả</label>
-                                <textarea
-                                    required
-                                    value={newRequest.description}
-                                    onChange={e => setNewRequest({ ...newRequest, description: e.target.value })}
-                                    placeholder="Mô tả vấn đề..."
-                                />
-                            </div>
-                            <div className="modal-actions">
-                                <button type="button" onClick={() => setCreateModalOpen(false)}>Hủy</button>
-                                <button type="submit" className="primary-btn">Tạo Yêu Cầu</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            {/* Create Request Modal removed as it's now handled by Receptionist */}
 
             {/* Update Status Modal */}
             {isUpdateModalOpen && (
