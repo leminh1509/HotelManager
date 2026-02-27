@@ -61,6 +61,11 @@
             <optional>true</optional>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
         <!-- JWT Dependencies - Version 0.11.5 -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
