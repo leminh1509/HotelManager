@@ -1,6 +1,8 @@
 // src/components/Register/Register.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import Header from '../Header/Header';
+import Footer from '../Footer/Footer';
 import './Register.css';
 
 const Register = ({ onRegisterSuccess }) => {
@@ -24,7 +26,6 @@ const Register = ({ onRegisterSuccess }) => {
       ...prev,
       [name]: value
     }));
-    // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -91,9 +92,8 @@ const Register = ({ onRegisterSuccess }) => {
       const data = await response.json();
 
       if (response.ok) {
-        // Save user data to localStorage
         localStorage.setItem('token', data.token);
-        
+
         const userData = {
           userId: data.userId,
           email: data.email,
@@ -101,7 +101,7 @@ const Register = ({ onRegisterSuccess }) => {
           lastName: data.lastName,
           role: data.role
         };
-        
+
         localStorage.setItem('user', JSON.stringify(userData));
 
         if (onRegisterSuccess) {
@@ -125,159 +125,165 @@ const Register = ({ onRegisterSuccess }) => {
   };
 
   return (
-    <div className="register-container">
-      <div className="register-wrapper">
-        <div className="register-card">
-          <div className="register-header">
-            <h2>Create Account</h2>
-            <p>Join Hotel today</p>
-          </div>
+    <>
+      <Header user={null} role="guest" />
 
-          {errors.general && (
-            <div className="alert alert-danger" role="alert">
-              {errors.general}
+      <div className="register-container">
+        <div className="register-wrapper">
+          <div className="register-card">
+            <div className="register-header">
+              <h2>Create Account</h2>
+              <p>Join Hotel today</p>
             </div>
-          )}
 
-          <form onSubmit={handleSubmit} className="register-form">
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="firstName">First Name *</label>
-                <input
-                  type="text"
-                  id="firstName"
-                  name="firstName"
-                  className={`form-control ${errors.firstName ? 'is-invalid' : ''}`}
-                  placeholder="First name"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                />
-                {errors.firstName && <div className="invalid-feedback">{errors.firstName}</div>}
+            {errors.general && (
+              <div className="alert alert-danger" role="alert">
+                {errors.general}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="register-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="firstName">First Name *</label>
+                  <input
+                    type="text"
+                    id="firstName"
+                    name="firstName"
+                    className={`form-control ${errors.firstName ? 'is-invalid' : ''}`}
+                    placeholder="First name"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                  />
+                  {errors.firstName && <div className="invalid-feedback">{errors.firstName}</div>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="middleName">Middle Name</label>
+                  <input
+                    type="text"
+                    id="middleName"
+                    name="middleName"
+                    className="form-control"
+                    placeholder="Middle name (optional)"
+                    value={formData.middleName}
+                    onChange={handleChange}
+                  />
+                </div>
               </div>
 
               <div className="form-group">
-                <label htmlFor="middleName">Middle Name</label>
+                <label htmlFor="lastName">Last Name *</label>
                 <input
                   type="text"
-                  id="middleName"
-                  name="middleName"
+                  id="lastName"
+                  name="lastName"
+                  className={`form-control ${errors.lastName ? 'is-invalid' : ''}`}
+                  placeholder="Last name"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                />
+                {errors.lastName && <div className="invalid-feedback">{errors.lastName}</div>}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="email">Email Address *</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                  placeholder="your.email@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+                {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="mobilePhone">Mobile Phone</label>
+                <input
+                  type="tel"
+                  id="mobilePhone"
+                  name="mobilePhone"
+                  className={`form-control ${errors.mobilePhone ? 'is-invalid' : ''}`}
+                  placeholder="0123456789"
+                  value={formData.mobilePhone}
+                  onChange={handleChange}
+                />
+                {errors.mobilePhone && <div className="invalid-feedback">{errors.mobilePhone}</div>}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="birthday">Birthday</label>
+                <input
+                  type="date"
+                  id="birthday"
+                  name="birthday"
                   className="form-control"
-                  placeholder="Middle name (optional)"
-                  value={formData.middleName}
+                  value={formData.birthday}
                   onChange={handleChange}
                 />
               </div>
+
+              <div className="form-group">
+                <label htmlFor="password">Password *</label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  className={`form-control ${errors.password ? 'is-invalid' : ''}`}
+                  placeholder="At least 6 characters"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+                {errors.password && <div className="invalid-feedback">{errors.password}</div>}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="confirmPassword">Confirm Password *</label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  className={`form-control ${errors.confirmPassword ? 'is-invalid' : ''}`}
+                  placeholder="Re-enter your password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                />
+                {errors.confirmPassword && <div className="invalid-feedback">{errors.confirmPassword}</div>}
+              </div>
+
+              <button
+                type="submit"
+                className="btn-register"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Creating Account...
+                  </>
+                ) : (
+                  'Create Account'
+                )}
+              </button>
+            </form>
+
+            <div className="register-footer">
+              <p>
+                Already have an account?{' '}
+                <Link to="/login" className="login-link">
+                  Sign in
+                </Link>
+              </p>
             </div>
-
-            <div className="form-group">
-              <label htmlFor="lastName">Last Name *</label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                className={`form-control ${errors.lastName ? 'is-invalid' : ''}`}
-                placeholder="Last name"
-                value={formData.lastName}
-                onChange={handleChange}
-              />
-              {errors.lastName && <div className="invalid-feedback">{errors.lastName}</div>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="email">Email Address *</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                className={`form-control ${errors.email ? 'is-invalid' : ''}`}
-                placeholder="your.email@example.com"
-                value={formData.email}
-                onChange={handleChange}
-              />
-              {errors.email && <div className="invalid-feedback">{errors.email}</div>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="mobilePhone">Mobile Phone</label>
-              <input
-                type="tel"
-                id="mobilePhone"
-                name="mobilePhone"
-                className={`form-control ${errors.mobilePhone ? 'is-invalid' : ''}`}
-                placeholder="0123456789"
-                value={formData.mobilePhone}
-                onChange={handleChange}
-              />
-              {errors.mobilePhone && <div className="invalid-feedback">{errors.mobilePhone}</div>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="birthday">Birthday</label>
-              <input
-                type="date"
-                id="birthday"
-                name="birthday"
-                className="form-control"
-                value={formData.birthday}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="password">Password *</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                className={`form-control ${errors.password ? 'is-invalid' : ''}`}
-                placeholder="At least 6 characters"
-                value={formData.password}
-                onChange={handleChange}
-              />
-              {errors.password && <div className="invalid-feedback">{errors.password}</div>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="confirmPassword">Confirm Password *</label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                className={`form-control ${errors.confirmPassword ? 'is-invalid' : ''}`}
-                placeholder="Re-enter your password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
-              {errors.confirmPassword && <div className="invalid-feedback">{errors.confirmPassword}</div>}
-            </div>
-
-            <button
-              type="submit"
-              className="btn-register"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Creating Account...
-                </>
-              ) : (
-                'Create Account'
-              )}
-            </button>
-          </form>
-
-          <div className="register-footer">
-            <p>
-              Already have an account?{' '}
-              <Link to="/login" className="login-link">
-                Sign in
-              </Link>
-            </p>
           </div>
         </div>
       </div>
-    </div>
+
+      <Footer />
+    </>
   );
 };
 

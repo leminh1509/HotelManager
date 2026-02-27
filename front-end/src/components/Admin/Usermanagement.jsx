@@ -204,7 +204,7 @@ export default function UserManagement() {
         page: page,
         size: pageSize,
         sortBy: "userId",
-        sortDir: "desc",
+        sortDir: "asc",
       });
 
       if (searchTerm) params.append("keyword", searchTerm);
