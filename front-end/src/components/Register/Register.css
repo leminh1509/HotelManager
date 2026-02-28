@@ -1,11 +1,13 @@
 /* src/components/Register/Register.css */
 .register-container {
-  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 40px 20px;
+  background-image: linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(88, 28, 135, 0.6) 50%, rgba(15, 23, 42, 0.8) 100%), url("https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1920&q=80");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  padding: 60px 20px;
 }
 
 .register-wrapper {
@@ -14,7 +16,10 @@
 }
 
 .register-card {
-  background: white;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   padding: 40px;

@@ -1,5 +1,6 @@
 package com.example.spring_project.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +14,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserResponse {
-
 
     private Integer userId;
     private String firstName;
@@ -32,4 +32,11 @@ public class UserResponse {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @JsonProperty("role")
+    public String getRole() {
+        if (roleName == null) return null;
+        String r = roleName.toUpperCase();
+        return r.startsWith("ROLE_") ? r.substring(5) : r; // ADMIN thay vì ROLE_ADMIN
+    }
 }
