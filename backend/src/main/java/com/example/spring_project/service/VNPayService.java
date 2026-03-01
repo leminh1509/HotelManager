@@ -87,4 +87,36 @@ public class VNPayService {
         // "00" is success
         return "00".equals(vnp_ResponseCode) ? 1 : 0;
     }
+
+    public boolean verifyHash(Map<String, String> fields) {
+        String vnp_SecureHash = fields.get("vnp_SecureHash");
+        if (vnp_SecureHash == null) {
+            return false;
+        }
+
+        fields.remove("vnp_SecureHashType");
+        fields.remove("vnp_SecureHash");
+
+        // Sort fields
+        List<String> fieldNames = new ArrayList<>(fields.keySet());
+        Collections.sort(fieldNames);
+        StringBuilder hashData = new StringBuilder();
+        Iterator<String> itr = fieldNames.iterator();
+        while (itr.hasNext()) {
+            String fieldName = itr.next();
+            String fieldValue = fields.get(fieldName);
+            if ((fieldValue != null) && (fieldValue.length() > 0)) {
+                // Build hash data
+                hashData.append(fieldName);
+                hashData.append('=');
+                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                if (itr.hasNext()) {
+                    hashData.append('&');
+                }
+            }
+        }
+
+        String signValue = VNPayConfig.hmacSHA512(vnPayConfig.getSecretKey(), hashData.toString());
+        return signValue.equals(vnp_SecureHash);
+    }
 }
