@@ -19,12 +19,12 @@ import ReceptionistLayout from "./components/Receptionist/ReceptionistLayout";
 import BookingDetail from "./components/Receptionist/BookingDetail";
 import PaymentList from "./components/Receptionist/PaymentList";
 import MaintenanceRequestList from "./components/Receptionist/MaintenanceRequestList";
-import CleaningRequestList from "./components/Receptionist/CleaningRequestList";
+
 import RoomList from "./components/Receptionist/RoomList";
 import ReceptionistRoomDetail from "./components/Receptionist/RoomDetail";
 import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
 import RoomList1 from "./components/Room/RoomList";
-import BookingList1 from"./components/Booking/BookingList";
+import BookingList1 from "./components/Booking/BookingList";
 import Profile from "./components/Profile/Profile";
 
 const Forbidden = () => (
@@ -97,7 +97,7 @@ export default function App() {
       {/*List room */}
       <Route path="/rooms" element={<RoomList1 />} />
 
-      
+
       {/* login/register phải truyền callback */}
       <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
       <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
@@ -134,7 +134,7 @@ export default function App() {
             <Route index element={<BookingList />} />
             <Route path="payments" element={<PaymentList />} />
             <Route path="maintenance" element={<MaintenanceRequestList />} />
-            <Route path="cleaning" element={<CleaningRequestList />} />
+
             <Route path="bookings/:id" element={<BookingDetail />} />
             <Route path="rooms" element={<RoomList />} />
             <Route path="rooms/:id" element={<ReceptionistRoomDetail />} />
