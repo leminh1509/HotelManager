@@ -47,13 +47,12 @@ export default function PaymentList() {
                             <th>Check-out</th>
                             <th>Total Amount</th>
                             <th>Payment Status</th>
-                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {payments.length === 0 ? (
                             <tr>
-                                <td colSpan="8" className="text-center">No checked-out bookings found.</td>
+                                <td colSpan="7" className="text-center">No checked-out bookings found.</td>
                             </tr>
                         ) : (
                             payments.map((booking) => (
@@ -66,14 +65,6 @@ export default function PaymentList() {
                                     <td className="fw-bold text-success">${booking.totalPrice}</td>
                                     <td>
                                         <span className="badge bg-success">Completed</span>
-                                    </td>
-                                    <td>
-                                        <button
-                                            className="btn btn-sm btn-outline-primary"
-                                            onClick={() => navigate(`/receptionist/booking/${booking.bookingId}`)}
-                                        >
-                                            View Details
-                                        </button>
                                     </td>
                                 </tr>
                             ))

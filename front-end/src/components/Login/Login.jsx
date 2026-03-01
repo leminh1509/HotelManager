@@ -1,6 +1,8 @@
 // src/components/Login/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import Header from '../Header/Header';
+import Footer from '../Footer/Footer';
 import './Login.css';
 
 const normalizeRole = (role) => {
@@ -26,7 +28,6 @@ const Login = ({ onLoginSuccess }) => {
     }));
     setError('');
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,7 +71,7 @@ const Login = ({ onLoginSuccess }) => {
       if (onLoginSuccess) onLoginSuccess(userData);
       switch (role) {
         case 'ADMIN':
-          navigate('/admin', { replace: true }); 
+          navigate('/admin', { replace: true });
           break;
         case 'RECEPTIONIST':
           navigate('/receptionist', { replace: true });
@@ -92,84 +93,90 @@ const Login = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-wrapper">
-        <div className="login-card">
-          <div className="login-header">
-            <h2>Welcome Back</h2>
-            <p>Sign in to continue to Hotel</p>
-          </div>
+    <>
+      <Header user={null} role="guest" />
 
-          {error && (
-            <div className="alert alert-danger" role="alert">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="login-form">
-            <div className="form-group">
-              <label htmlFor="email">Email Address</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                className="form-control"
-                placeholder="Enter your email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                autoComplete="email"
-              />
+      <div className="login-container">
+        <div className="login-wrapper">
+          <div className="login-card">
+            <div className="login-header">
+              <h2>Welcome Back</h2>
+              <p>Sign in to continue to Hotel</p>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                className="form-control"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                autoComplete="current-password"
-              />
-            </div>
-
-            <div className="form-options">
-              <div className="remember-me">
-                <input type="checkbox" id="remember" />
-                <label htmlFor="remember">Remember me</label>
+            {error && (
+              <div className="alert alert-danger" role="alert">
+                {error}
               </div>
-              <Link to="/forgot-password" className="forgot-link">
-                Forgot Password?
-              </Link>
+            )}
+
+            <form onSubmit={handleSubmit} className="login-form">
+              <div className="form-group">
+                <label htmlFor="email">Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  className="form-control"
+                  placeholder="Enter your email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="password">Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  className="form-control"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  autoComplete="current-password"
+                />
+              </div>
+
+              <div className="form-options">
+                <div className="remember-me">
+                  <input type="checkbox" id="remember" />
+                  <label htmlFor="remember">Remember me</label>
+                </div>
+                <Link to="/forgot-password" className="forgot-link">
+                  Forgot Password?
+                </Link>
+              </div>
+
+              <button type="submit" className="btn-login" disabled={loading}>
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Signing in...
+                  </>
+                ) : (
+                  'Sign In'
+                )}
+              </button>
+            </form>
+
+            <div className="login-footer">
+              <p>
+                Don't have an account?{' '}
+                <Link to="/register" className="register-link">
+                  Sign up now
+                </Link>
+              </p>
             </div>
-
-            <button type="submit" className="btn-login" disabled={loading}>
-              {loading ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Signing in...
-                </>
-              ) : (
-                'Sign In'
-              )}
-            </button>
-          </form>
-
-          <div className="login-footer">
-            <p>
-              Don't have an account?{' '}
-              <Link to="/register" className="register-link">
-                Sign up now
-              </Link>
-            </p>
           </div>
         </div>
       </div>
-    </div>
+
+      <Footer />
+    </>
   );
 };
 

@@ -49,39 +49,35 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                         @Param("cancelled") Status cancelled);
 
         /**
-         * Lấy booking kèm fetch eager room + category để map DTO.
-         */
-        @Query("""
-                                SELECT b FROM Booking b
-                                JOIN FETCH b.room r
-                                JOIN FETCH r.category
-                                JOIN FETCH b.user
-                                WHERE b.bookingId = :id
-                        """)
-        Booking findByIdWithDetails(@Param("id") Integer id);
-
-        /**
-         * Lọc bookings theo trạng thái.
-         */
-        List<Booking> findByStatus(Status status);
-
-        /**
-         * Kiểm tra xem phòng có booking overlap không, ngoại trừ checking booking hiện
-         * tại (trừ Cancelled).
-         * Dùng khi cập nhật checkout date cho một booking đã có.
+         * Kiểm tra overlap trừ booking hiện tại (dùng khi update booking).
          */
         @Query("""
                                 SELECT COUNT(b) FROM Booking b
                                 WHERE b.room.roomId    = :roomId
+                                  AND b.bookingId     <> :excludeBookingId
                                   AND b.status        <> :cancelled
                                   AND b.checkinTime   < :checkout
                                   AND b.checkoutTime  > :checkin
-                                  AND b.bookingId     <> :bookingId
                         """)
         Long countOverlappingExcludingBooking(
                         @Param("roomId") Integer roomId,
                         @Param("checkin") LocalDate checkin,
                         @Param("checkout") LocalDate checkout,
                         @Param("cancelled") Status cancelled,
-                        @Param("bookingId") Integer bookingId);
+                        @Param("excludeBookingId") Integer excludeBookingId);
+
+        List<Booking> findByStatus(Status status);
+
+        /**
+         * Lấy booking kèm fetch eager room + category + status để map DTO.
+         */
+        @Query("""
+                                SELECT b FROM Booking b
+                                JOIN FETCH b.room r
+                                JOIN FETCH r.category
+                                JOIN FETCH r.status
+                                JOIN FETCH b.user
+                                WHERE b.bookingId = :id
+                        """)
+        Booking findByIdWithDetails(@Param("id") Integer id);
 }

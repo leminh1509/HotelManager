@@ -25,6 +25,7 @@ import ReceptionistRoomDetail from "./components/Receptionist/RoomDetail";
 import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
 import RoomList1 from "./components/Room/RoomList";
 import BookingList1 from"./components/Booking/BookingList";
+import Profile from "./components/Profile/Profile";
 
 const Forbidden = () => (
   <div style={{ padding: 40, textAlign: "center" }}>
@@ -114,6 +115,7 @@ export default function App() {
         <Route path="/booking/new/:roomId" element={<BookingForm />} />
         <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmation />} />
         <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/profile" element={<Profile onLogout={handleLogout} />} />
       </Route>
       {/* ===== ADMIN ===== */}
       <Route element={<ProtectedRoute />}>
