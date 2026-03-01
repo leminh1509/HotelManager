@@ -4,29 +4,43 @@ import { useNavigate } from "react-router-dom";
 
 export default function MaintenanceRequestList() {
     const [requests, setRequests] = useState([]);
+    const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [showModal, setShowModal] = useState(false);
 
-    // Form state
     const [newRequest, setNewRequest] = useState({
         roomId: "",
         description: "",
-        type: "MAINTENANCE", // Default from enum
         priority: "MEDIUM"
     });
     const [submitting, setSubmitting] = useState(false);
 
     const navigate = useNavigate();
 
-    // Fetch requests
+    const fetchRooms = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await axios.get("http://localhost:9999/api/rooms", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const roomList = res.data;
+            setRooms(roomList);
+            if (roomList.length > 0) {
+                setNewRequest(prev => ({ ...prev, roomId: roomList[0].roomId }));
+            }
+        } catch (err) {
+            console.error("Failed to load rooms", err);
+        }
+    };
+
     const fetchRequests = async () => {
         try {
             const token = localStorage.getItem("token");
-            const res = await axios.get("http://localhost:9999/api/requests", {
+            const res = await axios.get("http://localhost:9999/api/requests/maintenance", {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setRequests(res.data);
+            setRequests(res.data.content || []);
             setLoading(false);
         } catch (err) {
             console.error(err);
@@ -37,6 +51,7 @@ export default function MaintenanceRequestList() {
 
     useEffect(() => {
         fetchRequests();
+        fetchRooms();
     }, []);
 
     const handleInputChange = (e) => {
@@ -54,12 +69,12 @@ export default function MaintenanceRequestList() {
         setSubmitting(true);
         try {
             const token = localStorage.getItem("token");
-            await axios.post("http://localhost:9999/api/requests", newRequest, {
+            await axios.post("http://localhost:9999/api/requests/maintenance", newRequest, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             alert("Request created successfully!");
             setShowModal(false);
-            setNewRequest({ roomId: "", description: "", type: "MAINTENANCE", priority: "MEDIUM" });
+            setNewRequest({ roomId: "", description: "", priority: "MEDIUM" });
             fetchRequests();
         } catch (err) {
             console.error(err);
@@ -89,7 +104,6 @@ export default function MaintenanceRequestList() {
                             <th>ID</th>
                             <th>Room</th>
                             <th>Description</th>
-                            <th>Type</th>
                             <th>Priority</th>
                             <th>Status</th>
                             <th>Date</th>
@@ -106,18 +120,17 @@ export default function MaintenanceRequestList() {
                                     <td>#{req.id}</td>
                                     <td>{req.room ? `Room ${req.room.roomNumber}` : "General"}</td>
                                     <td>{req.description}</td>
-                                    <td><span className="badge bg-secondary">{req.type}</span></td>
                                     <td>
                                         <span className={`badge ${req.priority === "HIGH" || req.priority === "URGENT" ? "bg-danger" :
-                                                req.priority === "MEDIUM" ? "bg-warning text-dark" : "bg-info"
+                                            req.priority === "MEDIUM" ? "bg-warning text-dark" : "bg-info"
                                             }`}>
                                             {req.priority}
                                         </span>
                                     </td>
                                     <td>
                                         <span className={`badge ${req.status === "COMPLETED" ? "bg-success" :
-                                                req.status === "IN_PROGRESS" ? "bg-primary" :
-                                                    req.status === "CANCELLED" ? "bg-secondary" : "bg-warning text-dark"
+                                            req.status === "IN_PROGRESS" ? "bg-primary" :
+                                                req.status === "CANCELLED" ? "bg-secondary" : "bg-warning text-dark"
                                             }`}>
                                             {req.status}
                                         </span>
@@ -142,21 +155,18 @@ export default function MaintenanceRequestList() {
                             <form onSubmit={handleSubmit}>
                                 <div className="modal-body">
                                     <div className="mb-3">
-                                        <label className="form-label">Room ID (Optional)</label>
-                                        <input
-                                            type="number"
-                                            className="form-control"
+                                        <label className="form-label">Room (Optional)</label>
+                                        <select
+                                            className="form-select"
                                             name="roomId"
                                             value={newRequest.roomId}
                                             onChange={handleInputChange}
-                                            placeholder="Leave empty for general area"
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Type</label>
-                                        <select className="form-select" name="type" value={newRequest.type} onChange={handleInputChange}>
-                                            <option value="MAINTENANCE">Maintenance</option>
-                                            <option value="CLEANING">Cleaning</option>
+                                        >
+                                            {rooms.map(room => (
+                                                <option key={room.roomId} value={room.roomId}>
+                                                    Room {room.roomNumber} — {room.category?.name || ""}
+                                                </option>
+                                            ))}
                                         </select>
                                     </div>
                                     <div className="mb-3">

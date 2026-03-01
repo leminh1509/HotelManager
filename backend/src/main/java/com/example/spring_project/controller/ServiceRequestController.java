@@ -60,6 +60,24 @@ public class ServiceRequestController {
         return createRequest(payload);
     }
 
+    @GetMapping("/maintenance")
+    public Page<ServiceRequest> getMaintenanceRequests(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        ServiceRequestStatus statusEnum = status != null && !status.isEmpty() ? ServiceRequestStatus.valueOf(status)
+                : null;
+        Pageable pageable = PageRequest.of(page, size, Sort.by("reportedAt").descending());
+        return service.searchRequests(statusEnum, ServiceRequestType.MAINTENANCE, search, pageable);
+    }
+
+    @PostMapping("/maintenance")
+    public ServiceRequest createMaintenanceRequest(@RequestBody Map<String, Object> payload) {
+        payload.put("type", "MAINTENANCE");
+        return createRequest(payload);
+    }
+
     @PostMapping
     public ServiceRequest createRequest(@RequestBody Map<String, Object> payload) {
         Object roomIdObj = payload.get("roomId");

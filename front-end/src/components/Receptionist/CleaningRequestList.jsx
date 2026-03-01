@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function CleaningRequestList() {
     const [requests, setRequests] = useState([]);
+    const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [showModal, setShowModal] = useState(false);
@@ -17,6 +18,22 @@ export default function CleaningRequestList() {
     const [submitting, setSubmitting] = useState(false);
 
     const navigate = useNavigate();
+
+    const fetchRooms = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await axios.get("http://localhost:9999/api/rooms", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const roomList = res.data;
+            setRooms(roomList);
+            if (roomList.length > 0) {
+                setNewRequest(prev => ({ ...prev, roomId: roomList[0].roomId }));
+            }
+        } catch (err) {
+            console.error("Failed to load rooms", err);
+        }
+    };
 
     // Fetch requests
     const fetchRequests = async () => {
@@ -38,6 +55,7 @@ export default function CleaningRequestList() {
 
     useEffect(() => {
         fetchRequests();
+        fetchRooms();
     }, []);
 
     const handleInputChange = (e) => {
@@ -108,15 +126,15 @@ export default function CleaningRequestList() {
                                     <td>{req.description}</td>
                                     <td>
                                         <span className={`badge ${req.priority === "HIGH" || req.priority === "URGENT" ? "bg-danger" :
-                                                req.priority === "MEDIUM" ? "bg-warning text-dark" : "bg-info"
+                                            req.priority === "MEDIUM" ? "bg-warning text-dark" : "bg-info"
                                             }`}>
                                             {req.priority}
                                         </span>
                                     </td>
                                     <td>
                                         <span className={`badge ${req.status === "COMPLETED" ? "bg-success" :
-                                                req.status === "IN_PROGRESS" ? "bg-primary" :
-                                                    req.status === "CANCELLED" ? "bg-secondary" : "bg-warning text-dark"
+                                            req.status === "IN_PROGRESS" ? "bg-primary" :
+                                                req.status === "CANCELLED" ? "bg-secondary" : "bg-warning text-dark"
                                             }`}>
                                             {req.status}
                                         </span>
@@ -141,15 +159,19 @@ export default function CleaningRequestList() {
                             <form onSubmit={handleSubmit}>
                                 <div className="modal-body">
                                     <div className="mb-3">
-                                        <label className="form-label">Room ID (Optional)</label>
-                                        <input
-                                            type="number"
-                                            className="form-control"
+                                        <label className="form-label">Room (Optional)</label>
+                                        <select
+                                            className="form-select"
                                             name="roomId"
                                             value={newRequest.roomId}
                                             onChange={handleInputChange}
-                                            placeholder="Leave empty for general area"
-                                        />
+                                        >
+                                            {rooms.map(room => (
+                                                <option key={room.roomId} value={room.roomId}>
+                                                    Room {room.roomNumber} — {room.category?.name || ""}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label">Priority</label>
