@@ -230,7 +230,6 @@ public class UserManagementController {
     /**
      * Xóa user VĨNH VIỄN (Hard Delete)
      * DELETE /api/admin/users/{userId}
-     * FIX: Xóa thật sự khỏi database
      */
     @DeleteMapping("/{userId}")
     public ResponseEntity<?> deleteUser(@PathVariable Integer userId) {
