@@ -223,13 +223,14 @@ public class BookingService {
             }
         }
 
-        if (newStatus == Status.CheckedIn) {
+        if (newStatus == Status.Confirmed || newStatus == Status.CheckedIn) {
             Room room = booking.getRoom();
             String roomStatusName = room.getStatus().getName();
-            // Assuming "Available" is the standard status for ready rooms
             if (!"Available".equalsIgnoreCase(roomStatusName)) {
                 throw new ConflictException("Room " + room.getRoomNumber()
-                        + " is not ready for check-in. Current status: " + roomStatusName);
+                        + " is not ready. Current status: " + roomStatusName
+                        + ". Room must be 'Available' before "
+                        + (newStatus == Status.Confirmed ? "confirming" : "checking in") + ".");
             }
         }
 
