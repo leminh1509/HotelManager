@@ -7,6 +7,7 @@ export default function BookingList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const PAGE_SIZE = 10;
 
   useEffect(() => {
@@ -43,12 +44,29 @@ export default function BookingList() {
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-danger">{error}</div>;
 
-  const totalPages = Math.ceil(bookings.length / PAGE_SIZE);
-  const paginated = bookings.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const filtered = searchQuery
+    ? bookings.filter(b => b.guestName?.toLowerCase().includes(searchQuery.toLowerCase()))
+    : bookings;
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <div className="container-fluid">
       <h2 className="mb-4">Booking Management</h2>
+
+      {/* Search Bar */}
+      <div className="mb-3">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Search by guest name..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
+        />
+      </div>
       <div className="card shadow filter-card">
         <div className="card-body">
           <div className="table-responsive">
@@ -128,7 +146,8 @@ export default function BookingList() {
       )}
 
       <div className="text-center text-muted mt-2 small">
-        Showing {Math.min((currentPage - 1) * PAGE_SIZE + 1, bookings.length)}–{Math.min(currentPage * PAGE_SIZE, bookings.length)} of {bookings.length} bookings
+        Showing {filtered.length === 0 ? 0 : Math.min((currentPage - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} bookings
+        {searchQuery && ` (filtered from ${bookings.length} total)`}
       </div>
     </div>
   );
