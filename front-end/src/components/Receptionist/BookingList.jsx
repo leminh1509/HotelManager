@@ -6,6 +6,8 @@ export default function BookingList() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
     fetchBookings();
@@ -41,6 +43,9 @@ export default function BookingList() {
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-danger">{error}</div>;
 
+  const totalPages = Math.ceil(bookings.length / PAGE_SIZE);
+  const paginated = bookings.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
   return (
     <div className="container-fluid">
       <h2 className="mb-4">Booking Management</h2>
@@ -61,7 +66,7 @@ export default function BookingList() {
                 </tr>
               </thead>
               <tbody>
-                {bookings.map((b) => (
+                {paginated.map((b) => (
                   <tr key={b.bookingId}>
                     <td>#{b.bookingId}</td>
                     <td>
@@ -80,7 +85,7 @@ export default function BookingList() {
                     </td>
                   </tr>
                 ))}
-                {bookings.length === 0 && (
+                {paginated.length === 0 && (
                   <tr>
                     <td colSpan="8" className="text-center">No bookings found</td>
                   </tr>
@@ -89,6 +94,41 @@ export default function BookingList() {
             </table>
           </div>
         </div>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="d-flex justify-content-center align-items-center gap-2 mt-3">
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(p => p - 1)}
+          >
+            &laquo; Prev
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            <button
+              key={page}
+              className={`btn btn-sm ${currentPage === page ? "btn-primary" : "btn-outline-secondary"}`}
+              onClick={() => setCurrentPage(page)}
+            >
+              {page}
+            </button>
+          ))}
+
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(p => p + 1)}
+          >
+            Next &raquo;
+          </button>
+        </div>
+      )}
+
+      <div className="text-center text-muted mt-2 small">
+        Showing {Math.min((currentPage - 1) * PAGE_SIZE + 1, bookings.length)}–{Math.min(currentPage * PAGE_SIZE, bookings.length)} of {bookings.length} bookings
       </div>
     </div>
   );
