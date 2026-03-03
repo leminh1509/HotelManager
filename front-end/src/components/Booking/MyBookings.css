@@ -435,4 +435,54 @@
     grid-template-columns:1fr;
   }
 }
+.mb-form-group {
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mb-form-group label {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.mb-form-group input,
+.mb-form-group textarea {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.mb-form-group textarea {
+  min-height: 80px;
+  resize: none;
+}
+
+.mb-refund-box {
+  margin: 15px 0;
+  padding: 10px;
+  border-radius: 6px;
+  background: #f9f9f9;
+}
+
+.mb-warning {
+  color: #d9534f;
+  font-weight: 600;
+}
+
+.mb-success {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.mb-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.mb-btn-confirm {
+  background: #dc3545;
+  color: white;
+}
 }

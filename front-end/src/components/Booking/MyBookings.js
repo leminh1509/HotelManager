@@ -97,6 +97,32 @@ export default function MyBookings() {
   const [filter, setFilter] = useState("all"); // all | upcoming | past | cancelled
   const [cancellingId, setCancellingId] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [cancelModal, setCancelModal] = useState(null); 
+  // booking object đang muốn hủy
+
+  const [cancelReason, setCancelReason] = useState("");
+  const [refundPolicy, setRefundPolicy] = useState(null); 
+  // { type: "no" | "half" | "full", percent: 0 | 50 | 100 }
+
+  const [bankInfo, setBankInfo] = useState({
+    accountNumber: "",
+    bankName: "",
+  });
+  function calculateRefundPolicy(checkinTime) {
+  const now = new Date();
+  const checkin = new Date(checkinTime);
+  const diffHours = (checkin - now) / (1000 * 60 * 60);
+
+  if (diffHours < 24) {
+    return { type: "no", percent: 0 };
+  }
+
+  if (diffHours < 48) {
+    return { type: "half", percent: 50 };
+  }
+
+  return { type: "full", percent: 100 };
+}
 
   useEffect(() => {
     async function fetchBookings() {
@@ -125,20 +151,11 @@ export default function MyBookings() {
   });
 
   // ─── Cancel handler ──
-  const handleCancel = async (bookingId) => {
-    if (!window.confirm("Bạn có muốn hủy đặt phòng này không?")) return;
-    setCancellingId(bookingId);
-    try {
-      await cancelBooking(bookingId);
-    } catch {
-      // Mock: update locally
-    }
-    // Update state
-    setBookings((prev) =>
-      prev.map((b) => (b.bookingId === bookingId ? { ...b, status: "Cancelled" } : b))
-    );
-    setCancellingId(null);
-  };
+  const openCancelModal = (booking) => {
+  const policy = calculateRefundPolicy(booking.checkinTime);
+  setRefundPolicy(policy);
+  setCancelModal(booking);
+};
 
   // ─── Render ──
   if (loading)
@@ -219,6 +236,130 @@ export default function MyBookings() {
   </div>
 )}
 
+{cancelModal && (
+  <div className="mb-modal-overlay" onClick={() => setCancelModal(null)}>
+    <div className="mb-modal" onClick={(e) => e.stopPropagation()}>
+      <h2>Hủy đặt phòng</h2>
+
+      <p><b>Mã booking:</b> {cancelModal.bookingId}</p>
+
+      {/* Lý do */}
+      <div className="mb-form-group">
+        <label>Lý do hủy phòng</label>
+        <textarea
+          value={cancelReason}
+          onChange={(e) => setCancelReason(e.target.value)}
+          placeholder="Nhập lý do..."
+        />
+      </div>
+
+      {/* Chính sách hoàn tiền */}
+      <div className="mb-refund-box">
+        {refundPolicy?.type === "no" && (
+          <p className="mb-warning">
+            ⚠ Hủy trong vòng 24h trước check-in → Không được hoàn tiền
+          </p>
+        )}
+
+        {refundPolicy?.type === "half" && (
+          <p className="mb-warning">
+            ⚠ Hủy trong vòng 48h → Chỉ được hoàn 50% tiền
+          </p>
+        )}
+
+        {refundPolicy?.type === "full" && (
+          <p className="mb-success">
+            ✔ Bạn sẽ được hoàn 100% tiền
+          </p>
+        )}
+      </div>
+
+      {/* Nếu được hoàn tiền */}
+      {refundPolicy?.percent > 0 && (
+        <>
+          <div className="mb-form-group">
+            <label>Số tài khoản</label>
+            <input
+              type="text"
+              value={bankInfo.accountNumber}
+              onChange={(e) =>
+                setBankInfo({ ...bankInfo, accountNumber: e.target.value })
+              }
+            />
+          </div>
+
+          <div className="mb-form-group">
+            <label>Ngân hàng</label>
+            <input
+              type="text"
+              value={bankInfo.bankName}
+              onChange={(e) =>
+                setBankInfo({ ...bankInfo, bankName: e.target.value })
+              }
+            />
+          </div>
+        </>
+      )}
+
+      <div className="mb-modal-actions">
+        <button
+          className="mb-btn mb-btn-cancel"
+          onClick={() => setCancelModal(null)}
+        >
+          Đóng
+        </button>
+
+        <button
+          className="mb-btn mb-btn-confirm"
+          onClick={async () => {
+            if (!cancelReason.trim()) {
+              alert("Vui lòng nhập lý do hủy phòng");
+              return;
+            }
+
+            if (
+              refundPolicy.percent > 0 &&
+              (!bankInfo.accountNumber || !bankInfo.bankName)
+            ) {
+              alert("Vui lòng nhập thông tin hoàn tiền");
+              return;
+            }
+
+            const confirmCancel = window.confirm(
+              `Xác nhận hủy phòng với lý do: "${cancelReason}"?`
+            );
+
+            if (!confirmCancel) return;
+
+            // gọi API ở đây
+            await cancelBooking(cancelModal.bookingId);
+
+            setBookings((prev) =>
+              prev.map((b) =>
+                b.bookingId === cancelModal.bookingId
+                  ? { ...b, status: "Cancelled" }
+                  : b
+              )
+            );
+
+            alert(
+              refundPolicy.percent > 0
+                ? "Hủy phòng thành công. Tiền sẽ sớm được hoàn về tài khoản của bạn."
+                : "Hủy phòng thành công."
+            );
+
+            setCancelModal(null);
+            setCancelReason("");
+            setBankInfo({ accountNumber: "", bankName: "" });
+          }}
+        >
+          Xác nhận hủy
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
         {/* Booking list */}
         {filtered.length === 0 ? (
           <div className="mb-empty">
@@ -280,7 +421,8 @@ export default function MyBookings() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleCancel(b.bookingId)}}
+                            openCancelModal(b);
+                          }}
                           disabled={cancellingId === b.bookingId}
                           className="mb-btn mb-btn-cancel"
                         >
