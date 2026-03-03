@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import SockJS from "sockjs-client";
+import { Stomp } from "@stomp/stompjs";
 
 export default function MaintenanceRequestList() {
     const [requests, setRequests] = useState([]);
@@ -8,6 +10,17 @@ export default function MaintenanceRequestList() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [showModal, setShowModal] = useState(false);
+
+    // Real-time notification state
+    const [wsMessage, setWsMessage] = useState(null);
+
+    // Custom Toast State
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     // Search and Pagination state
     const [searchTerm, setSearchTerm] = useState("");
@@ -58,6 +71,35 @@ export default function MaintenanceRequestList() {
     useEffect(() => {
         fetchRequests();
         fetchRooms();
+
+        // Setup WebSocket
+        const socket = new SockJS("http://localhost:9999/ws");
+        const stompClient = Stomp.over(socket);
+
+        // Disable debug logs if preferred
+        stompClient.debug = () => { };
+
+        stompClient.connect({}, (frame) => {
+            console.log("Connected to WebSocket: " + frame);
+            stompClient.subscribe("/topic/maintenance", (message) => {
+                if (message && message.body) {
+                    setWsMessage(message.body);
+                    // auto hide after 7 seconds
+                    setTimeout(() => setWsMessage(null), 7000);
+                    // Optionally, refresh list if needed
+                    fetchRequests();
+                }
+            });
+        }, (err) => {
+            console.error("WebSocket error: ", err);
+        });
+
+        // Cleanup on unmount
+        return () => {
+            if (stompClient.connected) {
+                stompClient.disconnect();
+            }
+        };
     }, []);
 
     const handleInputChange = (e) => {
@@ -68,7 +110,7 @@ export default function MaintenanceRequestList() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!newRequest.description) {
-            alert("Description is required");
+            showToast("Description is required", "error");
             return;
         }
 
@@ -78,13 +120,13 @@ export default function MaintenanceRequestList() {
             await axios.post("http://localhost:9999/api/requests/maintenance", newRequest, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            alert("Request created successfully!");
+            showToast("Request created successfully!");
             setShowModal(false);
             setNewRequest({ roomId: "", description: "", priority: "MEDIUM" });
             fetchRequests();
         } catch (err) {
             console.error(err);
-            alert("Failed to create request");
+            showToast("Failed to create request", "error");
         } finally {
             setSubmitting(false);
         }
@@ -115,6 +157,34 @@ export default function MaintenanceRequestList() {
 
     return (
         <div className="container mt-4">
+
+            {/* Global Application Toast */}
+            {toast && (
+                <div style={{
+                    position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 1060,
+                    backgroundColor: toast.type === 'error' ? '#f44336' : '#4CAF50',
+                    color: 'white', padding: '12px 24px', borderRadius: '4px',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.2)', fontSize: '15px',
+                    display: 'flex', alignItems: 'center', gap: '10px'
+                }}>
+                    <i className={`fa ${toast.type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}`}></i>
+                    {toast.message}
+                </div>
+            )}
+
+            {/* Real-time Toast Notification */}
+            {wsMessage && (
+                <div
+                    className="alert alert-warning alert-dismissible fade show shadow"
+                    role="alert"
+                    style={{ position: 'fixed', top: '90px', right: '20px', zIndex: 1050, minWidth: '300px' }}
+                >
+                    <strong><i className="fa fa-bell"></i> New Clean Request</strong><br />
+                    {wsMessage}
+                    <button type="button" className="btn-close" aria-label="Close" onClick={() => setWsMessage(null)}></button>
+                </div>
+            )}
+
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2>Maintenance Requests</h2>
                 <div className="d-flex gap-3 align-items-center">

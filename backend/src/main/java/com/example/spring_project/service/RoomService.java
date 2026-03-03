@@ -72,6 +72,32 @@ public class RoomService {
     // ─────────────────────────────────────────────────────
     // Lấy entity thô (dùng nội bộ trong BookingService)
     // ─────────────────────────────────────────────────────
+
+    public org.springframework.data.domain.Page<RoomResponse> searchPage(
+            LocalDate checkin,
+            LocalDate checkout,
+            int guestCount,
+            Integer categoryId,
+            Double minPrice,
+            Double maxPrice,
+            org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<Room> rooms = roomRepository.findAvailableRoomsFilteredPage(
+                checkin, checkout, guestCount, categoryId, minPrice, maxPrice, pageable);
+
+        return rooms.map(BookingMapper::toRoomResponse);
+    }
+
+    public org.springframework.data.domain.Page<RoomResponse> getAllPage(
+            String statusFilter,
+            org.springframework.data.domain.Pageable pageable) {
+        if (statusFilter == null || statusFilter.equalsIgnoreCase("all") || statusFilter.isEmpty()) {
+            return roomRepository.findAll(pageable)
+                    .map(BookingMapper::toRoomResponse);
+        }
+        return roomRepository.findRoomsByStatusPage(statusFilter, pageable)
+                .map(BookingMapper::toRoomResponse);
+    }
+
     public Room getEntityById(Integer roomId) {
         return roomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));

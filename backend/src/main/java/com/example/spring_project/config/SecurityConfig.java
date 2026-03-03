@@ -62,10 +62,10 @@ public class SecurityConfig {
 
                         .requestMatchers(new AntPathRequestMatcher("/api/rooms/**", "GET")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/categories/**", "GET")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/ws/**")).permitAll()
 
                         .requestMatchers(new AntPathRequestMatcher("/api/bookings/**")).authenticated()
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 // ✅ trả JSON rõ ràng thay vì 403/HTML khó debug
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, e) -> {
@@ -77,14 +77,14 @@ public class SecurityConfig {
                             res.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             res.setContentType("application/json");
                             res.getWriter().write("{\"message\":\"Forbidden\"}");
-                        })
-                )
+                        }))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();

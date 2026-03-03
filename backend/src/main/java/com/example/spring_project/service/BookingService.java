@@ -13,6 +13,7 @@ import com.example.spring_project.repository.UserRepository;
 import com.example.spring_project.util.BookingMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,13 +27,16 @@ public class BookingService {
     private final BookingRepository bookingRepo;
     private final RoomService roomService;
     private final UserRepository userRepo;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public BookingService(BookingRepository bookingRepo,
             RoomService roomService,
-            UserRepository userRepo) {
+            UserRepository userRepo,
+            SimpMessagingTemplate messagingTemplate) {
         this.bookingRepo = bookingRepo;
         this.roomService = roomService;
         this.userRepo = userRepo;
+        this.messagingTemplate = messagingTemplate;
     }
 
     // ─────────────────────────────────────────────────────
@@ -243,6 +247,9 @@ public class BookingService {
                 // Fallback to integer IDs if name-based lookup fails (assuming 3 is Cleaning)
                 roomService.updateStatus(booking.getRoom().getRoomId(), 3);
             }
+            // Broadcast realtime notification
+            messagingTemplate.convertAndSend("/topic/maintenance",
+                    "Room " + booking.getRoom().getRoomNumber() + " requires cleaning after checkout.");
         } else if (newStatus == Status.CheckedIn) {
             try {
                 roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Occupied");

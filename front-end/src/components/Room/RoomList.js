@@ -1,38 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-// import { getMyBookings, cancelBooking } from "../../services/bookingAPI";
-import { getAllRooms } from "../../services/roomAPI";
+import { getAllRooms, searchRooms, searchRoomsPaginated, getAllRoomsPaginated } from "../../services/roomAPI";
+import Header from "../Header/Header";
+import Footer from "../Footer/Footer";
 import "./RoomList.css";
-
-// ─── Mock data fallback ──────────────────────────────────
-
 
 // ─── Helpers ─────────────────────────────────────────────
 const STATUS_LABELS = {
-  Pending: "Chờ xác nhận",
-  Confirmed: "Đã xác nhận",
-  "Checked-in": "Đã check-in",
-  "Checked-out": "Đã check-out",
-  Cancelled: "Đã hủy",
+  Available: "Còn trống",
+  Occupied: "Đang có khách",
+  Cleaning: "Đang dọn dẹp",
+  Maintenance: "Bảo trì",
 };
 
 const STATUS_COLORS = {
-  Pending: "pending",
-  Confirmed: "confirmed",
-  "Checked-in": "checkedin",
-  "Checked-out": "checkedout",
-  Cancelled: "cancelled",
+  Available: "available",
+  Occupied: "occupied",
+  Cleaning: "cleaning",
+  Maintenance: "maintenance",
 };
-
-function formatDate(dt) {
-  if (!dt) return "—";
-  const d = new Date(dt);
-  return d.toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}
 
 function formatPrice(n) {
   return new Intl.NumberFormat("vi-VN").format(n);
@@ -41,145 +27,266 @@ function formatPrice(n) {
 // ─── Main Component ──────────────────────────────────────
 export default function RoomList() {
   const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all"); // all | available | booked | unavailable
-  
+  const [loading, setLoading] = useState(false);
 
+  // Filter states
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [checkin, setCheckin] = useState("");
+  const [checkout, setCheckout] = useState("");
+  const [guestCount, setGuestCount] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 6;
+
+  // Initial load
   useEffect(() => {
-    async function fetchRooms() {
-      try {
-        const res = await getAllRooms();
-        setRooms(res.data);
-      } catch {
-        // Fallback mock
-        
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchRooms();
-  }, []);
-// ─── Filter logic ──
+    fetchRooms(currentPage);
+  }, [filterStatus, currentPage]);
 
-  const filtered = rooms.filter((r) => {
-    if (filter === "all") return true;
-    const sId = r.statusName;
-    if (filter === "available") return sId === "Available";
-    if (filter === "booked") return  sId === "Occupied";
-    if (filter === "unavailable") return sId !== "Available" && sId !== "Occupied";
-    return true;
-  });
-  
-  // ─── Render ──
-  if (loading)
+  const fetchRooms = async (page = 1) => {
+    setLoading(true);
+    try {
+      if (checkin && checkout) {
+        // Search API if dates are provided
+        const params = {
+          checkin,
+          checkout,
+          guests: guestCount || 1,
+          minPrice: minPrice || null,
+          maxPrice: maxPrice || null,
+          page: page - 1,
+          size: itemsPerPage
+        };
+        const res = await searchRoomsPaginated(params);
+        if (res.data && res.data.content) {
+          setRooms(res.data.content);
+          setTotalPages(res.data.totalPages);
+        } else {
+          setRooms([]);
+        }
+      } else {
+        // Fallback to all rooms
+        const params = {
+          status: filterStatus === "all" ? "" : filterStatus,
+          page: page - 1,
+          size: itemsPerPage
+        };
+        const res = await getAllRoomsPaginated(params);
+        if (res.data && res.data.content) {
+          setRooms(res.data.content);
+          setTotalPages(res.data.totalPages);
+        } else {
+          setRooms([]);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch rooms:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setCurrentPage(1);
+    fetchRooms(1);
+  };
+
+  const currentItems = rooms;
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    let start = Math.max(currentPage - 2, 1);
+    let end = Math.min(start + 4, totalPages);
+    if (end - start < 4) {
+      start = Math.max(end - 4, 1);
+    }
+
+    const pages = [];
+    for (let i = start; i <= end; i++) pages.push(i);
+
     return (
-      <div className="mb-loading">
-        <div className="mb-spinner" />
-        <p>Đang tải danh sách phòng...</p>
+      <div className="pagination-container" style={{ display: "flex", justifyContent: "center", alignItems: "center", marginTop: "30px", gap: "5px" }}>
+        <button
+          disabled={currentPage === 1}
+          onClick={() => paginate(currentPage - 1)}
+          style={{ padding: "8px 12px", border: "1px solid #ddd", borderRadius: "4px", backgroundColor: currentPage === 1 ? "#f5f5f5" : "#fff", cursor: currentPage === 1 ? "not-allowed" : "pointer" }}
+        >
+          Trước
+        </button>
+
+        {start > 1 && (
+          <>
+            <button onClick={() => paginate(1)} style={{ padding: "8px 12px", border: "1px solid #ddd", borderRadius: "4px", backgroundColor: "#fff", cursor: "pointer" }}>1</button>
+            {start > 2 && <span style={{ padding: "8px 4px" }}>...</span>}
+          </>
+        )}
+
+        {pages.map(i => (
+          <button
+            key={i}
+            onClick={() => paginate(i)}
+            style={{ padding: "8px 12px", border: "1px solid #ddd", borderRadius: "4px", backgroundColor: currentPage === i ? "#ff385c" : "#fff", color: currentPage === i ? "#fff" : "#333", cursor: "pointer" }}
+          >
+            {i}
+          </button>
+        ))}
+
+        {end < totalPages && (
+          <>
+            {end < totalPages - 1 && <span style={{ padding: "8px 4px" }}>...</span>}
+            <button onClick={() => paginate(totalPages)} style={{ padding: "8px 12px", border: "1px solid #ddd", borderRadius: "4px", backgroundColor: "#fff", cursor: "pointer" }}>{totalPages}</button>
+          </>
+        )}
+
+        <button
+          disabled={currentPage === totalPages}
+          onClick={() => paginate(currentPage + 1)}
+          style={{ padding: "8px 12px", border: "1px solid #ddd", borderRadius: "4px", backgroundColor: currentPage === totalPages ? "#f5f5f5" : "#fff", cursor: currentPage === totalPages ? "not-allowed" : "pointer" }}
+        >
+          Tiếp
+        </button>
       </div>
     );
+  };
 
   return (
-    <div className="mb-page">
-      <div className="mb-container">
-        {/* Header */}
-        <div className="mb-header">
-          <h1>Danh sách phòng</h1>
-          
-        </div>
-        {/* Filter tabs */}
-        <div className="mb-filters">
-          {["all", "available", "booked", "unavailable"].map((f) => (
-            <button
-              key={f}
-              className={`mb-filter-btn ${filter === f ? "active" : ""}`}
-              onClick={() => setFilter(f)}
-            >
-              {f === "all" && "Tất cả"}
-              {f === "available" && "Còn Trống"}
-              {f === "booked" && "Đã Đặt"}
-              {f === "unavailable" && "Không Hoạt động"}
-              <span className="mb-filter-count">
-                {rooms.filter((r) => {
-                    console.log('status: room: ',r.roomNumber,': ',r.statusName);
-                if (f === "all") return true;   
-                const sId = r.statusName;
-                if (f === "available") return sId === "Available";
-                if (f === "booked") return  sId === "Occupied";
-                if (f === "unavailable") return sId !== "Available" && sId !== "Occupied";
-                  return true;
-                }).length}
-              </span>
-            </button>
-          ))}
-        </div>
-       
+    <>
+      <Header user={null} role="guest" />
 
-        {/* Rooms list */}
-        {filtered.length === 0 ? (
-          <div className="mb-empty">
-            <p>Không có đặt phòng nào trong mục này.</p>
-            <Link to="/home" className="mb-empty-link">Tìm phòng ngay →</Link>
+      <div className="mb-page" style={{ paddingTop: "80px", minHeight: "80vh" }}>
+        <div className="mb-container">
+
+          <div className="mb-header">
+            <h1>Danh sách phòng</h1>
+            <p>Tìm và đặt phòng tốt nhất cho kỳ nghỉ của bạn</p>
           </div>
-        ) : (
-          <div className="mb-list">
-            {filtered.map((r) => {
-             
-              return (
-  <div key={r.roomId} className="mb-card">
-    {/* Left: info */}
-    <div className="mb-card-body">
-      <div className="mb-card-top">
-        <div>
-          <h3>Phòng {r.roomNumber}</h3>
-          <span className="mb-category">{r.categoryName}</span>
-        </div>
-        <span className={`mb-status ${STATUS_COLORS[r.status] || ""}`}>
-          {STATUS_LABELS[r.status] || r.status}
-        </span>
-      </div>
 
-      <div className="mb-card-details">
-        <div className="mb-detail">
-          <span className="mb-detail-label">Tầng</span>
-          <span className="mb-detail-value">Tầng {r.floor}</span>
-        </div>
-        <div className="mb-detail">
-          <span className="mb-detail-label">Diện tích</span>
-          <span className="mb-detail-value">{r.sizem2} m²</span>
-        </div>
-        <div className="mb-detail">
-          <span className="mb-detail-label">Sức chứa</span>
-          <span className="mb-detail-value">{r.capacity} khách</span>
-        </div>
-        <div className="mb-detail">
-          <span className="mb-detail-label">Giường</span>
-          <span className="mb-detail-value">{r.bedConfiguration}</span>
-        </div>
-      </div>
-    </div>
+          {/* Search Form */}
+          <form className="room-search-form" onSubmit={handleSearch}>
+            <div className="search-inputs">
+              <div className="input-group">
+                <label>Check-in</label>
+                <input type="date" value={checkin} onChange={e => setCheckin(e.target.value)} />
+              </div>
+              <div className="input-group">
+                <label>Check-out</label>
+                <input type="date" value={checkout} onChange={e => setCheckout(e.target.value)} />
+              </div>
+              <div className="input-group">
+                <label>Số người</label>
+                <input type="number" min="1" placeholder="Khách" value={guestCount} onChange={e => setGuestCount(e.target.value)} />
+              </div>
+              <div className="input-group">
+                <label>Giá từ (VNĐ)</label>
+                <input type="number" placeholder="Tối thiểu" value={minPrice} onChange={e => setMinPrice(e.target.value)} />
+              </div>
+              <div className="input-group">
+                <label>Đến (VNĐ)</label>
+                <input type="number" placeholder="Tối đa" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} />
+              </div>
+              <button type="submit" className="mb-btn mb-btn-book search-btn">Tìm phòng</button>
+            </div>
+          </form>
 
-    {/* Right: price + actions */}
-    <div className="mb-card-aside">
-      <div className="mb-price">{formatPrice(r.price)} đ/đêm</div>
-
-      <div className="mb-card-actions">
-        <Link to={`/rooms/${r.roomId}`} className="mb-btn mb-btn-view">
-          Xem chi tiết
-        </Link>
-        {r.status === "Available" && (
-          <Link to={`/booking/${r.roomId}`} className="mb-btn mb-btn-book">
-            Đặt phòng
-          </Link>
-        )}
-      </div>
-    </div>
-  </div>
-);
-            })}
+          {/* Filter tabs */}
+          <div className="mb-filters">
+            {["all", "available", "booked", "unavailable"].map((f) => (
+              <button
+                key={f}
+                className={`mb-filter-btn ${filterStatus === f ? "active" : ""}`}
+                onClick={() => { setFilterStatus(f); setCurrentPage(1); }}
+              >
+                {f === "all" && "Tất cả"}
+                {f === "available" && "Còn Trống"}
+                {f === "booked" && "Đã Đặt"}
+                {f === "unavailable" && "Khác"}
+              </button>
+            ))}
           </div>
-        )}
+
+          {/* Loading handling */}
+          {loading ? (
+            <div className="mb-loading" style={{ margin: "50px auto", textAlign: "center" }}>
+              <div className="mb-spinner" style={{ display: "inline-block", border: "4px solid rgba(0,0,0,0.1)", borderLeftColor: "#ff385c", borderRadius: "50%", width: "40px", height: "40px", animation: "spin 1s linear infinite" }} />
+              <p>Đang tải danh sách phòng...</p>
+            </div>
+          ) : (
+            <>
+              {/* Rooms list */}
+              {currentItems.length === 0 ? (
+                <div className="mb-empty">
+                  <p>Không tìm thấy phòng nào phù hợp.</p>
+                  <button onClick={() => { setCheckin(""); setCheckout(""); fetchRooms(); }} className="mb-empty-link btn-link" style={{ background: "none", border: "none", cursor: "pointer", color: "#ff385c" }}>Xóa bộ lọc tìm kiếm →</button>
+                </div>
+              ) : (
+                <div className="mb-list">
+                  {currentItems.map((r) => (
+                    <div key={r.roomId} className="mb-card">
+                      <div className="mb-card-body">
+                        <div className="mb-card-top">
+                          <div>
+                            <h3>Phòng {r.roomNumber}</h3>
+                            <span className="mb-category">{r.categoryName}</span>
+                          </div>
+                          <span className={`mb-status ${STATUS_COLORS[r.statusName] || ""}`}>
+                            {STATUS_LABELS[r.statusName] || r.statusName}
+                          </span>
+                        </div>
+
+                        <div className="mb-card-details">
+                          <div className="mb-detail">
+                            <span className="mb-detail-label">Tầng</span>
+                            <span className="mb-detail-value">Tầng {r.floor}</span>
+                          </div>
+                          <div className="mb-detail">
+                            <span className="mb-detail-label">Diện tích</span>
+                            <span className="mb-detail-value">{r.sizem2} m²</span>
+                          </div>
+                          <div className="mb-detail">
+                            <span className="mb-detail-label">Sức chứa</span>
+                            <span className="mb-detail-value">{r.capacity} khách</span>
+                          </div>
+                          <div className="mb-detail">
+                            <span className="mb-detail-label">Giường</span>
+                            <span className="mb-detail-value">{r.bedConfiguration}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mb-card-aside">
+                        <div className="mb-price">{formatPrice(r.price)} đ/đêm</div>
+                        <div className="mb-card-actions">
+                          <Link to={`/rooms/${r.roomId}`} className="mb-btn mb-btn-view">
+                            Xem chi tiết
+                          </Link>
+                          {r.statusName === "Available" && (
+                            <Link to={`/booking/${r.roomId}`} className="mb-btn mb-btn-book">
+                              Đặt phòng
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Pagination Controls */}
+              {renderPagination()}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+
+      <Footer />
+    </>
   );
 }

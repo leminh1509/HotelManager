@@ -1,6 +1,5 @@
 package com.example.spring_project.controller;
 
-import com.example.spring_project.entity.Room;
 import com.example.spring_project.dto.RoomResponse;
 import com.example.spring_project.service.RoomService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -41,6 +40,27 @@ public class RoomController {
             @RequestParam(required = false) Double maxPrice) {
         List<RoomResponse> rooms = roomService.search(
                 checkin, checkout, guests, categoryId, minPrice, maxPrice);
+        return ResponseEntity.ok(rooms);
+    }
+
+    @GetMapping("/page")
+    public ResponseEntity<org.springframework.data.domain.Page<RoomResponse>> getAllRoomsPage(
+            @RequestParam(defaultValue = "all", required = false) String status,
+            org.springframework.data.domain.Pageable pageable) {
+        return ResponseEntity.ok(roomService.getAllPage(status, pageable));
+    }
+
+    @GetMapping("/search/page")
+    public ResponseEntity<org.springframework.data.domain.Page<RoomResponse>> searchPage(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate checkin,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate checkout,
+            @RequestParam(defaultValue = "1") int guests,
+            @RequestParam(required = false) Integer categoryId,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<RoomResponse> rooms = roomService.searchPage(
+                checkin, checkout, guests, categoryId, minPrice, maxPrice, pageable);
         return ResponseEntity.ok(rooms);
     }
 
