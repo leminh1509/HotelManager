@@ -8,6 +8,11 @@ export default function MaintenanceRequestList() {
     const [error, setError] = useState("");
     const [showModal, setShowModal] = useState(false);
 
+    // Search and Pagination state
+    const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 8;
+
     // Form state
     const [newRequest, setNewRequest] = useState({
         roomId: "",
@@ -71,13 +76,50 @@ export default function MaintenanceRequestList() {
 
     if (loading) return <div>Loading...</div>;
 
+    // Filter logic
+    const filteredRequests = requests.filter(req =>
+        req.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (req.room && req.room.roomNumber.toString().includes(searchTerm)) ||
+        req.id.toString().includes(searchTerm) ||
+        req.type.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Pagination logic
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredRequests.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+        setCurrentPage(1);
+    };
+
     return (
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2>Maintenance Requests</h2>
-                <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-                    + Create Request
-                </button>
+                <div className="d-flex gap-3 align-items-center">
+                    <div className="search-box">
+                        <div className="input-group">
+                            <span className="input-group-text bg-white border-end-0">
+                                <i className="fa fa-search text-muted"></i>
+                            </span>
+                            <input
+                                type="text"
+                                className="form-control border-start-0"
+                                placeholder="Search requests..."
+                                value={searchTerm}
+                                onChange={handleSearchChange}
+                            />
+                        </div>
+                    </div>
+                    <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                        + Create
+                    </button>
+                </div>
             </div>
 
             {error && <div className="alert alert-danger">{error}</div>}
@@ -96,12 +138,14 @@ export default function MaintenanceRequestList() {
                         </tr>
                     </thead>
                     <tbody>
-                        {requests.length === 0 ? (
+                        {currentItems.length === 0 ? (
                             <tr>
-                                <td colSpan="7" className="text-center">No requests found.</td>
+                                <td colSpan="7" className="text-center py-4">
+                                    {searchTerm ? `No results found for "${searchTerm}"` : "No requests found."}
+                                </td>
                             </tr>
                         ) : (
-                            requests.map((req) => (
+                            currentItems.map((req) => (
                                 <tr key={req.id}>
                                     <td>#{req.id}</td>
                                     <td>{req.room ? `Room ${req.room.roomNumber}` : "General"}</td>
@@ -109,15 +153,15 @@ export default function MaintenanceRequestList() {
                                     <td><span className="badge bg-secondary">{req.type}</span></td>
                                     <td>
                                         <span className={`badge ${req.priority === "HIGH" || req.priority === "URGENT" ? "bg-danger" :
-                                                req.priority === "MEDIUM" ? "bg-warning text-dark" : "bg-info"
+                                            req.priority === "MEDIUM" ? "bg-warning text-dark" : "bg-info"
                                             }`}>
                                             {req.priority}
                                         </span>
                                     </td>
                                     <td>
                                         <span className={`badge ${req.status === "COMPLETED" ? "bg-success" :
-                                                req.status === "IN_PROGRESS" ? "bg-primary" :
-                                                    req.status === "CANCELLED" ? "bg-secondary" : "bg-warning text-dark"
+                                            req.status === "IN_PROGRESS" ? "bg-primary" :
+                                                req.status === "CANCELLED" ? "bg-secondary" : "bg-warning text-dark"
                                             }`}>
                                             {req.status}
                                         </span>
@@ -129,6 +173,29 @@ export default function MaintenanceRequestList() {
                     </tbody>
                 </table>
             </div>
+
+            {totalPages > 1 && (
+                <div className="d-flex justify-content-between align-items-center mt-3 mb-4">
+                    <div className="text-muted small">
+                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredRequests.length)} of {filteredRequests.length}
+                    </div>
+                    <nav>
+                        <ul className="pagination pagination-sm mb-0">
+                            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                                <button className="page-link" onClick={() => paginate(currentPage - 1)}>Prev</button>
+                            </li>
+                            {[...Array(totalPages)].map((_, i) => (
+                                <li key={i + 1} className={`page-item ${currentPage === i + 1 ? "active" : ""}`}>
+                                    <button className="page-link" onClick={() => paginate(i + 1)}>{i + 1}</button>
+                                </li>
+                            ))}
+                            <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                                <button className="page-link" onClick={() => paginate(currentPage + 1)}>Next</button>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            )}
 
             {/* Create Modal */}
             {showModal && (

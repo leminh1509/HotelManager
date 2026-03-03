@@ -34,8 +34,9 @@ public class PaymentController {
 
     @GetMapping("/vnpay-payment")
     public ResponseEntity<String> createVnPayPayment(@RequestParam("amount") int amount,
-            @RequestParam("orderInfo") String orderInfo) {
-        String paymentUrl = vnPayService.createOrder(amount, orderInfo, null);
+            @RequestParam("orderInfo") String orderInfo,
+            @RequestParam(required = false) String bankCode) {
+        String paymentUrl = vnPayService.createOrder(amount, orderInfo, null, bankCode);
         return ResponseEntity.ok(paymentUrl);
     }
 
