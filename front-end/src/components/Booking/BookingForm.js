@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link, useLocation  } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useBooking } from "../../context/BookingContext";
 import { getRoomById, createBooking, getBookingByRoomId } from "../../services/bookingAPI";
 import "./BookingForm.css";
@@ -122,88 +122,88 @@ export default function BookingForm() {
   }, [roomId, room, setSelectedRoom, navigate]);
 
   // ─── Auto fill date từ query params ───
-useEffect(() => {
-  const params = new URLSearchParams(location.search);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
 
-  const checkIn = params.get("checkIn");
-  const checkOut = params.get("checkOut");
+    const checkIn = params.get("checkIn");
+    const checkOut = params.get("checkOut");
 
-  // chỉ set khi bookingData chưa có (tránh overwrite khi user sửa tay)
-  const updateData = {};
+    // chỉ set khi bookingData chưa có (tránh overwrite khi user sửa tay)
+    const updateData = {};
 
-  if (checkIn && !bookingData.checkinDate) {
-    updateData.checkinDate = checkIn;
-  }
-
-  if (checkOut && !bookingData.checkoutDate) {
-    updateData.checkoutDate = checkOut;
-  }
-
-  if (Object.keys(updateData).length > 0) {
-    updateBookingData(updateData);
-  }
-}, [location.search]);
-
- 
-// ─── Check booking conflict ───
-useEffect(() => {
-  async function checkConflict() {
-    if (!bookingData.checkinDate || !bookingData.checkoutDate || !room)
-      return;
-
-    setCheckingDate(true);
-
-    try {
-      // giả sử API trả về list booking của room
-      const res = await getBookingByRoomId(room.roomId);
-      console.log('res',res.data);
-      // normalize API response
-let bookings = [];
-
-if (Array.isArray(res.data)) {
-  bookings = res.data;
-} else if (res.data && typeof res.data === "object") {
-  bookings = [res.data];
-}
-
-      let conflict = false;
-
-      for (const b of bookings) {
-        const bookedCheckin = b.checkinTime.split("T")[0];
-        const bookedCheckout = b.checkoutTime.split("T")[0];
-
-        if (
-          isOverlap(
-            bookingData.checkinDate,
-            bookingData.checkoutDate,
-            bookedCheckin,
-            bookedCheckout
-          )
-        ) {
-          conflict = true;
-          break;
-        }
-      }
-
-      setDateConflict(conflict);
-    } catch (err) {
-      console.error("Check booking conflict error:", err);
-      setDateConflict(false);
-    } finally {
-      setCheckingDate(false);
+    if (checkIn && !bookingData.checkinDate) {
+      updateData.checkinDate = checkIn;
     }
-  }
 
-  checkConflict();
-}, [bookingData.checkinDate, bookingData.checkoutDate, room]);
+    if (checkOut && !bookingData.checkoutDate) {
+      updateData.checkoutDate = checkOut;
+    }
+
+    if (Object.keys(updateData).length > 0) {
+      updateBookingData(updateData);
+    }
+  }, [location.search]);
+
+
+  // ─── Check booking conflict ───
+  useEffect(() => {
+    async function checkConflict() {
+      if (!bookingData.checkinDate || !bookingData.checkoutDate || !room)
+        return;
+
+      setCheckingDate(true);
+
+      try {
+        // giả sử API trả về list booking của room
+        const res = await getBookingByRoomId(room.roomId);
+        console.log('res', res.data);
+        // normalize API response
+        let bookings = [];
+
+        if (Array.isArray(res.data)) {
+          bookings = res.data;
+        } else if (res.data && typeof res.data === "object") {
+          bookings = [res.data];
+        }
+
+        let conflict = false;
+
+        for (const b of bookings) {
+          const bookedCheckin = b.checkinTime.split("T")[0];
+          const bookedCheckout = b.checkoutTime.split("T")[0];
+
+          if (
+            isOverlap(
+              bookingData.checkinDate,
+              bookingData.checkoutDate,
+              bookedCheckin,
+              bookedCheckout
+            )
+          ) {
+            conflict = true;
+            break;
+          }
+        }
+
+        setDateConflict(conflict);
+      } catch (err) {
+        console.error("Check booking conflict error:", err);
+        setDateConflict(false);
+      } finally {
+        setCheckingDate(false);
+      }
+    }
+
+    checkConflict();
+  }, [bookingData.checkinDate, bookingData.checkoutDate, room]);
 
   // ─── Validation ──
   // kiểm tra overlap date
   const isOverlap = (start1, end1, start2, end2) => {
     console.log(start1, end1, start2, end2);
     return new Date(start1) < new Date(end2) &&
-           new Date(end1) > new Date(start2);
-};
+      new Date(end1) > new Date(start2);
+  };
   const validateStep = (s) => {
     const errs = {};
     if (s === 0) {
@@ -228,46 +228,46 @@ if (Array.isArray(res.data)) {
   };
 
   const validateStep2 = () => {
-  // số điện thoại VN (9–11 số)
-const phoneRegex = /^[0-9]{9,11}$/;
+    // số điện thoại VN (9–11 số)
+    const phoneRegex = /^[0-9]{9,11}$/;
 
-// CMND/CCCD (9 hoặc 12 số)
-const idRegex = /^[0-9]{9}$|^[0-9]{12}$/;
+    // CMND/CCCD (9 hoặc 12 số)
+    const idRegex = /^[0-9]{9}$|^[0-9]{12}$/;
 
-// email cơ bản
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const errs = {};
+    // email cơ bản
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const errs = {};
 
-  // tên
-  if (!bookingData.guestName?.trim()) {
-    errs.guestName = "Vui lòng nhập họ tên";
-  }
+    // tên
+    if (!bookingData.guestName?.trim()) {
+      errs.guestName = "Vui lòng nhập họ tên";
+    }
 
-  // email
-  // if (!bookingData.guestEmail) {
-  //   errs.email = "Vui lòng nhập email";
-  // } else if (!emailRegex.test(bookingData.guestEmail)) {
-  //   errs.email = "Email không hợp lệ";
-  // }
+    // email
+    // if (!bookingData.guestEmail) {
+    //   errs.email = "Vui lòng nhập email";
+    // } else if (!emailRegex.test(bookingData.guestEmail)) {
+    //   errs.email = "Email không hợp lệ";
+    // }
 
-  // số điện thoại
-  if (!bookingData.guestPhone) {
-    errs.guestPhone = "Vui lòng nhập số điện thoại";
-  } else if (!phoneRegex.test(bookingData.guestPhone)) {
-    errs.guestPhone = "Số điện thoại phải là 9–11 chữ số";
-  }
+    // số điện thoại
+    if (!bookingData.guestPhone) {
+      errs.guestPhone = "Vui lòng nhập số điện thoại";
+    } else if (!phoneRegex.test(bookingData.guestPhone)) {
+      errs.guestPhone = "Số điện thoại phải là 9–11 chữ số";
+    }
 
-  // CMND / CCCD
-  if (!bookingData.guestIdNumber) {
-    errs.guestIdNumber = "Vui lòng nhập CMND/CCCD";
-  } else if (!idRegex.test(bookingData.guestIdNumber)) {
-    errs.guestIdNumber = "CMND/CCCD phải gồm 9 hoặc 12 số";
-  }
+    // CMND / CCCD
+    if (!bookingData.guestIdNumber) {
+      errs.guestIdNumber = "Vui lòng nhập CMND/CCCD";
+    } else if (!idRegex.test(bookingData.guestIdNumber)) {
+      errs.guestIdNumber = "CMND/CCCD phải gồm 9 hoặc 12 số";
+    }
 
-  setErrors(errs);
+    setErrors(errs);
 
-  return Object.keys(errs).length === 0;
-};
+    return Object.keys(errs).length === 0;
+  };
 
   const handleNext = () => {
     const errs = validateStep(step);
@@ -276,8 +276,8 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return;
     }
     setErrors({});
-     if (step === 1) {
-     if (!validateStep2()) return;
+    if (step === 1) {
+      if (!validateStep2()) return;
     }
     setStep((s) => s + 1);
   };
@@ -317,7 +317,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       const diff = end - start;
       const nights = diff > 0 ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : 1;
 
-      navigate(`/booking/confirmation/${bookingId}`, {
+      navigate(`/payment`, {
         state: {
           bookingId,
           totalAmount: totalPrice,
@@ -379,10 +379,10 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                   </div>
                 </div>
                 {dateConflict && (
-                    <div className="bf-error" style={{marginTop: "10px"}}>
-                        ❌ Khoảng thời gian này phòng đã được đặt. Vui lòng chọn ngày khác.
-                    </div>
-)}
+                  <div className="bf-error" style={{ marginTop: "10px" }}>
+                    ❌ Khoảng thời gian này phòng đã được đặt. Vui lòng chọn ngày khác.
+                  </div>
+                )}
 
                 <div className="bf-field">
                   <label>Số khách <span className="bf-req">*</span></label>
@@ -399,13 +399,13 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 </div>
 
                 <div className="bf-actions">
-                 <button
+                  <button
                     onClick={handleNext}
                     disabled={dateConflict || checkingDate}
                     className="bf-btn-next"
-                >
-                  {checkingDate ? "Đang kiểm tra..." : "Tiếp tục →"}
-                </button>
+                  >
+                    {checkingDate ? "Đang kiểm tra..." : "Tiếp tục →"}
+                  </button>
                 </div>
               </div>
             )}
@@ -444,7 +444,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                     <label>Số điện thoại <span className="bf-req">*</span></label>
                     <input
                       type="tel"
-                      pattern="[0-9]{10}" 
+                      pattern="[0-9]{10}"
                       title="Vui lòng nhập đúng 10 chữ số"
                       placeholder="0xx xxx xxxx"
                       value={bookingData.guestPhone}

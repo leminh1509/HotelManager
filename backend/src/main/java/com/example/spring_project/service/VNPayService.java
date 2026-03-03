@@ -15,7 +15,7 @@ public class VNPayService {
 
     private final VNPayConfig vnPayConfig;
 
-    public String createOrder(int total, String orderInfo, String urlReturn) {
+    public String createOrder(int total, String orderInfo, String urlReturn, String bankCode) {
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
         String vnp_TxnRef = VNPayConfig.getRandomNumber(8);
@@ -33,12 +33,18 @@ public class VNPayService {
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
         vnp_Params.put("vnp_OrderInfo", orderInfo);
         vnp_Params.put("vnp_OrderType", orderType);
+        if (bankCode != null && !bankCode.isEmpty()) {
+            vnp_Params.put("vnp_BankCode", bankCode);
+        }
 
         String locate = "vn";
         vnp_Params.put("vnp_Locale", locate);
 
-        urlReturn += vnPayConfig.getVnp_ReturnUrl();
-        vnp_Params.put("vnp_ReturnUrl", vnPayConfig.getVnp_ReturnUrl());
+        if (urlReturn != null && !urlReturn.isEmpty()) {
+            vnp_Params.put("vnp_ReturnUrl", urlReturn);
+        } else {
+            vnp_Params.put("vnp_ReturnUrl", vnPayConfig.getVnp_ReturnUrl());
+        }
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
         Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
@@ -62,11 +68,11 @@ public class VNPayService {
                 // Build hash data
                 hashData.append(fieldName);
                 hashData.append('=');
-                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
                 // Build query
-                query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII));
+                query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8));
                 query.append('=');
-                query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                query.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
                 if (itr.hasNext()) {
                     query.append('&');
                     hashData.append('&');
@@ -74,7 +80,16 @@ public class VNPayService {
             }
         }
         String queryUrl = query.toString();
-        String vnp_SecureHash = VNPayConfig.hmacSHA512(vnPayConfig.getSecretKey(), hashData.toString());
+        // Remove trailing & if any
+        if (queryUrl.endsWith("&")) {
+            queryUrl = queryUrl.substring(0, queryUrl.length() - 1);
+        }
+        String hashStr = hashData.toString();
+        if (hashStr.endsWith("&")) {
+            hashStr = hashStr.substring(0, hashStr.length() - 1);
+        }
+
+        String vnp_SecureHash = VNPayConfig.hmacSHA512(vnPayConfig.getSecretKey(), hashStr);
         queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
         String paymentUrl = vnPayConfig.getVnp_PayUrl() + "?" + queryUrl;
         return paymentUrl;
@@ -109,14 +124,19 @@ public class VNPayService {
                 // Build hash data
                 hashData.append(fieldName);
                 hashData.append('=');
-                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
                 if (itr.hasNext()) {
                     hashData.append('&');
                 }
             }
         }
 
-        String signValue = VNPayConfig.hmacSHA512(vnPayConfig.getSecretKey(), hashData.toString());
+        String hashStr = hashData.toString();
+        if (hashStr.endsWith("&")) {
+            hashStr = hashStr.substring(0, hashStr.length() - 1);
+        }
+
+        String signValue = VNPayConfig.hmacSHA512(vnPayConfig.getSecretKey(), hashStr);
         return signValue.equals(vnp_SecureHash);
     }
 }
