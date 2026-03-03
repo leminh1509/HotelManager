@@ -466,6 +466,28 @@ INSERT INTO room (room_number, category_id, status_id, price, capacity, floor, s
 ('P.1004', 5, 1, 10000000, 2, 10, 120, '1 Royal Bed', 'Không hoàn trả', 'President Suite - Sang trọng bậc nhất', 'url_p1004'),
 ('P.1005', 5, 1, 10000000, 2, 10, 120, '1 Royal Bed', 'Không hoàn trả', 'President Suite - Tiện nghi tối tân', 'url_p1005');
 
+--insert booking
+INSERT INTO booking (
+    user_id, room_id,
+    guest_name, guest_email, guest_phone,
+    guest_id_number, guest_nationality, guest_address,
+    guest_count,
+    checkin_time, checkout_time,
+    status, total_price,
+    special_request,
+    created_at, updated_at
+) VALUES (
+    2, 2,  -- Giả sử user_id=2 là khách hàng, room_id=2 là phòng trống
+    'Nguyen Van Test', 'test.guest@email.com', '0912345678',
+    'CCCD123456789', 'Vietnam', '123 Duong Test, TP.HCM',
+    2,
+    CURDATE(), DATE_ADD(CURDATE(), INTERVAL 3 DAY), -- Check-in hôm nay, ở 3 ngày
+    'Confirmed', 1500000.0,
+    'Yêu cầu phòng yên tĩnh',
+    NOW(), NOW()
+);
+
+
 -- Service Requests (For Maintenance/Cleaning)
 CREATE TABLE service_requests (
   id INT AUTO_INCREMENT PRIMARY KEY,

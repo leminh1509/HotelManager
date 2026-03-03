@@ -4,8 +4,6 @@ import com.example.spring_project.dto.BookingCreateRequest;
 import com.example.spring_project.dto.BookingResponse;
 import com.example.spring_project.entity.User;
 import com.example.spring_project.service.BookingService;
-
-import jakarta.persistence.criteria.CriteriaBuilder.In;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -74,19 +72,20 @@ public class BookingController {
     // GET /api/rooms/{roomId}
     // Lấy chi tiết 1 booking
     // ─────────────────────────────────────────────────────
-    
+
     @GetMapping("/rooms/{roomId}")
     public ResponseEntity<List<BookingResponse>> getByRoomId(@PathVariable Integer roomId) {
-         List<BookingResponse> response = bookingService.getByRoomId(roomId);
+        List<BookingResponse> response = bookingService.getByRoomId(roomId);
         return ResponseEntity.ok(response);
     }
-      // ─────────────────────────────────────────────────────
+
+    // ─────────────────────────────────────────────────────
     // GET /api/bookings/all
     // Lấy danh sách booking
     // ─────────────────────────────────────────────────────
     @GetMapping("/all")
     public ResponseEntity<List<BookingResponse>> getAll() {
-         List<BookingResponse> response = bookingService.getAllBookings();
+        List<BookingResponse> response = bookingService.getAllBookings();
         return ResponseEntity.ok(response);
     }
 

@@ -2,22 +2,14 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-export default function MaintenanceRequestList() {
+export default function CleaningRequestList() {
     const [requests, setRequests] = useState([]);
     const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [showModal, setShowModal] = useState(false);
 
-<<<<<<< HEAD
-    // Search and Pagination state
-    const [searchTerm, setSearchTerm] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 8;
-
     // Form state
-=======
->>>>>>> c79c43284b99177070abadb14ab905f672a38e68
     const [newRequest, setNewRequest] = useState({
         roomId: "",
         description: "",
@@ -43,17 +35,20 @@ export default function MaintenanceRequestList() {
         }
     };
 
+    // Fetch requests
     const fetchRequests = async () => {
         try {
             const token = localStorage.getItem("token");
-            const res = await axios.get("http://localhost:9999/api/requests/maintenance", {
+            // Use the specific cleaning endpoint
+            const res = await axios.get("http://localhost:9999/api/requests/cleaning", {
                 headers: { Authorization: `Bearer ${token}` },
             });
+            // The endpoint returns a Page object, so we likely need res.data.content
             setRequests(res.data.content || []);
             setLoading(false);
         } catch (err) {
             console.error(err);
-            setError("Failed to load maintenance requests");
+            setError("Failed to load cleaning requests");
             setLoading(false);
         }
     };
@@ -78,16 +73,16 @@ export default function MaintenanceRequestList() {
         setSubmitting(true);
         try {
             const token = localStorage.getItem("token");
-            await axios.post("http://localhost:9999/api/requests/maintenance", newRequest, {
+            await axios.post("http://localhost:9999/api/requests/cleaning", newRequest, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            alert("Request created successfully!");
+            alert("Cleaning request created successfully!");
             setShowModal(false);
             setNewRequest({ roomId: "", description: "", priority: "MEDIUM" });
             fetchRequests();
         } catch (err) {
             console.error(err);
-            alert("Failed to create request");
+            alert("Failed to create cleaning request");
         } finally {
             setSubmitting(false);
         }
@@ -95,50 +90,13 @@ export default function MaintenanceRequestList() {
 
     if (loading) return <div>Loading...</div>;
 
-    // Filter logic
-    const filteredRequests = requests.filter(req =>
-        req.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (req.room && req.room.roomNumber.toString().includes(searchTerm)) ||
-        req.id.toString().includes(searchTerm) ||
-        req.type.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    // Pagination logic
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = filteredRequests.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
-
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-        setCurrentPage(1);
-    };
-
     return (
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2>Maintenance Requests</h2>
-                <div className="d-flex gap-3 align-items-center">
-                    <div className="search-box">
-                        <div className="input-group">
-                            <span className="input-group-text bg-white border-end-0">
-                                <i className="fa fa-search text-muted"></i>
-                            </span>
-                            <input
-                                type="text"
-                                className="form-control border-start-0"
-                                placeholder="Search requests..."
-                                value={searchTerm}
-                                onChange={handleSearchChange}
-                            />
-                        </div>
-                    </div>
-                    <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-                        + Create
-                    </button>
-                </div>
+                <h2>Cleaning Requests</h2>
+                <button className="btn btn-success" onClick={() => setShowModal(true)}>
+                    + Request Cleaning
+                </button>
             </div>
 
             {error && <div className="alert alert-danger">{error}</div>}
@@ -156,14 +114,12 @@ export default function MaintenanceRequestList() {
                         </tr>
                     </thead>
                     <tbody>
-                        {currentItems.length === 0 ? (
+                        {requests.length === 0 ? (
                             <tr>
-                                <td colSpan="7" className="text-center py-4">
-                                    {searchTerm ? `No results found for "${searchTerm}"` : "No requests found."}
-                                </td>
+                                <td colSpan="6" className="text-center">No cleaning requests found.</td>
                             </tr>
                         ) : (
-                            currentItems.map((req) => (
+                            requests.map((req) => (
                                 <tr key={req.id}>
                                     <td>#{req.id}</td>
                                     <td>{req.room ? `Room ${req.room.roomNumber}` : "General"}</td>
@@ -191,36 +147,13 @@ export default function MaintenanceRequestList() {
                 </table>
             </div>
 
-            {totalPages > 1 && (
-                <div className="d-flex justify-content-between align-items-center mt-3 mb-4">
-                    <div className="text-muted small">
-                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredRequests.length)} of {filteredRequests.length}
-                    </div>
-                    <nav>
-                        <ul className="pagination pagination-sm mb-0">
-                            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                                <button className="page-link" onClick={() => paginate(currentPage - 1)}>Prev</button>
-                            </li>
-                            {[...Array(totalPages)].map((_, i) => (
-                                <li key={i + 1} className={`page-item ${currentPage === i + 1 ? "active" : ""}`}>
-                                    <button className="page-link" onClick={() => paginate(i + 1)}>{i + 1}</button>
-                                </li>
-                            ))}
-                            <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
-                                <button className="page-link" onClick={() => paginate(currentPage + 1)}>Next</button>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-            )}
-
             {/* Create Modal */}
             {showModal && (
                 <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
                     <div className="modal-dialog">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">New Maintenance Request</h5>
+                                <h5 className="modal-title">New Cleaning Request</h5>
                                 <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
                             </div>
                             <form onSubmit={handleSubmit}>
@@ -258,6 +191,7 @@ export default function MaintenanceRequestList() {
                                             value={newRequest.description}
                                             onChange={handleInputChange}
                                             required
+                                            placeholder="e.g., Needs fresh towels, Spill in lobby..."
                                         ></textarea>
                                     </div>
                                 </div>
@@ -266,7 +200,7 @@ export default function MaintenanceRequestList() {
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn btn-primary" disabled={submitting}>
-                                        {submitting ? "Submitting..." : "Submit Request"}
+                                        {submitting ? "Submit Request" : "Submit Request"}
                                     </button>
                                 </div>
                             </form>

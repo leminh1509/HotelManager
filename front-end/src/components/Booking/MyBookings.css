@@ -309,4 +309,130 @@
     align-items: flex-start;
     gap: 12px;
   }
+  /* ===== Overlay ===== */
+.mb-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,.65);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+/* ===== Modal ===== */
+.mb-modal {
+  width: 620px;
+  max-width: 94%;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow:
+    0 30px 60px rgba(0,0,0,.25);
+  animation: modalIn .35s ease;
+}
+
+/* ===== HEADER ===== */
+.mb-modal-header {
+  height: 160px;
+  background: linear-gradient(135deg,#0ea5e9,#6366f1);
+  color: white;
+  padding: 22px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+
+.mb-modal-title h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.mb-modal-status {
+  margin-top: 6px;
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.2);
+  font-size: 13px;
+}
+
+/* CLOSE BUTTON */
+.mb-modal-close {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  width: 34px;
+  height: 34px;
+  background: rgba(255,255,255,.2);
+  border-radius: 50%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  cursor:pointer;
+  font-size:18px;
+  transition:.2s;
+}
+
+.mb-modal-close:hover {
+  background: rgba(255,255,255,.35);
+}
+
+/* ===== CONTENT ===== */
+.mb-modal-content {
+  padding: 26px;
+}
+
+.mb-modal-section h4 {
+  margin-bottom: 14px;
+  color:#0f172a;
+}
+
+/* GRID INFO */
+.mb-modal-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+}
+
+.mb-modal-grid label {
+  font-size:12px;
+  color:#94a3b8;
+}
+
+.mb-modal-grid p {
+  margin:4px 0 0;
+  font-weight:500;
+  color:#0f172a;
+}
+
+/* ===== PRICE ===== */
+.mb-modal-price {
+  margin-top:28px;
+  font-size:28px;
+  font-weight:700;
+  text-align:right;
+  color:#0ea5e9;
+}
+
+/* ===== ANIMATION ===== */
+@keyframes modalIn {
+  from {
+    transform: translateY(40px) scale(.95);
+    opacity:0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity:1;
+  }
+}
+
+/* MOBILE */
+@media (max-width:600px){
+  .mb-modal-grid{
+    grid-template-columns:1fr;
+  }
+}
 }

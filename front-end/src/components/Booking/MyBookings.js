@@ -96,6 +96,7 @@ export default function MyBookings() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all"); // all | upcoming | past | cancelled
   const [cancellingId, setCancellingId] = useState(null);
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   useEffect(() => {
     async function fetchBookings() {
@@ -181,7 +182,42 @@ export default function MyBookings() {
               </span>
             </button>
           ))}
+          
         </div>
+        {selectedBooking && (
+  <div className="mb-modal-overlay" onClick={() => setSelectedBooking(null)}>
+   
+    <div
+      className="mb-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h2>Chi tiết đặt phòng</h2>
+
+      <div className="mb-modal-content">
+        <p><b>Mã booking:</b> {selectedBooking.bookingId}</p>
+        <p><b>Phòng:</b> {selectedBooking.roomName}</p>
+        <p><b>Số phòng:</b> {selectedBooking.roomNumber}</p>
+        <p><b>Khách:</b> {selectedBooking.guestName}</p>
+        <p><b>Số người:</b> {selectedBooking.guestCount}</p>
+        <p><b>Check-in:</b> {formatDate(selectedBooking.checkinTime)}</p>
+        <p><b>Check-out:</b> {formatDate(selectedBooking.checkoutTime)}</p>
+        <p><b>Tổng tiền:</b> {formatPrice(selectedBooking.totalPrice)} đ</p>
+        <p>
+          <b>Trạng thái:</b>{" "}
+          {STATUS_LABELS[selectedBooking.status]}
+        </p>
+        <p><b>Ngày tạo:</b> {formatDate(selectedBooking.createdAt)}</p>
+      </div>
+
+      <button
+        className="mb-btn"
+        onClick={() => setSelectedBooking(null)}
+      >
+        Đóng
+      </button>
+    </div>
+  </div>
+)}
 
         {/* Booking list */}
         {filtered.length === 0 ? (
@@ -198,7 +234,11 @@ export default function MyBookings() {
               const isUpcoming = checkinDate >= now;
 
               return (
-                <div key={b.bookingId} className="mb-card">
+              <div
+                key={b.bookingId}
+                className="mb-card"
+                onClick={() => setSelectedBooking(b)}
+>
                   {/* Left: info */}
                   <div className="mb-card-body">
                     <div className="mb-card-top">
@@ -238,7 +278,9 @@ export default function MyBookings() {
                     <div className="mb-card-actions">
                       {canCancel && (
                         <button
-                          onClick={() => handleCancel(b.bookingId)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCancel(b.bookingId)}}
                           disabled={cancellingId === b.bookingId}
                           className="mb-btn mb-btn-cancel"
                         >
@@ -250,13 +292,16 @@ export default function MyBookings() {
                           Đặt lại
                         </Link>
                       )}
+                      
                     </div>
                   </div>
                 </div>
               );
             })}
+            
           </div>
         )}
+        
       </div>
     </div>
   );
