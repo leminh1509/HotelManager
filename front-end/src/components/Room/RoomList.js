@@ -263,7 +263,10 @@ export default function RoomList() {
 
                       <div className="mb-card-aside">
                         <div className="mb-price">{formatPrice(r.price)} đ/đêm</div>
-                        <div className="mb-card-actions">
+                        <div style={{ fontSize: '12px', color: '#ff6b6b', marginTop: '4px', textAlign: 'center', fontWeight: '500' }}>
+                          *Giá linh động (Cuối tuần / Lễ)
+                        </div>
+                        <div className="mb-card-actions" style={{ marginTop: '12px' }}>
                           <Link to={`/rooms/${r.roomId}`} className="mb-btn mb-btn-view">
                             Xem chi tiết
                           </Link>

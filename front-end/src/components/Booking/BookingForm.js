@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useBooking } from "../../context/BookingContext";
 import { getRoomById, createBooking, getBookingByRoomId } from "../../services/bookingAPI";
+import { previewBookingPrice } from "../../services/roomAPI";
 import "./BookingForm.css";
 
 // ─── Mock room fallback (xóa khi API thật sẵn sàng) ────
@@ -47,10 +48,10 @@ function StepBar({ step }) {
 }
 
 // ─── Room Summary (sidebar) ──────────────────────────────
-function RoomSummary({ room, bookingData }) {
+function RoomSummary({ room, bookingData, dynamicPrice }) {
   if (!room) return null;
   const nights = calcNights(bookingData.checkinDate, bookingData.checkoutDate);
-  const total = room.price * nights;
+  const total = dynamicPrice !== null ? dynamicPrice : (room.price * nights);
 
   return (
     <aside className="bf-summary">
@@ -78,9 +79,14 @@ function RoomSummary({ room, bookingData }) {
       </div>
 
       <div className="bf-summary-price">
-        <span>{formatPrice(room.price)} đ × {nights} đêm</span>
+        <span>{formatPrice(room.price)} đ / đêm</span>
         <strong>{formatPrice(total)} đ</strong>
       </div>
+      {dynamicPrice !== null && dynamicPrice !== (room.price * nights) && (
+        <div style={{ fontSize: '11px', color: '#ff6b6b', textAlign: 'right', marginTop: '4px' }}>
+          *Đã tính phụ phí (Lễ / Cuối Tuần)
+        </div>
+      )}
     </aside>
   );
 }
@@ -99,6 +105,9 @@ export default function BookingForm() {
   const location = useLocation();
   const [dateConflict, setDateConflict] = useState(false);
   const [checkingDate, setCheckingDate] = useState(false);
+
+  // Dynamic price state
+  const [dynamicPrice, setDynamicPrice] = useState(null);
 
   // Fetch room nếu chưa có trong context
   useEffect(() => {
@@ -196,6 +205,24 @@ export default function BookingForm() {
 
     checkConflict();
   }, [bookingData.checkinDate, bookingData.checkoutDate, room]);
+
+  // ─── Fetch Dynamic Price ───
+  useEffect(() => {
+    async function fetchPrice() {
+      if (!bookingData.checkinDate || !bookingData.checkoutDate || !room || dateConflict) {
+        setDynamicPrice(null);
+        return;
+      }
+      try {
+        const res = await previewBookingPrice(room.roomId, bookingData.checkinDate, bookingData.checkoutDate);
+        setDynamicPrice(res.data);
+      } catch (err) {
+        console.error("Error fetching preview price", err);
+        setDynamicPrice(null);
+      }
+    }
+    fetchPrice();
+  }, [bookingData.checkinDate, bookingData.checkoutDate, room, dateConflict]);
 
   // ─── Validation ──
   // kiểm tra overlap date
@@ -336,7 +363,7 @@ export default function BookingForm() {
   if (!room) return <div className="bf-loading"><div className="bf-spinner" /><p>Đang tải...</p></div>;
 
   const nights = calcNights(bookingData.checkinDate, bookingData.checkoutDate);
-  const totalPrice = room.price * nights;
+  const totalPrice = dynamicPrice !== null ? dynamicPrice : (room.price * nights);
 
   return (
     <div className="bf-page">
@@ -566,8 +593,14 @@ export default function BookingForm() {
                 {/* Price breakdown */}
                 <div className="bf-review-section bf-price-breakdown">
                   <h4>Tổng giá</h4>
-                  <div className="bf-review-row"><span>{formatPrice(room.price)} đ × {nights} đêm</span><span>{formatPrice(totalPrice)} đ</span></div>
-                  <div className="bf-review-row bf-total"><span>Tổng</span><span>{formatPrice(totalPrice)} </span></div>
+                  <div className="bf-review-row"><span>Tạm tính ({nights} đêm)</span><span>{formatPrice(room.price * nights)} đ</span></div>
+                  {dynamicPrice !== null && dynamicPrice !== (room.price * nights) && (
+                    <div className="bf-review-row" style={{ color: '#ff6b6b' }}>
+                      <span>Phụ phí (Cuối tuần / Lễ)</span>
+                      <span>+ {formatPrice(dynamicPrice - (room.price * nights))} đ</span>
+                    </div>
+                  )}
+                  <div className="bf-review-row bf-total"><span>Tổng cần thanh toán</span><span>{formatPrice(totalPrice)} đ</span></div>
                 </div>
 
                 <div className="bf-actions">
@@ -585,7 +618,7 @@ export default function BookingForm() {
           </div>
 
           {/* ─── Sidebar summary ─── */}
-          <RoomSummary room={room} bookingData={bookingData} />
+          <RoomSummary room={room} bookingData={bookingData} dynamicPrice={dynamicPrice} />
         </div>
       </div>
     </div>

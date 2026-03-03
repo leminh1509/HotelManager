@@ -32,6 +32,10 @@ export const getAllRoomsPaginated = (params) => api.get("/rooms/page", { params 
 // GET /rooms/:roomId  → trả về room + category + amenities + rating trung bình
 export const getRoomById = (roomId) => api.get(`/rooms/${roomId}`);
 
+// ─── Booking APIs ───────────────────────────────────────────
+export const previewBookingPrice = (roomId, checkin, checkout) =>
+  api.get("/bookings/preview-price", { params: { roomId, checkin, checkout } });
+
 
 
 // ─── Category APIs ───────────────────────────────────────
