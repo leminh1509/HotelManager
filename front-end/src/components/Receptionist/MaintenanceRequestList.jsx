@@ -9,15 +9,12 @@ export default function MaintenanceRequestList() {
     const [error, setError] = useState("");
     const [showModal, setShowModal] = useState(false);
 
-<<<<<<< HEAD
     // Search and Pagination state
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
 
     // Form state
-=======
->>>>>>> c79c43284b99177070abadb14ab905f672a38e68
     const [newRequest, setNewRequest] = useState({
         roomId: "",
         description: "",
