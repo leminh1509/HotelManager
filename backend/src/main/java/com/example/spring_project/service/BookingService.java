@@ -234,6 +234,23 @@ public class BookingService {
             }
         }
 
+        if (newStatus == Status.CheckedOut) {
+            // When checking out, change the room status to 'Cleaning' to trigger automatic
+            // maintenance
+            try {
+                roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Cleaning");
+            } catch (Exception e) {
+                // Fallback to integer IDs if name-based lookup fails (assuming 3 is Cleaning)
+                roomService.updateStatus(booking.getRoom().getRoomId(), 3);
+            }
+        } else if (newStatus == Status.CheckedIn) {
+            try {
+                roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Occupied");
+            } catch (Exception e) {
+                roomService.updateStatus(booking.getRoom().getRoomId(), 2);
+            }
+        }
+
         booking.setStatus(newStatus);
         booking.setUpdatedAt(LocalDateTime.now());
 
