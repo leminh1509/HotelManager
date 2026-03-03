@@ -283,3 +283,121 @@
   filter: brightness(0) invert(1);
   /* Make logo white */
 }
+.auth-header {
+  width: 100%;
+  background: #ffffff;
+  border-bottom: 1px solid #f0ecea;
+  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.06);
+  position: relative;
+  z-index: 100;
+}
+
+.auth-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Logo + tên thương hiệu */
+.auth-header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.auth-header-logo-img {
+  width: 44px;
+  height: auto;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.auth-header-logo:hover .auth-header-logo-img {
+  transform: scale(1.06);
+}
+
+.auth-header-brand {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1520;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* Divider dọc */
+.auth-header-divider {
+  display: inline-block;
+  width: 1px;
+  height: 24px;
+  background: #e0d8dc;
+  flex-shrink: 0;
+}
+
+/* Tagline */
+.auth-header-tagline {
+  font-size: 13px;
+  color: #a89aaf;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  flex: 1;
+}
+
+/* Nút Back to Home */
+.auth-header-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  border-radius: 100px;
+  border: 1.5px solid #dfa974;
+  color: #dfa974;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.auth-header-back-btn i {
+  font-size: 13px;
+  transition: transform 0.25s ease;
+}
+
+.auth-header-back-btn:hover {
+  background: #dfa974;
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(223, 169, 116, 0.35);
+}
+
+.auth-header-back-btn:hover i {
+  transform: translateX(-3px);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .auth-header-divider,
+  .auth-header-tagline {
+    display: none;
+  }
+  .auth-header-inner {
+    justify-content: space-between;
+  }
+  .auth-header-back-btn span {
+    display: none;
+  }
+  .auth-header-back-btn {
+    padding: 9px 13px;
+  }
+  .auth-header-back-btn i {
+    font-size: 15px;
+  }
+}

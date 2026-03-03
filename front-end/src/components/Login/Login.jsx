@@ -1,8 +1,7 @@
 // src/components/Login/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import Header from '../Header/Header';
-import Footer from '../Footer/Footer';
+import Header, { AuthHeader } from '../Header/Header';
 import './Login.css';
 
 const normalizeRole = (role) => {
@@ -94,8 +93,7 @@ const Login = ({ onLoginSuccess }) => {
 
   return (
     <>
-      <Header user={null} role="guest" />
-
+      <AuthHeader />
       <div className="login-container">
         <div className="login-wrapper">
           <div className="login-card">
@@ -174,8 +172,6 @@ const Login = ({ onLoginSuccess }) => {
           </div>
         </div>
       </div>
-
-      <Footer />
     </>
   );
 };

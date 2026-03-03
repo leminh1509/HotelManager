@@ -1,8 +1,7 @@
 // src/components/Register/Register.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import Header from '../Header/Header';
-import Footer from '../Footer/Footer';
+import Header, { AuthHeader } from '../Header/Header';
 import './Register.css';
 
 const Register = ({ onRegisterSuccess }) => {
@@ -126,7 +125,7 @@ const Register = ({ onRegisterSuccess }) => {
 
   return (
     <>
-      <Header user={null} role="guest" />
+      <AuthHeader />
 
       <div className="register-container">
         <div className="register-wrapper">
@@ -281,8 +280,6 @@ const Register = ({ onRegisterSuccess }) => {
           </div>
         </div>
       </div>
-
-      <Footer />
     </>
   );
 };
