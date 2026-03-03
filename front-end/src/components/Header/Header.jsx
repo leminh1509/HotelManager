@@ -3,6 +3,33 @@ import React, { useMemo, useState } from "react";
 import { NavLink, Link } from "react-router-dom";
 import "./Header.css";
 
+export function AuthHeader({ backTo = "/home", backLabel = "Back to Home" }) {
+  return (
+    <header className="auth-header">
+      <div className="auth-header-inner">
+
+        {/* Logo + Brand */}
+        <Link to="/home" className="auth-header-logo">
+          <img
+            src="/hms/img/36x.png"
+            className="auth-header-logo-img"
+          />
+        </Link>
+
+        {/* Divider + Tagline – ẩn trên mobile */}
+        <span className="auth-header-divider" aria-hidden="true" />
+        <span className="auth-header-tagline">Luxury &amp; Comfort</span>
+
+        {/* Nút quay về trang chủ */}
+        <Link to={backTo} className="auth-header-back-btn">
+          <i className="fa fa-arrow-left" />
+          <span>{backLabel}</span>
+        </Link>
+
+      </div>
+    </header>
+  );
+}
 export default function Header({
   user = null,
   role = "guest",
@@ -15,49 +42,43 @@ export default function Header({
     return role === "receptionist" || Boolean(pageActive);
   }, [role, pageActive]);
 
-
   const receptionistItems = [
-    { key: "booking-list", label: "Booking List", to: "/receptionist/booking-list" },
+    { key: "booking-list",   label: "Booking List",   to: "/receptionist/booking-list" },
     { key: "create-booking", label: "Create Booking", to: "/receptionist/create-booking" },
-    { key: "room-fees", label: "Room Fees", to: "/receptionist/room-fees" },
-    { key: "bills", label: "Bills", to: "/receptionist/bills" },
-    { key: "rules", label: "Rules", to: "/receptionist/rules" },
-    { key: "rooms", label: "Rooms", to: "/receptionist/rooms" },
+    { key: "room-fees",      label: "Room Fees",      to: "/receptionist/room-fees" },
+    { key: "bills",          label: "Bills",          to: "/receptionist/bills" },
+    { key: "rules",          label: "Rules",          to: "/receptionist/rules" },
+    { key: "rooms",          label: "Rooms",          to: "/receptionist/rooms" },
   ];
 
   const maintenanceItems = [
     { key: "dashboard", label: "Dashboard", to: "/maintenance/dashboard", end: true },
-    { key: "requests", label: "Requests", to: "/maintenance/requests" },
-    { key: "schedule", label: "Schedule", to: "/maintenance/schedule" },
+    { key: "requests",  label: "Requests",  to: "/maintenance/requests" },
+    { key: "schedule",  label: "Schedule",  to: "/maintenance/schedule" },
     { key: "inventory", label: "Inventory", to: "/maintenance/inventory" },
   ];
 
   const guestItems = [
-    { label: "Home", to: "/home", end: true },
-    { label: "Rooms", to: "/rooms" },
-    { label: "Guidelines", to: "/guidelines" },
-    { label: "Rules", to: "/rules" },
+    { label: "Home",        to: "/home",          end: true },
+    { label: "Rooms",       to: "/rooms" },
+    { label: "Guidelines",  to: "/guidelines" },
+    { label: "Rules",       to: "/rules" },
     { label: "My Requests", to: "/user/requests" },
   ];
 
   const closeMobile = () => setMobileOpen(false);
 
   return (
-    <header className={`header-section ${role === 'maintenance' ? 'maintenance-header-mode' : ''}`}>
+    <header className={`header-section ${role === "maintenance" ? "maintenance-header-mode" : ""}`}>
       <div className="top-nav">
         <div className="container">
           <div className="row top-nav-row">
             <div className="col-left">
               <ul className="tn-left">
-                <li>
-                  <i className="fa fa-phone" /> (84) 359 797 703
-                </li>
-                <li>
-                  <i className="fa fa-envelope" /> 37hotel@gmail.com
-                </li>
+                <li><i className="fa fa-phone" /> (84) 359 797 703</li>
+                <li><i className="fa fa-envelope" /> 37hotel@gmail.com</li>
               </ul>
             </div>
-
             <div className="col-right">
               <div className="tn-right">
                 {!user ? (
@@ -76,8 +97,7 @@ export default function Header({
                         <i className="fa fa-user-circle-o" /> Hi, {user.firstName + " " + user.lastName}
                       </NavLink>
                     </div>
-
-                    {role !== 'maintenance' && (
+                    {role !== "maintenance" && (
                       <NavLink to="/my-bookings" className="user-nav-link">
                         <i className="fa fa-book" /> My Bookings
                       </NavLink>
@@ -85,9 +105,7 @@ export default function Header({
                     <button
                       type="button"
                       className="user-nav-link btn-linklike"
-                      onClick={() => {
-                        onLogout?.();
-                      }}
+                      onClick={() => onLogout?.()}
                     >
                       <i className="fa fa-sign-out" /> Logout
                     </button>
@@ -111,15 +129,13 @@ export default function Header({
                     alt="36 Hotel Logo"
                     className="logo-img"
                     onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-                    onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                    onMouseOut={(e)  => (e.currentTarget.style.transform = "scale(1)")}
                   />
                 </Link>
               </div>
             </div>
-
             <div className="nav-col">
               <div className="nav-menu">
-                {/* Mobile toggle */}
                 <button
                   type="button"
                   className="mobile-toggle"
@@ -129,15 +145,12 @@ export default function Header({
                 >
                   <i className="fa fa-bars" />
                 </button>
-
                 <nav className={`mainmenu ${mobileOpen ? "open" : ""}`}>
                   {role === "receptionist" || pageActive === "receptionist" ? (
                     <ul>
                       {receptionistItems.map((it) => (
                         <li key={it.key} className={pageActive === it.key ? "active" : ""}>
-                          <Link to={it.to} onClick={closeMobile}>
-                            {it.label}
-                          </Link>
+                          <Link to={it.to} onClick={closeMobile}>{it.label}</Link>
                         </li>
                       ))}
                     </ul>
@@ -170,7 +183,7 @@ export default function Header({
                           </NavLink>
                         </li>
                       ))}
-                      {user && role !== 'maintenance' && (
+                      {user && role !== "maintenance" && (
                         <li className="mobile-only-link">
                           <NavLink
                             to="/my-bookings"

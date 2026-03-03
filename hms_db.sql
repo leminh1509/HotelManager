@@ -466,7 +466,7 @@ INSERT INTO room (room_number, category_id, status_id, price, capacity, floor, s
 ('P.1004', 5, 1, 10000000, 2, 10, 120, '1 Royal Bed', 'Không hoàn trả', 'President Suite - Sang trọng bậc nhất', 'url_p1004'),
 ('P.1005', 5, 1, 10000000, 2, 10, 120, '1 Royal Bed', 'Không hoàn trả', 'President Suite - Tiện nghi tối tân', 'url_p1005');
 
---insert booking
+-- booking
 INSERT INTO booking (
     user_id, room_id,
     guest_name, guest_email, guest_phone,
@@ -513,3 +513,10 @@ CREATE TABLE service_requests (
 INSERT INTO service_requests (room_id, type, description, priority, status, reported_at) VALUES 
 (1, 'MAINTENANCE', 'Air conditioner leaking water', 'HIGH', 'PENDING', NOW()),
 (2, 'CLEANING', 'Room needs deep cleaning', 'MEDIUM', 'IN_PROGRESS', NOW());
+CREATE TABLE otp_tokens (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    otp VARCHAR(6) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used BOOLEAN NOT NULL DEFAULT FALSE
+);

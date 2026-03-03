@@ -1,5 +1,6 @@
 package com.example.spring_project.service;
 
+import com.example.spring_project.dto.CreateUserRequest;
 import com.example.spring_project.dto.UpdateUserRequest;
 import com.example.spring_project.dto.UserResponse;
 import com.example.spring_project.entity.Role;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,10 +25,50 @@ public class UserManagementService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder; // ✅ THÊM MỚI
+
+    // ✅ MỚI: Admin tạo tài khoản người dùng
+    @Transactional
+    public UserResponse createUser(CreateUserRequest request) {
+        log.info("Admin creating new user with email: {}", request.getEmail());
+
+        // Kiểm tra email trùng
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already exists: " + request.getEmail());
+        }
+
+        // Kiểm tra phone trùng (nếu có nhập)
+        if (request.getMobilePhone() != null && !request.getMobilePhone().isBlank()) {
+            if (userRepository.existsByMobilePhone(request.getMobilePhone())) {
+                throw new RuntimeException("Mobile phone already exists: " + request.getMobilePhone());
+            }
+        }
+
+        // Lấy role
+        Role role = roleRepository.findById(request.getRoleId())
+                .orElseThrow(() -> new RuntimeException("Role not found with id: " + request.getRoleId()));
+
+        // Tạo user mới
+        User user = new User();
+        user.setFirstName(request.getFirstName().trim());
+        user.setMiddleName(request.getMiddleName() != null ? request.getMiddleName().trim() : null);
+        user.setLastName(request.getLastName().trim());
+        user.setEmail(request.getEmail().trim().toLowerCase());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setMobilePhone(request.getMobilePhone() != null ? request.getMobilePhone().trim() : null);
+        user.setBirthday(request.getBirthday());
+        user.setRole(role);
+        user.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
+        user.setIsBlackList(false);
+
+        User saved = userRepository.save(user);
+        log.info("Successfully created user with id: {}", saved.getUserId());
+
+        return convertToUserResponse(saved);
+    }
 
     // ✅ Optimized Search with Pagination
     public Page<UserResponse> getAllUsers(String keyword, String roleName, Pageable pageable) {
-        // Handle empty strings as null
         if (keyword != null && keyword.trim().isEmpty())
             keyword = null;
         if (roleName != null && (roleName.trim().isEmpty() || roleName.equals("all")))
@@ -36,7 +78,6 @@ public class UserManagementService {
                 .map(this::convertToUserResponse);
     }
 
-    // ✅ TỐI ƯU: Load all khi cần (ít dùng)
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(this::convertToUserResponse)
@@ -49,20 +90,15 @@ public class UserManagementService {
         return convertToUserResponse(user);
     }
 
-    // ✅ TỐI ƯU: Query trực tiếp theo role_name
     public List<UserResponse> getUsersByRole(String roleName) {
         return userRepository.findByRole_Name(roleName).stream()
                 .map(this::convertToUserResponse)
                 .collect(Collectors.toList());
     }
 
-    // ✅ Hoặc validate role trước
     public List<UserResponse> getUsersByRoleValidated(String roleName) {
-        // Validate role tồn tại
         Role role = roleRepository.findByName(roleName)
                 .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
-
-        // Query users
         return userRepository.findByRole(role).stream()
                 .map(this::convertToUserResponse)
                 .collect(Collectors.toList());
@@ -75,171 +111,114 @@ public class UserManagementService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        // Cập nhật thông tin cơ bản
         if (request.getFirstName() != null && !request.getFirstName().trim().isEmpty()) {
             user.setFirstName(request.getFirstName().trim());
         }
-
         if (request.getMiddleName() != null) {
             user.setMiddleName(request.getMiddleName().trim());
         }
-
         if (request.getLastName() != null && !request.getLastName().trim().isEmpty()) {
             user.setLastName(request.getLastName().trim());
         }
-
-        // Cập nhật email (kiểm tra duplicate)
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
             if (userRepository.existsByEmail(request.getEmail())) {
                 throw new RuntimeException("Email already exists: " + request.getEmail());
             }
             user.setEmail(request.getEmail().trim().toLowerCase());
         }
-
-        // Cập nhật mobile phone (kiểm tra duplicate)
         if (request.getMobilePhone() != null && !request.getMobilePhone().equals(user.getMobilePhone())) {
             if (userRepository.existsByMobilePhone(request.getMobilePhone())) {
                 throw new RuntimeException("Mobile phone already exists: " + request.getMobilePhone());
             }
             user.setMobilePhone(request.getMobilePhone().trim());
         }
-
         if (request.getBirthday() != null) {
             user.setBirthday(request.getBirthday());
         }
-
         if (request.getAvatarUrl() != null) {
             user.setAvatarUrl(request.getAvatarUrl().trim());
         }
-
-        // Cập nhật role nếu có
         if (request.getRoleId() != null) {
             Role newRole = roleRepository.findById(request.getRoleId())
                     .orElseThrow(() -> new RuntimeException("Role not found with id: " + request.getRoleId()));
             user.setRole(newRole);
-            log.info("Updated user {} role to: {}", userId, newRole.getName());
         }
-
-        // Cập nhật trạng thái
         if (request.getIsActive() != null) {
             user.setIsActive(request.getIsActive());
         }
-
         if (request.getIsBlackList() != null) {
             user.setIsBlackList(request.getIsBlackList());
         }
 
         User updatedUser = userRepository.save(user);
         log.info("Successfully updated user: {}", userId);
-
         return convertToUserResponse(updatedUser);
     }
 
     @Transactional
     public UserResponse changeUserRole(Integer userId, Integer roleId) {
-        log.info("Changing role for user {} to role {}", userId, roleId);
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-
         Role newRole = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
 
         if (user.getRole().getRoleId().equals(roleId)) {
-            log.warn("User {} already has role {}", userId, newRole.getName());
             throw new RuntimeException("User already has role: " + newRole.getName());
         }
 
-        Role oldRole = user.getRole();
         user.setRole(newRole);
-
-        User updatedUser = userRepository.saveAndFlush(user);
-
-        log.info("Successfully changed user {} role from {} to {}",
-                userId, oldRole.getName(), newRole.getName());
-
-        return convertToUserResponse(updatedUser);
+        return convertToUserResponse(userRepository.saveAndFlush(user));
     }
 
     @Transactional
     public UserResponse toggleUserActive(Integer userId) {
-        log.info("Toggling active status for user: {}", userId);
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-
-        boolean newStatus = !user.getIsActive();
-        user.setIsActive(newStatus);
-
-        User updatedUser = userRepository.save(user);
-        log.info("User {} active status changed to: {}", userId, newStatus);
-
-        return convertToUserResponse(updatedUser);
+        user.setIsActive(!user.getIsActive());
+        return convertToUserResponse(userRepository.save(user));
     }
 
     @Transactional
     public UserResponse toggleUserBlacklist(Integer userId) {
-        log.info("Toggling blacklist status for user: {}", userId);
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-
-        boolean newStatus = !user.getIsBlackList();
-        user.setIsBlackList(newStatus);
-
-        User updatedUser = userRepository.save(user);
-        log.info("User {} blacklist status changed to: {}", userId, newStatus);
-
-        return convertToUserResponse(updatedUser);
+        user.setIsBlackList(!user.getIsBlackList());
+        return convertToUserResponse(userRepository.save(user));
     }
 
     @Transactional
     public void deleteUser(Integer userId) {
-        log.info("Permanently deleting user: {}", userId);
-
         if (!userRepository.existsById(userId)) {
             throw new RuntimeException("User not found with id: " + userId);
         }
-
         try {
             userRepository.deleteById(userId);
             userRepository.flush();
-
-            log.info("Successfully deleted user: {}", userId);
         } catch (Exception e) {
-            log.error("Error deleting user {}: {}", userId, e.getMessage());
             throw new RuntimeException("Failed to delete user. User may have associated data: " + e.getMessage());
         }
     }
 
     @Transactional
     public void softDeleteUser(Integer userId) {
-        log.info("Soft deleting user: {}", userId);
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-
         user.setIsActive(false);
         userRepository.save(user);
-
-        log.info("User {} deactivated (soft delete)", userId);
     }
 
     public List<Role> getAllRoles() {
         return roleRepository.findAll();
     }
 
-    // ✅ TỐI ƯU: Dùng countByRole_Name
     public long countUsersByRole(String roleName) {
         return userRepository.countByRole_Name(roleName);
     }
 
-    // ✅ TỐI ƯU: Dùng countByIsActiveTrue
     public long countActiveUsers() {
         return userRepository.countByIsActiveTrue();
     }
 
-    // ✅ TỐI ƯU: Dùng countByIsBlackListTrue
     public long countBlacklistedUsers() {
         return userRepository.countByIsBlackListTrue();
     }
