@@ -1,4 +1,7 @@
 /* src/components/Login/Login.css */
+
+/* === (giữ nguyên toàn bộ CSS cũ) === */
+
 .login-container {
   display: flex;
   align-items: center;
@@ -27,19 +30,13 @@
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 28px;
 }
 
 .login-header h2 {
@@ -68,6 +65,58 @@
   border: 1px solid #fcc;
 }
 
+/* ✅ Google Sign-In Wrapper */
+.google-signin-wrapper {
+  margin-bottom: 20px;
+}
+
+/* Đảm bảo button Google chiếm full width */
+.google-btn-container {
+  display: flex;
+  justify-content: center;
+}
+
+.google-btn-container > div {
+  width: 100% !important;
+}
+
+/* Khi đang loading Google */
+.google-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #555;
+  background: #fafafa;
+}
+
+/* ✅ Divider "hoặc" */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.divider span {
+  font-size: 13px;
+  color: #999;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+/* Form */
 .login-form {
   margin-bottom: 24px;
 }
@@ -187,9 +236,7 @@
 }
 
 @keyframes spinner-border {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 .login-footer {
@@ -216,7 +263,7 @@
   text-decoration: underline;
 }
 
-/* Responsive Design */
+/* Responsive */
 @media (max-width: 576px) {
   .login-card {
     padding: 30px 24px;
