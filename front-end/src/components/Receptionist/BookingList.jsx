@@ -6,11 +6,9 @@ export default function BookingList() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Search and Pagination state
-  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [searchQuery, setSearchQuery] = useState("");
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
     fetchBookings();
@@ -46,46 +44,29 @@ export default function BookingList() {
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-danger">{error}</div>;
 
-  // Filter logic
-  const filteredBookings = bookings.filter(b =>
-    b.guestName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    b.roomNumber.toString().includes(searchTerm) ||
-    b.bookingId.toString().includes(searchTerm)
-  );
-
-  // Pagination logic
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredBookings.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
-
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset to first page on search
-  };
+  const filtered = searchQuery
+    ? bookings.filter(b => b.guestName?.toLowerCase().includes(searchQuery.toLowerCase()))
+    : bookings;
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <div className="container-fluid">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Booking Management</h2>
-        <div className="search-box">
-          <div className="input-group">
-            <span className="input-group-text bg-white border-end-0">
-              <i className="fa fa-search text-muted"></i>
-            </span>
-            <input
-              type="text"
-              className="form-control border-start-0"
-              placeholder="Search by Guest, Room, or ID..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-            />
-          </div>
-        </div>
-      </div>
+      <h2 className="mb-4">Booking Management</h2>
 
+      {/* Search Bar */}
+      <div className="mb-3">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Search by guest name..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
+        />
+      </div>
       <div className="card shadow filter-card">
         <div className="card-body">
           <div className="table-responsive">
@@ -103,7 +84,7 @@ export default function BookingList() {
                 </tr>
               </thead>
               <tbody>
-                {currentItems.map((b) => (
+                {paginated.map((b) => (
                   <tr key={b.bookingId}>
                     <td>#{b.bookingId}</td>
                     <td>
@@ -122,46 +103,51 @@ export default function BookingList() {
                     </td>
                   </tr>
                 ))}
-                {currentItems.length === 0 && (
+                {paginated.length === 0 && (
                   <tr>
-                    <td colSpan="8" className="text-center py-4">
-                      {searchTerm ? `No results found for "${searchTerm}"` : "No bookings found"}
-                    </td>
+                    <td colSpan="8" className="text-center">No bookings found</td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
         </div>
+      </div>
 
-        {totalPages > 1 && (
-          <div className="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center pb-4">
-            <div className="text-muted small">
-              Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredBookings.length)} of {filteredBookings.length} entries
-            </div>
-            <nav>
-              <ul className="pagination pagination-sm mb-0">
-                <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                  <button className="page-link" onClick={() => paginate(currentPage - 1)}>
-                    <i className="fa fa-chevron-left"></i>
-                  </button>
-                </li>
-                {[...Array(totalPages)].map((_, i) => (
-                  <li key={i + 1} className={`page-item ${currentPage === i + 1 ? "active" : ""}`}>
-                    <button className="page-link" onClick={() => paginate(i + 1)}>
-                      {i + 1}
-                    </button>
-                  </li>
-                ))}
-                <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
-                  <button className="page-link" onClick={() => paginate(currentPage + 1)}>
-                    <i className="fa fa-chevron-right"></i>
-                  </button>
-                </li>
-              </ul>
-            </nav>
-          </div>
-        )}
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="d-flex justify-content-center align-items-center gap-2 mt-3">
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(p => p - 1)}
+          >
+            &laquo; Prev
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            <button
+              key={page}
+              className={`btn btn-sm ${currentPage === page ? "btn-primary" : "btn-outline-secondary"}`}
+              onClick={() => setCurrentPage(page)}
+            >
+              {page}
+            </button>
+          ))}
+
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(p => p + 1)}
+          >
+            Next &raquo;
+          </button>
+        </div>
+      )}
+
+      <div className="text-center text-muted mt-2 small">
+        Showing {filtered.length === 0 ? 0 : Math.min((currentPage - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} bookings
+        {searchQuery && ` (filtered from ${bookings.length} total)`}
       </div>
     </div>
   );

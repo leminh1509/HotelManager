@@ -5,6 +5,7 @@ import com.example.spring_project.dto.BookingResponse;
 import com.example.spring_project.entity.Booking;
 import com.example.spring_project.entity.Booking.Status;
 import com.example.spring_project.entity.Room;
+import com.example.spring_project.entity.ServiceRequestType;
 import com.example.spring_project.entity.User;
 import com.example.spring_project.exception.ConflictException;
 import com.example.spring_project.exception.ResourceNotFoundException;
@@ -28,15 +29,18 @@ public class BookingService {
     private final RoomService roomService;
     private final UserRepository userRepo;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ServiceRequestService serviceRequestService;
 
     public BookingService(BookingRepository bookingRepo,
             RoomService roomService,
             UserRepository userRepo,
-            SimpMessagingTemplate messagingTemplate) {
+            SimpMessagingTemplate messagingTemplate,
+            ServiceRequestService serviceRequestService) {
         this.bookingRepo = bookingRepo;
         this.roomService = roomService;
         this.userRepo = userRepo;
         this.messagingTemplate = messagingTemplate;
+        this.serviceRequestService = serviceRequestService;
     }
 
     // ─────────────────────────────────────────────────────
@@ -321,6 +325,18 @@ public class BookingService {
         booking.setUpdatedAt(LocalDateTime.now());
 
         Booking saved = bookingRepo.save(booking);
+
+        // Tự động tạo cleaning request khi check-out
+        if (newStatus == Status.CheckedOut) {
+            Room room = booking.getRoom();
+            String description = "Room " + room.getRoomNumber() + " needs cleaning after guest check-out.";
+            serviceRequestService.createRequest(
+                    room.getRoomId(),
+                    description,
+                    ServiceRequestType.CLEANING,
+                    "HIGH");
+        }
+
         return BookingMapper.toBookingResponse(saved);
     }
 

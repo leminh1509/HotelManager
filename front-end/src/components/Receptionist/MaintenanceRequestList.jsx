@@ -6,10 +6,10 @@ import { Stomp } from "@stomp/stompjs";
 
 export default function MaintenanceRequestList() {
     const [requests, setRequests] = useState([]);
-    const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [showModal, setShowModal] = useState(false);
+    const [rooms, setRooms] = useState([]);
 
     // Real-time notification state
     const [wsMessage, setWsMessage] = useState(null);
@@ -36,6 +36,10 @@ export default function MaintenanceRequestList() {
     const [submitting, setSubmitting] = useState(false);
 
     const navigate = useNavigate();
+
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+    };
 
     const fetchRooms = async () => {
         try {
@@ -131,33 +135,10 @@ export default function MaintenanceRequestList() {
             setSubmitting(false);
         }
     };
-
     if (loading) return <div>Loading...</div>;
-
-    // Filter logic
-    const filteredRequests = requests.filter(req =>
-        req.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (req.room && req.room.roomNumber.toString().includes(searchTerm)) ||
-        req.id.toString().includes(searchTerm) ||
-        req.type.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    // Pagination logic
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = filteredRequests.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
-
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-        setCurrentPage(1);
-    };
 
     return (
         <div className="container mt-4">
-
             {/* Global Application Toast */}
             {toast && (
                 <div style={{
@@ -223,14 +204,12 @@ export default function MaintenanceRequestList() {
                         </tr>
                     </thead>
                     <tbody>
-                        {currentItems.length === 0 ? (
+                        {requests.length === 0 ? (
                             <tr>
-                                <td colSpan="7" className="text-center py-4">
-                                    {searchTerm ? `No results found for "${searchTerm}"` : "No requests found."}
-                                </td>
+                                <td colSpan="6" className="text-center">No maintenance requests found.</td>
                             </tr>
                         ) : (
-                            currentItems.map((req) => (
+                            requests.map((req) => (
                                 <tr key={req.id}>
                                     <td>#{req.id}</td>
                                     <td>{req.room ? `Room ${req.room.roomNumber}` : "General"}</td>
@@ -257,90 +236,6 @@ export default function MaintenanceRequestList() {
                     </tbody>
                 </table>
             </div>
-
-            {totalPages > 1 && (
-                <div className="d-flex justify-content-between align-items-center mt-3 mb-4">
-                    <div className="text-muted small">
-                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredRequests.length)} of {filteredRequests.length}
-                    </div>
-                    <nav>
-                        <ul className="pagination pagination-sm mb-0">
-                            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                                <button className="page-link" onClick={() => paginate(currentPage - 1)}>Prev</button>
-                            </li>
-                            {[...Array(totalPages)].map((_, i) => (
-                                <li key={i + 1} className={`page-item ${currentPage === i + 1 ? "active" : ""}`}>
-                                    <button className="page-link" onClick={() => paginate(i + 1)}>{i + 1}</button>
-                                </li>
-                            ))}
-                            <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
-                                <button className="page-link" onClick={() => paginate(currentPage + 1)}>Next</button>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-            )}
-
-            {/* Create Modal */}
-            {showModal && (
-                <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-                    <div className="modal-dialog">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">New Maintenance Request</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
-                            </div>
-                            <form onSubmit={handleSubmit}>
-                                <div className="modal-body">
-                                    <div className="mb-3">
-                                        <label className="form-label">Room (Optional)</label>
-                                        <select
-                                            className="form-select"
-                                            name="roomId"
-                                            value={newRequest.roomId}
-                                            onChange={handleInputChange}
-                                        >
-                                            {rooms.map(room => (
-                                                <option key={room.roomId} value={room.roomId}>
-                                                    Room {room.roomNumber} — {room.category?.name || ""}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Priority</label>
-                                        <select className="form-select" name="priority" value={newRequest.priority} onChange={handleInputChange}>
-                                            <option value="LIGHT">Light</option>
-                                            <option value="MEDIUM">Medium</option>
-                                            <option value="HIGH">High</option>
-                                            <option value="URGENT">Urgent</option>
-                                        </select>
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Description</label>
-                                        <textarea
-                                            className="form-control"
-                                            name="description"
-                                            rows="3"
-                                            value={newRequest.description}
-                                            onChange={handleInputChange}
-                                            required
-                                        ></textarea>
-                                    </div>
-                                </div>
-                                <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
-                                        Cancel
-                                    </button>
-                                    <button type="submit" className="btn btn-primary" disabled={submitting}>
-                                        {submitting ? "Submitting..." : "Submit Request"}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
