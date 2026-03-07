@@ -14,13 +14,13 @@ export default function MaintenanceRequestList() {
         const fetchRequests = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const res = await axios.get("http://localhost:9999/api/requests/maintenance", {
+                const res = await axios.get("http://localhost:9999/api/requests/cleaning", {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 setRequests(res.data.content || []);
             } catch (err) {
                 console.error(err);
-                setError("Failed to load maintenance requests");
+                setError("Failed to load cleaning requests");
             } finally {
                 setLoading(false);
             }
@@ -45,7 +45,7 @@ export default function MaintenanceRequestList() {
     return (
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2>Maintenance Requests</h2>
+                <h2>Cleaning Requests</h2>
                 <input
                     type="text"
                     className="form-control w-auto"
@@ -73,7 +73,7 @@ export default function MaintenanceRequestList() {
                         {paginated.length === 0 ? (
                             <tr>
                                 <td colSpan="6" className="text-center">
-                                    {searchTerm ? `No results for "${searchTerm}"` : "No maintenance requests found."}
+                                    {searchTerm ? `No results for "${searchTerm}"` : "No cleaning requests found."}
                                 </td>
                             </tr>
                         ) : (
@@ -105,7 +105,6 @@ export default function MaintenanceRequestList() {
                 </table>
             </div>
 
-            {/* Pagination */}
             {totalPages > 1 && (
                 <div className="d-flex justify-content-center align-items-center gap-2 mt-3">
                     <button
