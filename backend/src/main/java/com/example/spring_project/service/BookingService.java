@@ -195,7 +195,7 @@ public class BookingService {
 
         List<Booking> bookings = bookingRepo.findByStatus(status);
         return bookings.stream()
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .sorted((a, b) -> b.getBookingId().compareTo(a.getBookingId()))
                 .map(BookingMapper::toBookingResponse)
                 .collect(Collectors.toList());
     }
@@ -204,7 +204,7 @@ public class BookingService {
     public List<BookingResponse> getAllBookings() {
         List<Booking> list = bookingRepo.findAll();
         return list.stream()
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .sorted((a, b) -> b.getBookingId().compareTo(a.getBookingId()))
                 .map(BookingMapper::toBookingResponse)
                 .collect(Collectors.toList());
     }
