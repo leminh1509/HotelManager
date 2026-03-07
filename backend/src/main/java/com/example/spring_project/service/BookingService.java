@@ -241,6 +241,11 @@ public class BookingService {
         booking.setStatus(newStatus);
         booking.setUpdatedAt(LocalDateTime.now());
 
+        // Cập nhật trạng thái phòng khi check-in
+        if (newStatus == Status.CheckedIn) {
+            roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Occupied");
+        }
+
         Booking saved = bookingRepo.save(booking);
 
         // Tự động tạo cleaning request và đổi trạng thái phòng khi check-out
