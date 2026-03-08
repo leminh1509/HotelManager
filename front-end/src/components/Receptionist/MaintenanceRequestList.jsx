@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
 
+const PAGE_SIZE = 10;
+
 export default function MaintenanceRequestList() {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -137,35 +139,20 @@ export default function MaintenanceRequestList() {
     };
     if (loading) return <div>Loading...</div>;
 
+    const filtered = requests.filter(req => {
+        const term = searchTerm.toLowerCase();
+        return (
+            req.id?.toString().includes(term) ||
+            req.room?.roomNumber?.toString().toLowerCase().includes(term) ||
+            req.description?.toLowerCase().includes(term)
+        );
+    });
+
+    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+    const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
     return (
         <div className="container mt-4">
-            {/* Global Application Toast */}
-            {toast && (
-                <div style={{
-                    position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 1060,
-                    backgroundColor: toast.type === 'error' ? '#f44336' : '#4CAF50',
-                    color: 'white', padding: '12px 24px', borderRadius: '4px',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.2)', fontSize: '15px',
-                    display: 'flex', alignItems: 'center', gap: '10px'
-                }}>
-                    <i className={`fa ${toast.type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}`}></i>
-                    {toast.message}
-                </div>
-            )}
-
-            {/* Real-time Toast Notification */}
-            {wsMessage && (
-                <div
-                    className="alert alert-warning alert-dismissible fade show shadow"
-                    role="alert"
-                    style={{ position: 'fixed', top: '90px', right: '20px', zIndex: 1050, minWidth: '300px' }}
-                >
-                    <strong><i className="fa fa-bell"></i> New Clean Request</strong><br />
-                    {wsMessage}
-                    <button type="button" className="btn-close" aria-label="Close" onClick={() => setWsMessage(null)}></button>
-                </div>
-            )}
-
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2>Maintenance Requests</h2>
                 <div className="d-flex gap-3 align-items-center">
@@ -204,12 +191,14 @@ export default function MaintenanceRequestList() {
                         </tr>
                     </thead>
                     <tbody>
-                        {requests.length === 0 ? (
+                        {paginated.length === 0 ? (
                             <tr>
-                                <td colSpan="6" className="text-center">No maintenance requests found.</td>
+                                <td colSpan="6" className="text-center">
+                                    {searchTerm ? `No results for "${searchTerm}"` : "No cleaning requests found."}
+                                </td>
                             </tr>
                         ) : (
-                            requests.map((req) => (
+                            paginated.map((req) => (
                                 <tr key={req.id}>
                                     <td>#{req.id}</td>
                                     <td>{req.room ? `Room ${req.room.roomNumber}` : "General"}</td>
@@ -235,6 +224,41 @@ export default function MaintenanceRequestList() {
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            {
+                totalPages > 1 && (
+                    <div className="d-flex justify-content-center align-items-center gap-2 mt-3">
+                        <button
+                            className="btn btn-sm btn-outline-secondary"
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(p => p - 1)}
+                        >
+                            &laquo; Prev
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                            <button
+                                key={page}
+                                className={`btn btn-sm ${currentPage === page ? "btn-primary" : "btn-outline-secondary"}`}
+                                onClick={() => setCurrentPage(page)}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                        <button
+                            className="btn btn-sm btn-outline-secondary"
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(p => p + 1)}
+                        >
+                            Next &raquo;
+                        </button>
+                    </div>
+                )
+            }
+
+            <div className="text-center text-muted mt-2 small">
+                Showing {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} requests
+                {searchTerm && ` (filtered from ${requests.length} total)`}
             </div>
         </div>
     );

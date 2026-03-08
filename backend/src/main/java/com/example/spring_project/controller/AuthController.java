@@ -2,9 +2,11 @@ package com.example.spring_project.controller;
 
 import com.example.spring_project.dto.AuthResponse;
 import com.example.spring_project.dto.ErrorResponse;
+import com.example.spring_project.dto.Googleauthrequest;
 import com.example.spring_project.dto.LoginRequest;
 import com.example.spring_project.dto.RegisterRequest;
 import com.example.spring_project.service.AuthService;
+import com.example.spring_project.service.Googleauthservice;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +23,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:5173"})
 public class AuthController {
 
-
     private final AuthService authService;
+    private final Googleauthservice googleAuthService;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
@@ -33,13 +35,7 @@ public class AuthController {
             AuthResponse response = authService.register(request);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            ErrorResponse error = ErrorResponse.builder()
-                    .timestamp(LocalDateTime.now())
-                    .status(HttpStatus.BAD_REQUEST.value())
-                    .error("Registration Failed")
-                    .message(e.getMessage())
-                    .build();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            return buildError(HttpStatus.BAD_REQUEST, "Registration Failed", e.getMessage(), null);
         }
     }
 
@@ -49,19 +45,23 @@ public class AuthController {
             AuthResponse response = authService.login(request);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            ErrorResponse error = ErrorResponse.builder()
-                    .timestamp(LocalDateTime.now())
-                    .status(HttpStatus.UNAUTHORIZED.value())
-                    .error("Authentication Failed")
-                    .message(e.getMessage())
-                    .build();
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            return buildError(HttpStatus.UNAUTHORIZED, "Authentication Failed", e.getMessage(), null);
+        }
+    }
+
+    // ✅ ENDPOINT MỚI: Login bằng Google
+    @PostMapping("/google")
+    public ResponseEntity<?> loginWithGoogle(@Valid @RequestBody Googleauthrequest request) {
+        try {
+            AuthResponse response = googleAuthService.loginWithGoogle(request.getIdToken());
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return buildError(HttpStatus.UNAUTHORIZED, "Google Authentication Failed", e.getMessage(), null);
         }
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
-        // JWT is stateless, so logout is handled on client side by removing token
         Map<String, String> response = new HashMap<>();
         response.put("message", "Logout successful");
         return ResponseEntity.ok(response);
@@ -89,5 +89,18 @@ public class AuthController {
                 .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    // Helper
+    private ResponseEntity<ErrorResponse> buildError(HttpStatus status, String error, String message, String path) {
+        return ResponseEntity.status(status).body(
+                ErrorResponse.builder()
+                        .timestamp(LocalDateTime.now())
+                        .status(status.value())
+                        .error(error)
+                        .message(message)
+                        .path(path)
+                        .build()
+        );
     }
 }

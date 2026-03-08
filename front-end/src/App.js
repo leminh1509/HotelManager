@@ -19,7 +19,7 @@ import ReceptionistLayout from "./components/Receptionist/ReceptionistLayout";
 import BookingDetail from "./components/Receptionist/BookingDetail";
 import PaymentList from "./components/Receptionist/PaymentList";
 import MaintenanceRequestList from "./components/Receptionist/MaintenanceRequestList";
-
+import ForgotPassword from "./components/ForgotPassword/ForgotPassword";
 import RoomList from "./components/Receptionist/RoomList";
 import ReceptionistRoomDetail from "./components/Receptionist/RoomDetail";
 import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
@@ -101,6 +101,7 @@ export default function App() {
       {/* login/register phải truyền callback */}
       <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
       <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/forbidden" element={<Forbidden />} />
 
       {/* ===== BOOKING ===== */}

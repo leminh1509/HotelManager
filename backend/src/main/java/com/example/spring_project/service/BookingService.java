@@ -258,7 +258,7 @@ public class BookingService {
 
         List<Booking> bookings = bookingRepo.findByStatus(status);
         return bookings.stream()
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .sorted((a, b) -> b.getBookingId().compareTo(a.getBookingId()))
                 .map(BookingMapper::toBookingResponse)
                 .collect(Collectors.toList());
     }
@@ -267,7 +267,7 @@ public class BookingService {
     public List<BookingResponse> getAllBookings() {
         List<Booking> list = bookingRepo.findAll();
         return list.stream()
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .sorted((a, b) -> b.getBookingId().compareTo(a.getBookingId()))
                 .map(BookingMapper::toBookingResponse)
                 .collect(Collectors.toList());
     }
@@ -324,11 +324,21 @@ public class BookingService {
         booking.setStatus(newStatus);
         booking.setUpdatedAt(LocalDateTime.now());
 
+        // Cập nhật trạng thái phòng khi check-in
+        if (newStatus == Status.CheckedIn) {
+            roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Occupied");
+        }
+
         Booking saved = bookingRepo.save(booking);
 
-        // Tự động tạo cleaning request khi check-out
+        // Tự động tạo cleaning request và đổi trạng thái phòng khi check-out
         if (newStatus == Status.CheckedOut) {
             Room room = booking.getRoom();
+
+            // Đổi trạng thái phòng → Cleaning
+            roomService.updateRoomStatus(room.getRoomId(), "Cleaning");
+
+            // Tạo cleaning request tự động
             String description = "Room " + room.getRoomNumber() + " needs cleaning after guest check-out.";
             serviceRequestService.createRequest(
                     room.getRoomId(),
