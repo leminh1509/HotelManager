@@ -10,11 +10,11 @@ const api = axios.create({
 
 // Tự gắn token nếu đã login
 api.interceptors.request.use((config) => {
-   const token = localStorage.getItem("token");
-   console.log('tk',token);
+  const token = localStorage.getItem("token");
+  console.log('tk', token);
 
   // if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  config.headers.Authorization = `Bearer ${token}`;
   // } else {
   //   delete config.headers.Authorization;
   // }
@@ -26,9 +26,15 @@ api.interceptors.request.use((config) => {
 // GET /rooms/search?checkin=&checkout=&guests=&categoryId=&minPrice=&maxPrice=
 export const searchRooms = (params) => api.get("/rooms/search", { params });
 export const getAllRooms = () => api.get("/rooms");
+export const searchRoomsPaginated = (params) => api.get("/rooms/search/page", { params });
+export const getAllRoomsPaginated = (params) => api.get("/rooms/page", { params });
 
 // GET /rooms/:roomId  → trả về room + category + amenities + rating trung bình
 export const getRoomById = (roomId) => api.get(`/rooms/${roomId}`);
+
+// ─── Booking APIs ───────────────────────────────────────────
+export const previewBookingPrice = (roomId, checkin, checkout) =>
+  api.get("/bookings/preview-price", { params: { roomId, checkin, checkout } });
 
 
 

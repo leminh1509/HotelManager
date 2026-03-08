@@ -59,6 +59,21 @@ public class BookingController {
     }
 
     // ─────────────────────────────────────────────────────
+    // GET /api/bookings/preview-price
+    // Xem trước giá linh động
+    // ─────────────────────────────────────────────────────
+    @GetMapping("/preview-price")
+    public ResponseEntity<Double> previewPrice(
+            @RequestParam Integer roomId,
+            @RequestParam String checkin,
+            @RequestParam String checkout) {
+        LocalDate checkinDate = LocalDate.parse(checkin);
+        LocalDate checkoutDate = LocalDate.parse(checkout);
+        double price = bookingService.previewPrice(roomId, checkinDate, checkoutDate);
+        return ResponseEntity.ok(price);
+    }
+
+    // ─────────────────────────────────────────────────────
     // GET /api/bookings/{bookingId}
     // Lấy chi tiết 1 booking
     // ─────────────────────────────────────────────────────

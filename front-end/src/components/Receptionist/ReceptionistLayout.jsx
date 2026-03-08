@@ -74,9 +74,6 @@ export default function ReceptionistLayout() {
           >
             <i className="fa fa-cog"></i> {!isCollapsed && "Cleaning Requests"}
           </NavLink>
-
-
-
           {/* Add more links if needed */}
 
           <button onClick={handleLogout} className="nav-item logout-btn">

@@ -38,17 +38,10 @@ public class PaymentService {
             case Cash:
                 payment.setStatus(PaymentStatus.Completed);
                 break;
-            case BankTransfer:
-                payment.setStatus(PaymentStatus.Pending); // Needs manual verification or webhook
-                break;
             case PaymentGateway:
                 // Logic to call Gateway would go here
                 // For now, assume it's pending until callback
                 payment.setStatus(PaymentStatus.Pending);
-                break;
-            case CreditCard:
-            case EWallet:
-                payment.setStatus(PaymentStatus.Completed); // Simplified for demo
                 break;
             default:
                 payment.setStatus(PaymentStatus.Pending);

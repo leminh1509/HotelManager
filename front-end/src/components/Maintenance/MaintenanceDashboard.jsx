@@ -4,6 +4,8 @@ import Footer from '../Footer/Footer';
 import './MaintenanceDashboard.css';
 import { getAllRooms } from '../../services/roomAPI'; // Assuming this exists or I'll use fetch
 import axios from 'axios';
+import SockJS from "sockjs-client";
+import { Stomp } from "@stomp/stompjs";
 
 const MaintenanceDashboard = () => {
     const userString = localStorage.getItem('user');
@@ -17,6 +19,20 @@ const MaintenanceDashboard = () => {
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
     const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
+
+    // Real-time notification state
+    const [wsMessage, setWsMessage] = useState(null);
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [showNotifications, setShowNotifications] = useState(false);
+
+    // Custom Toast State
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     // Search & Filter State
     const [filters, setFilters] = useState({
@@ -50,6 +66,34 @@ const MaintenanceDashboard = () => {
 
     useEffect(() => {
         fetchRooms();
+
+        // Setup WebSocket
+        const socket = new SockJS("http://localhost:9999/ws");
+        const stompClient = Stomp.over(socket);
+
+        stompClient.debug = () => { };
+
+        stompClient.connect({}, (frame) => {
+            console.log("Connected to WebSocket: " + frame);
+            stompClient.subscribe("/topic/maintenance", (message) => {
+                if (message && message.body) {
+                    setWsMessage(message.body);
+                    setNotifications(prev => [{ id: Date.now(), text: message.body, time: new Date() }, ...prev]);
+                    setUnreadCount(prev => prev + 1);
+                    setTimeout(() => setWsMessage(null), 7000);
+                    // Refresh data when a notification arrives
+                    fetchRequests();
+                }
+            });
+        }, (err) => {
+            console.error("WebSocket error: ", err);
+        });
+
+        return () => {
+            if (stompClient.connected) {
+                stompClient.disconnect();
+            }
+        };
     }, []);
 
     const fetchRequests = async () => {
@@ -142,10 +186,10 @@ const MaintenanceDashboard = () => {
             setCreateModalOpen(false);
             setNewRequest({ roomId: '', description: '', type: 'MAINTENANCE', priority: 'MEDIUM' });
             fetchRequests();
-            alert('Tạo yêu cầu thành công!');
+            showToast('Tạo yêu cầu thành công!');
         } catch (error) {
             console.error("Error creating request", error);
-            alert('Tạo yêu cầu thất bại');
+            showToast('Tạo yêu cầu thất bại', 'error');
         }
     };
 
@@ -164,9 +208,10 @@ const MaintenanceDashboard = () => {
             });
             setUpdateModalOpen(false);
             fetchRequests();
+            showToast('Cập nhật thành công', 'success');
         } catch (error) {
             console.error("Error updating request", error);
-            alert('Cập nhật thất bại');
+            showToast('Cập nhật thất bại', 'error');
         }
     };
 
@@ -182,9 +227,10 @@ const MaintenanceDashboard = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchRequests();
+            showToast('Đã cập nhật yêu cầu');
         } catch (error) {
             console.error("Error quick updating request", error);
-            alert('Cập nhật thất bại');
+            showToast('Cập nhật thất bại', 'error');
         }
     };
 
@@ -227,17 +273,118 @@ const MaintenanceDashboard = () => {
             <MaintenanceHeader user={user} onLogout={handleLogout} />
 
             <div className="maintenance-container">
-                <div className="maintenance-header">
+
+                {/* Global Application Toast */}
+                {toast && (
+                    <div style={{
+                        position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 1060,
+                        backgroundColor: toast.type === 'error' ? '#f44336' : '#4CAF50',
+                        color: 'white', padding: '12px 24px', borderRadius: '4px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.2)', fontSize: '15px',
+                        display: 'flex', alignItems: 'center', gap: '10px'
+                    }}>
+                        <i className={`fa ${toast.type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}`}></i>
+                        {toast.message}
+                    </div>
+                )}
+                {/* Real-time Toast Notification */}
+                {wsMessage && (
+                    <div
+                        style={{
+                            position: 'fixed',
+                            top: '90px',
+                            right: '20px',
+                            zIndex: 1050,
+                            minWidth: '300px',
+                            backgroundColor: '#fff3cd',
+                            color: '#856404',
+                            padding: '15px',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                            border: '1px solid #ffeeba',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px'
+                        }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <strong style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <i className="fa fa-bell" style={{ color: '#d39e00' }}></i>
+                                New Clean Request
+                            </strong>
+                            <button
+                                type="button"
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#856404', opacity: 0.7 }}
+                                aria-label="Close"
+                                onClick={() => setWsMessage(null)}
+                            >
+                                &times;
+                            </button>
+                        </div>
+                        <div>{wsMessage}</div>
+                    </div>
+                )}
+
+                <div className="maintenance-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                         <h1>Bảng Điều Khiển Bảo Trì & Dọn Dẹp</h1>
                         <p>Chào mừng trở lại, {user.firstName || 'Nhân viên'}.</p>
+                    </div>
+
+                    {/* Permanent Bell Icon */}
+                    <div style={{ position: 'relative', marginRight: '20px' }}>
+                        <div
+                            onClick={() => {
+                                setShowNotifications(!showNotifications);
+                                if (!showNotifications) setUnreadCount(0);
+                            }}
+                            style={{ cursor: 'pointer', position: 'relative', padding: '10px' }}
+                        >
+                            <i className="fa fa-bell" style={{ fontSize: '28px', color: '#555' }}></i>
+                            {unreadCount > 0 && (
+                                <span style={{
+                                    position: 'absolute', top: '2px', right: '4px',
+                                    backgroundColor: '#dc3545', color: 'white', borderRadius: '50%',
+                                    padding: '2px 6px', fontSize: '12px', fontWeight: 'bold'
+                                }}>
+                                    {unreadCount}
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Dropdown list */}
+                        {showNotifications && (
+                            <div style={{
+                                position: 'absolute', top: '50px', right: '0',
+                                width: '320px', backgroundColor: '#fff',
+                                boxShadow: '0 4px 15px rgba(0,0,0,0.1)', borderRadius: '8px',
+                                padding: '15px', zIndex: 1000, border: '1px solid #eee'
+                            }}>
+                                <h4 style={{ margin: '0 0 10px 0', fontSize: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Thông báo</h4>
+                                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                    {notifications.length > 0 ? notifications.map(n => (
+                                        <div key={n.id} style={{ padding: '10px 0', borderBottom: '1px solid #f5f5f5', fontSize: '14px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                                                <i className="fa fa-info-circle" style={{ color: '#007bff', marginTop: '3px' }}></i>
+                                                <span>{n.text}</span>
+                                            </div>
+                                            <div style={{ fontSize: '12px', color: '#888', marginLeft: '22px', marginTop: '4px' }}>
+                                                {n.time.toLocaleTimeString()}
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <div style={{ fontSize: '14px', color: '#888', padding: '10px', textAlign: 'center' }}>Chưa có thông báo nào</div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Stats Row */}
                 <div className="stats-row">
                     <div className="stat-card total" onClick={() => setFilters({ ...filters, status: '', page: 0 })}>
-                        <div className="stat-icon">Testing</div>
+                        <div className="stat-icon">📋</div>
                         <div className="stat-info">
                             <h3>{stats.total}</h3>
                             <span>Tổng Công Việc</span>
