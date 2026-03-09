@@ -12,7 +12,7 @@ const Payment = ({ user, role, onLogout }) => {
   const { bookingId, totalAmount, room, bookingData, nights } = location.state || {};
 
   // 2. State
-  const [paymentMethod, setPaymentMethod] = useState('cash'); // cash, vnpay, card
+  const [paymentMethod, setPaymentMethod] = useState('vnpay'); // vnpay, card
   const [isProcessing, setIsProcessing] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -23,12 +23,12 @@ const Payment = ({ user, role, onLogout }) => {
     number: '',
     name: '',
     expiry: '',
-    cvv: '',
     bank: ''
   });
 
   const [banks, setBanks] = useState([]);
   const [loadingBanks, setLoadingBanks] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchBanks = async () => {
@@ -49,37 +49,28 @@ const Payment = ({ user, role, onLogout }) => {
   }, []);
 
   // Fallbacks
+  // If bookingId is a string like "BK-12", extract the number. If null, use 0 to avoid backend error.
+  const numericBookingId = bookingId ? (typeof bookingId === 'string' ? (bookingId.match(/\d+/) ? bookingId.match(/\d+/)[0] : 0) : bookingId) : 0;
   const displayId = bookingId || 'BK-TEST';
   const displayAmount = totalAmount || 0;
   const displayRoomName = room?.name || 'Phòng mẫu';
   const displayNights = nights || 1;
 
-  const mapMethodToBackend = (method) => {
-    switch (method) {
-      case 'cash': return 'Cash';
-      case 'vnpay': return 'PaymentGateway';
-      case 'card': return 'CreditCard';
-      default: return 'Cash';
-    }
-  };
-
   const handlePayment = async () => {
     setIsProcessing(true);
     setError('');
 
-    if (paymentMethod === 'card') {
-      if (!cardDetails.number || !cardDetails.name || !cardDetails.expiry || !cardDetails.cvv || !cardDetails.bank) {
-        setError('Vui lòng nhập đầy đủ thông tin thẻ và chọn ngân hàng.');
-        setIsProcessing(false);
-        return;
-      }
-    }
-
-    if (paymentMethod === 'vnpay') {
+    // Both VNPay and Card will now go through VNPay Gateway for OTP
+    if (paymentMethod === 'vnpay' || paymentMethod === 'card') {
       try {
         const orderInfo = `VNPAY BK-${displayId}`;
         const amount = Math.round(displayAmount);
-        const bankCode = 'VNPAYQR';
+
+        // If bank is selected in grid, use it. Otherwise default based on method.
+        let bankCode = cardDetails.bank;
+        if (!bankCode) {
+          bankCode = paymentMethod === 'vnpay' ? 'VNPAYQR' : 'VNBANK';
+        }
 
         const url = `http://localhost:9999/api/payments/vnpay-payment?amount=${amount}&orderInfo=${encodeURIComponent(orderInfo)}&bankCode=${bankCode}`;
 
@@ -97,36 +88,13 @@ const Payment = ({ user, role, onLogout }) => {
         return;
       } catch (err) {
         console.error(err);
-        setError('Lỗi kết nối VNPay. Vui lòng thử lại.');
+        setError('Lỗi kết nối thanh toán. Vui lòng thử lại.');
         setIsProcessing(false);
         return;
       }
     }
 
-    try {
-      const response = await fetch('http://localhost:9999/api/payments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          invoiceId: displayId,
-          amount: parseFloat(displayAmount),
-          method: mapMethodToBackend(paymentMethod),
-          bankName: paymentMethod === 'card' ? cardDetails.bank : null,
-          bankAccount: paymentMethod === 'card' ? cardDetails.number : null,
-        }),
-      });
-
-      if (!response.ok) throw new Error('Thanh toán thất bại.');
-      setPaymentSuccess(true);
-    } catch (err) {
-      console.error(err);
-      setError('Thanh toán thất bại. Vui lòng thử lại.');
-    } finally {
-      setIsProcessing(false);
-    }
+    setIsProcessing(false);
   };
 
   const formatPrice = (n) => new Intl.NumberFormat("vi-VN").format(n);
@@ -205,7 +173,6 @@ const Payment = ({ user, role, onLogout }) => {
             <h2 className="payment-title">Bạn muốn thanh toán bằng cách nào?</h2>
 
             <div className="methods-grid">
-              {/* VNPay */}
               <div
                 className={`method-card ${paymentMethod === 'vnpay' ? 'active' : ''}`}
                 onClick={() => setPaymentMethod('vnpay')}
@@ -214,22 +181,13 @@ const Payment = ({ user, role, onLogout }) => {
                 <span className="method-name">VNPay QR</span>
               </div>
 
-              {/* Cash */}
-              <div
-                className={`method-card ${paymentMethod === 'cash' ? 'active' : ''}`}
-                onClick={() => setPaymentMethod('cash')}
-              >
-                <span className="method-icon" style={{ fontSize: 24 }}>💵</span>
-                <span className="method-name">Tiền mặt</span>
-              </div>
-
               {/* Credit Card */}
               <div
                 className={`method-card ${paymentMethod === 'card' ? 'active' : ''}`}
                 onClick={() => setPaymentMethod('card')}
               >
                 <span className="method-icon" style={{ fontSize: 24 }}>💳</span>
-                <span className="method-name">Thẻ tín dụng</span>
+                <span className="method-name">Thẻ ngân hàng</span>
               </div>
             </div>
 
@@ -265,20 +223,39 @@ const Payment = ({ user, role, onLogout }) => {
                   />
                 </div>
                 <div className="form-group" style={{ marginBottom: 15 }}>
-                  <label>Ngân hàng phát hành</label>
-                  <select
-                    className="form-input"
-                    value={cardDetails.bank}
-                    onChange={(e) => setCardDetails({ ...cardDetails, bank: e.target.value })}
-                    disabled={loadingBanks}
-                  >
-                    <option value="">{loadingBanks ? 'Đang tải danh sách...' : '-- Chọn ngân hàng --'}</option>
-                    {banks.map(b => (
-                      <option key={b.id} value={b.shortName || b.name}>
-                        {b.shortName ? `${b.shortName} - ${b.name}` : b.name}
-                      </option>
-                    ))}
-                  </select>
+                  <label>Chọn ngân hàng</label>
+                  <div className="bank-search-container">
+                    <input
+                      type="text"
+                      className="bank-search-input"
+                      placeholder="Tìm kiếm ngân hàng (vcb, bidv...)"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+
+                  {loadingBanks ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>Đang tải danh sách ngân hàng...</div>
+                  ) : (
+                    <div className="bank-grid-scroll">
+                      {banks
+                        .filter(b =>
+                          b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (b.shortName && b.shortName.toLowerCase().includes(searchTerm.toLowerCase()))
+                        )
+                        .map(b => (
+                          <div
+                            key={b.id}
+                            className={`bank-card-item ${cardDetails.bank === (b.shortName || b.name) ? 'selected' : ''}`}
+                            onClick={() => setCardDetails({ ...cardDetails, bank: b.shortName || b.name })}
+                          >
+                            <img src={b.logo} alt={b.shortName} className="bank-logo-img" />
+                            <div className="bank-short-name">{b.shortName || b.name}</div>
+                          </div>
+                        ))
+                      }
+                    </div>
+                  )}
                 </div>
                 <div className="form-group" style={{ marginBottom: 15 }}>
                   <label>Tên chủ thẻ</label>
@@ -306,37 +283,66 @@ const Payment = ({ user, role, onLogout }) => {
                       }}
                     />
                   </div>
-                  <div className="form-group">
-                    <label>CVV</label>
-                    <input
-                      type="password"
-                      className="form-input"
-                      placeholder="***"
-                      maxLength="3"
-                      value={cardDetails.cvv}
-                      onChange={(e) => setCardDetails({ ...cardDetails, cvv: e.target.value.replace(/\D/g, '') })}
-                    />
-                  </div>
                 </div>
               </div>
             )}
 
             {/* QR Section (Only for Automated VNPay Gateway) */}
-            {['vnpay'].includes(paymentMethod) && (
-              <div style={{ marginTop: 30, textAlign: 'center', background: '#f9f9f9', padding: 20, borderRadius: 8, border: '1px dashed #ccc' }}>
-                <h4 style={{ marginBottom: 15, color: '#333' }}>
-                  {getQrTitle()}
-                </h4>
+            {paymentMethod === 'vnpay' && (
+              <div className="vnpay-setup" style={{ marginTop: 20 }}>
+                <div className="form-group" style={{ marginBottom: 15 }}>
+                  <label>Chọn ngân hàng thanh toán qua VNPAY</label>
+                  <p style={{ fontSize: 13, color: '#666', marginBottom: 10 }}>Chọn ngân hàng để sử dụng mã OTP (ví dụ: chọn <strong>NCB</strong> để test Sandbox)</p>
 
-                <div className="qr-box" style={{ background: '#fff', padding: 10, display: 'inline-block', borderRadius: 8, boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
-                  {renderQrCode()}
+                  <div className="bank-search-container">
+                    <input
+                      type="text"
+                      className="bank-search-input"
+                      placeholder="Tìm kiếm ngân hàng (ncb, vcb, bidv...)"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+
+                  {loadingBanks ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>Đang tải danh sách ngân hàng...</div>
+                  ) : (
+                    <div className="bank-grid-scroll">
+                      {banks
+                        .filter(b =>
+                          b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (b.shortName && b.shortName.toLowerCase().includes(searchTerm.toLowerCase()))
+                        )
+                        .map(b => (
+                          <div
+                            key={b.id}
+                            className={`bank-card-item ${cardDetails.bank === (b.shortName || b.name) ? 'selected' : ''}`}
+                            onClick={() => setCardDetails({ ...cardDetails, bank: b.shortName || b.name })}
+                          >
+                            <img src={b.logo} alt={b.shortName} className="bank-logo-img" />
+                            <div className="bank-short-name">{b.shortName || b.name}</div>
+                          </div>
+                        ))
+                      }
+                    </div>
+                  )}
                 </div>
 
-                <div style={{ marginTop: 15 }}>
-                  <p style={{ margin: '5px 0' }}>Tổng tiền: <strong style={{ color: '#008000', fontSize: 18 }}>{formatPrice(displayAmount)} đ</strong></p>
-                  <p style={{ margin: '5px 0', fontSize: 14 }}>Nội dung: <strong style={{ background: '#eee', padding: '2px 6px', borderRadius: 4 }}>{getQrContent()}</strong></p>
+                <div style={{ marginTop: 30, textAlign: 'center', background: '#f9f9f9', padding: 20, borderRadius: 8, border: '1px dashed #ccc' }}>
+                  <h4 style={{ marginBottom: 15, color: '#333' }}>
+                    {getQrTitle()}
+                  </h4>
 
-                  {getQrNote()} để quét mã.
+                  <div className="qr-box" style={{ background: '#fff', padding: 10, display: 'inline-block', borderRadius: 8, boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+                    {renderQrCode()}
+                  </div>
+
+                  <div style={{ marginTop: 15 }}>
+                    <p style={{ margin: '5px 0' }}>Tổng tiền: <strong style={{ color: '#008000', fontSize: 18 }}>{formatPrice(displayAmount)} đ</strong></p>
+                    <p style={{ margin: '5px 0', fontSize: 14 }}>Nội dung: <strong style={{ background: '#eee', padding: '2px 6px', borderRadius: 4 }}>{getQrContent()}</strong></p>
+
+                    {getQrNote()} để quét mã.
+                  </div>
                 </div>
               </div>
             )}
@@ -395,7 +401,7 @@ const Payment = ({ user, role, onLogout }) => {
                 ? `Đang chuyển hướng...`
                 : (isProcessing
                   ? 'Đang xử lý...'
-                  : (paymentMethod === 'vnpay' ? 'Thanh toán với VNPAY' : 'Tiếp tục thanh toán')
+                  : (paymentMethod === 'vnpay' ? 'Thanh toán với VNPAY' : 'Thanh toán qua Thẻ ngân hàng')
                 )
               }
             </button>

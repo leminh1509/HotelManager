@@ -288,3 +288,111 @@
   border-color: #007bff;
   outline: none;
 }
+
+/* Bank Grid Styles */
+.bank-search-container {
+  margin-bottom: 12px;
+}
+
+.bank-search-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.bank-search-input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.bank-grid-scroll {
+  max-height: 280px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+  padding: 12px;
+  background: #fdfdfd;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+/* Custom Scrollbar */
+.bank-grid-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.bank-grid-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.bank-grid-scroll::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+.bank-grid-scroll::-webkit-scrollbar-thumb:hover {
+  background: #bbb;
+}
+
+.bank-card-item {
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #fff;
+  text-align: center;
+  height: 85px;
+  position: relative;
+}
+
+.bank-card-item:hover {
+  border-color: #007bff;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.08);
+}
+
+.bank-card-item.selected {
+  border-color: #007bff;
+  background-color: #f0f7ff;
+  box-shadow: 0 0 0 2px #007bff inset;
+}
+
+.bank-card-item.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  color: #007bff;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.bank-logo-img {
+  width: 100%;
+  height: 38px;
+  object-fit: contain;
+  margin-bottom: 8px;
+  pointer-events: none;
+}
+
+.bank-short-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: #444;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  pointer-events: none;
+}
