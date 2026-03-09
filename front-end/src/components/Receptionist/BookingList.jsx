@@ -8,11 +8,26 @@ export default function BookingList() {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterRoom, setFilterRoom] = useState("");
+  const [filterDateCreated, setFilterDateCreated] = useState("");
+  const [filterDateCheckout, setFilterDateCheckout] = useState("");
+  const [rooms, setRooms] = useState([]);
   const PAGE_SIZE = 10;
 
   useEffect(() => {
     fetchBookings();
+    fetchRooms();
   }, []);
+
+  const fetchRooms = async () => {
+    try {
+      const res = await axios.get("http://localhost:9999/api/rooms");
+      setRooms(res.data);
+    } catch (err) {
+      console.error("Failed to fetch rooms:", err);
+    }
+  };
 
   const fetchBookings = async () => {
     try {
@@ -44,28 +59,104 @@ export default function BookingList() {
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-danger">{error}</div>;
 
-  const filtered = searchQuery
-    ? bookings.filter(b => b.guestName?.toLowerCase().includes(searchQuery.toLowerCase()))
-    : bookings;
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const filtered = bookings.filter(b => {
+    const matchSearch = searchQuery ? b.guestName?.toLowerCase().includes(searchQuery.toLowerCase()) : true;
+    const matchStatus = filterStatus ? b.status === filterStatus : true;
+    const matchRoom = filterRoom ? 
+        b.roomNumber?.toString().includes(filterRoom) || b.roomName?.toLowerCase().includes(filterRoom.toLowerCase()) 
+        : true;
+    const matchCreated = filterDateCreated ? 
+        new Date(b.createdAt).toISOString().split('T')[0] === filterDateCreated 
+        : true;
+    const matchCheckout = filterDateCheckout ? 
+        new Date(b.checkoutTime).toISOString().split('T')[0] === filterDateCheckout 
+        : true;
+
+    return matchSearch && matchStatus && matchRoom && matchCreated && matchCheckout;
+  });
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const hasFilters = searchQuery || filterStatus || filterRoom || filterDateCreated || filterDateCheckout;
 
   return (
     <div className="container-fluid">
       <h2 className="mb-4">Booking Management</h2>
 
-      {/* Search Bar */}
-      <div className="mb-3">
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Search by guest name..."
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setCurrentPage(1);
-          }}
-        />
+      {/* Filters */}
+      <div className="row mb-3 g-2">
+        <div className="col-md-3">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search guest name..."
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+          />
+        </div>
+        <div className="col-md-2">
+          <select 
+            className="form-select" 
+            value={filterStatus} 
+            onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+          >
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Checked-in">Checked-in</option>
+            <option value="Checked-out">Checked-out</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div className="col-md-2">
+          <select
+            className="form-select"
+            value={filterRoom}
+            onChange={(e) => { setFilterRoom(e.target.value); setCurrentPage(1); }}
+          >
+            <option value="">All Rooms</option>
+            {rooms.map(r => (
+              <option key={r.roomId} value={r.roomNumber}>{r.roomNumber}</option>
+            ))}
+          </select>
+        </div>
+        <div className="col-md-2">
+          <input
+            type="date"
+            className="form-control"
+            title="Date Created"
+            value={filterDateCreated}
+            onChange={(e) => { setFilterDateCreated(e.target.value); setCurrentPage(1); }}
+          />
+          <small className="text-muted" style={{fontSize: "0.75rem"}}>Date Created</small>
+        </div>
+        <div className="col-md-2">
+          <input
+            type="date"
+            className="form-control"
+            title="Check-Out Date"
+            value={filterDateCheckout}
+            onChange={(e) => { setFilterDateCheckout(e.target.value); setCurrentPage(1); }}
+          />
+          <small className="text-muted" style={{fontSize: "0.75rem"}}>Check-Out</small>
+        </div>
+        <div className="col-md-1">
+            <button 
+                className="btn btn-outline-secondary w-100" 
+                onClick={() => {
+                    setSearchQuery("");
+                    setFilterStatus("");
+                    setFilterRoom("");
+                    setFilterDateCreated("");
+                    setFilterDateCheckout("");
+                    setCurrentPage(1);
+                }}
+                disabled={!hasFilters}
+            >
+                Clear
+            </button>
+        </div>
       </div>
       <div className="card shadow filter-card">
         <div className="card-body">
@@ -147,7 +238,7 @@ export default function BookingList() {
 
       <div className="text-center text-muted mt-2 small">
         Showing {filtered.length === 0 ? 0 : Math.min((currentPage - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} bookings
-        {searchQuery && ` (filtered from ${bookings.length} total)`}
+        {hasFilters && ` (filtered from ${bookings.length} total)`}
       </div>
     </div>
   );

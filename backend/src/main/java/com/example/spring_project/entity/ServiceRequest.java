@@ -9,11 +9,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "service_requests")
+@Table(name = "maintenance_request")
 public class ServiceRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "request_id")
     private Long id;
 
     @ManyToOne
