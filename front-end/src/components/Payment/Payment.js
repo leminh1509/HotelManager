@@ -12,11 +12,41 @@ const Payment = ({ user, role, onLogout }) => {
   const { bookingId, totalAmount, room, bookingData, nights } = location.state || {};
 
   // 2. State
-  const [paymentMethod, setPaymentMethod] = useState('cash'); // cash, vnpay
+  const [paymentMethod, setPaymentMethod] = useState('cash'); // cash, vnpay, card
   const [isProcessing, setIsProcessing] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  // Card Details State
+  const [cardDetails, setCardDetails] = useState({
+    number: '',
+    name: '',
+    expiry: '',
+    cvv: '',
+    bank: ''
+  });
+
+  const [banks, setBanks] = useState([]);
+  const [loadingBanks, setLoadingBanks] = useState(false);
+
+  useEffect(() => {
+    const fetchBanks = async () => {
+      setLoadingBanks(true);
+      try {
+        const response = await fetch('https://api.vietqr.io/v2/banks');
+        const data = await response.json();
+        if (data.code === '00') {
+          setBanks(data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching banks:', err);
+      } finally {
+        setLoadingBanks(false);
+      }
+    };
+    fetchBanks();
+  }, []);
 
   // Fallbacks
   const displayId = bookingId || 'BK-TEST';
@@ -28,6 +58,7 @@ const Payment = ({ user, role, onLogout }) => {
     switch (method) {
       case 'cash': return 'Cash';
       case 'vnpay': return 'PaymentGateway';
+      case 'card': return 'CreditCard';
       default: return 'Cash';
     }
   };
@@ -35,6 +66,14 @@ const Payment = ({ user, role, onLogout }) => {
   const handlePayment = async () => {
     setIsProcessing(true);
     setError('');
+
+    if (paymentMethod === 'card') {
+      if (!cardDetails.number || !cardDetails.name || !cardDetails.expiry || !cardDetails.cvv || !cardDetails.bank) {
+        setError('Vui lòng nhập đầy đủ thông tin thẻ và chọn ngân hàng.');
+        setIsProcessing(false);
+        return;
+      }
+    }
 
     if (paymentMethod === 'vnpay') {
       try {
@@ -75,8 +114,8 @@ const Payment = ({ user, role, onLogout }) => {
           invoiceId: displayId,
           amount: parseFloat(displayAmount),
           method: mapMethodToBackend(paymentMethod),
-          bankName: null,
-          bankAccount: null,
+          bankName: paymentMethod === 'card' ? cardDetails.bank : null,
+          bankAccount: paymentMethod === 'card' ? cardDetails.number : null,
         }),
       });
 
@@ -183,7 +222,104 @@ const Payment = ({ user, role, onLogout }) => {
                 <span className="method-icon" style={{ fontSize: 24 }}>💵</span>
                 <span className="method-name">Tiền mặt</span>
               </div>
+
+              {/* Credit Card */}
+              <div
+                className={`method-card ${paymentMethod === 'card' ? 'active' : ''}`}
+                onClick={() => setPaymentMethod('card')}
+              >
+                <span className="method-icon" style={{ fontSize: 24 }}>💳</span>
+                <span className="method-name">Thẻ tín dụng</span>
+              </div>
             </div>
+
+            {/* Card Form Section */}
+            {paymentMethod === 'card' && (
+              <div className="card-form">
+                <div className="card-preview">
+                  <div className="card-chip"></div>
+                  <div className="card-number-display">
+                    {cardDetails.number.padEnd(16, '•').replace(/(.{4})/g, '$1 ')}
+                  </div>
+                  <div className="card-bottom">
+                    <div className="card-name-section">
+                      <div className="card-label">Chủ thẻ</div>
+                      <div className="card-name-display">{cardDetails.name || 'FULL NAME'}</div>
+                    </div>
+                    <div className="card-expiry-section">
+                      <div className="card-label">Hết hạn</div>
+                      <div className="card-expiry-display">{cardDetails.expiry || 'MM/YY'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 15 }}>
+                  <label>Số thẻ</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="xxxx xxxx xxxx xxxx"
+                    maxLength="16"
+                    value={cardDetails.number}
+                    onChange={(e) => setCardDetails({ ...cardDetails, number: e.target.value.replace(/\D/g, '') })}
+                  />
+                </div>
+                <div className="form-group" style={{ marginBottom: 15 }}>
+                  <label>Ngân hàng phát hành</label>
+                  <select
+                    className="form-input"
+                    value={cardDetails.bank}
+                    onChange={(e) => setCardDetails({ ...cardDetails, bank: e.target.value })}
+                    disabled={loadingBanks}
+                  >
+                    <option value="">{loadingBanks ? 'Đang tải danh sách...' : '-- Chọn ngân hàng --'}</option>
+                    {banks.map(b => (
+                      <option key={b.id} value={b.shortName || b.name}>
+                        {b.shortName ? `${b.shortName} - ${b.name}` : b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group" style={{ marginBottom: 15 }}>
+                  <label>Tên chủ thẻ</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="NGUYEN VAN A"
+                    value={cardDetails.name}
+                    onChange={(e) => setCardDetails({ ...cardDetails, name: e.target.value.toUpperCase() })}
+                  />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Ngày hết hạn</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="MM/YY"
+                      maxLength="5"
+                      value={cardDetails.expiry}
+                      onChange={(e) => {
+                        let v = e.target.value.replace(/\D/g, '');
+                        if (v.length > 2) v = v.substring(0, 2) + '/' + v.substring(2, 4);
+                        setCardDetails({ ...cardDetails, expiry: v });
+                      }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>CVV</label>
+                    <input
+                      type="password"
+                      className="form-input"
+                      placeholder="***"
+                      maxLength="3"
+                      value={cardDetails.cvv}
+                      onChange={(e) => setCardDetails({ ...cardDetails, cvv: e.target.value.replace(/\D/g, '') })}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* QR Section (Only for Automated VNPay Gateway) */}
             {['vnpay'].includes(paymentMethod) && (

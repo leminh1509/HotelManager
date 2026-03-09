@@ -95,7 +95,7 @@ export default function App() {
       <Route path="/home" element={<Home user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
 
       {/*List room */}
-      <Route path="/rooms" element={<RoomList1 />} />
+      <Route path="/rooms" element={<RoomList1 user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
 
 
       {/* login/register phải truyền callback */}
@@ -106,16 +106,16 @@ export default function App() {
 
       {/* ===== BOOKING ===== */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/payment" element={<Payment user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
-        <Route path="/payment/vnpay-return" element={<PaymentResult user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
+        <Route path="/payment" element={<Payment user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        <Route path="/payment/vnpay-return" element={<PaymentResult user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
 
         {/* ===== BOOKING ===== */}
 
-        <Route path="/rooms/:roomId" element={<RoomDetail />} />
-        <Route path="/booking/list" element={<BookingList1 />} />
-        <Route path="/booking/new/:roomId" element={<BookingForm />} />
-        <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmation />} />
-        <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/rooms/:roomId" element={<RoomDetail user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        <Route path="/booking/list" element={<BookingList1 user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        <Route path="/booking/new/:roomId" element={<BookingForm user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmation user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        <Route path="/my-bookings" element={<MyBookings user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
         <Route path="/profile" element={<Profile onLogout={handleLogout} />} />
       </Route>
       {/* ===== ADMIN ===== */}

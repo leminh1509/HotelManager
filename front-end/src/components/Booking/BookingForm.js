@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useBooking } from "../../context/BookingContext";
 import { getRoomById, createBooking, getBookingByRoomId } from "../../services/bookingAPI";
 import { previewBookingPrice } from "../../services/roomAPI";
+import Header from "../Header/Header";
+import Footer from "../Footer/Footer";
 import "./BookingForm.css";
 
 // ─── Mock room fallback (xóa khi API thật sẵn sàng) ────
@@ -92,7 +94,7 @@ function RoomSummary({ room, bookingData, dynamicPrice }) {
 }
 
 // ─── Main Component ──────────────────────────────────────
-export default function BookingForm() {
+export default function BookingForm({ user, role, onLogout }) {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { selectedRoom, setSelectedRoom, bookingData, updateBookingData } = useBooking();
@@ -366,261 +368,265 @@ export default function BookingForm() {
   const totalPrice = dynamicPrice !== null ? dynamicPrice : (room.price * nights);
 
   return (
-    <div className="bf-page">
-      <div className="bf-container">
-        {/* Back */}
-        <Link to={`/rooms/${roomId}`} className="bf-back">← Quay lại phòng</Link>
+    <>
+      <Header user={user} role={role} onLogout={onLogout} />
+      <div className="bf-page">
+        <div className="bf-container">
+          {/* Back */}
+          <Link to={`/rooms/${roomId}`} className="bf-back">← Quay lại phòng</Link>
 
-        <StepBar step={step} />
+          <StepBar step={step} />
 
-        <div className="bf-layout">
-          {/* ─── Main form area ─── */}
-          <div className="bf-main">
+          <div className="bf-layout">
+            {/* ─── Main form area ─── */}
+            <div className="bf-main">
 
-            {/* ========== STEP 0: Dates & Guests ========== */}
-            {step === 0 && (
-              <div className="bf-card">
-                <h2>Chọn ngày và số khách</h2>
+              {/* ========== STEP 0: Dates & Guests ========== */}
+              {step === 0 && (
+                <div className="bf-card">
+                  <h2>Chọn ngày và số khách</h2>
 
-                <div className="bf-form-row">
-                  <div className="bf-field">
-                    <label>Ngày Check-in <span className="bf-req">*</span></label>
-                    <input
-                      type="date"
-                      value={bookingData.checkinDate || ""}
-                      onChange={(e) => updateBookingData({ checkinDate: e.target.value })}
-                      className={errors.checkinDate ? "bf-input error" : "bf-input"}
-                    />
-                    {errors.checkinDate && <span className="bf-error">{errors.checkinDate}</span>}
+                  <div className="bf-form-row">
+                    <div className="bf-field">
+                      <label>Ngày Check-in <span className="bf-req">*</span></label>
+                      <input
+                        type="date"
+                        value={bookingData.checkinDate || ""}
+                        onChange={(e) => updateBookingData({ checkinDate: e.target.value })}
+                        className={errors.checkinDate ? "bf-input error" : "bf-input"}
+                      />
+                      {errors.checkinDate && <span className="bf-error">{errors.checkinDate}</span>}
+                    </div>
+                    <div className="bf-field">
+                      <label>Ngày Check-out <span className="bf-req">*</span></label>
+                      <input
+                        type="date"
+                        value={bookingData.checkoutDate || ""}
+                        min={bookingData.checkinDate || undefined}
+                        onChange={(e) => updateBookingData({ checkoutDate: e.target.value })}
+                        className={errors.checkoutDate ? "bf-input error" : "bf-input"}
+                      />
+                      {errors.checkoutDate && <span className="bf-error">{errors.checkoutDate}</span>}
+                    </div>
                   </div>
-                  <div className="bf-field">
-                    <label>Ngày Check-out <span className="bf-req">*</span></label>
-                    <input
-                      type="date"
-                      value={bookingData.checkoutDate || ""}
-                      min={bookingData.checkinDate || undefined}
-                      onChange={(e) => updateBookingData({ checkoutDate: e.target.value })}
-                      className={errors.checkoutDate ? "bf-input error" : "bf-input"}
-                    />
-                    {errors.checkoutDate && <span className="bf-error">{errors.checkoutDate}</span>}
-                  </div>
-                </div>
-                {dateConflict && (
-                  <div className="bf-error" style={{ marginTop: "10px" }}>
-                    ❌ Khoảng thời gian này phòng đã được đặt. Vui lòng chọn ngày khác.
-                  </div>
-                )}
-
-                <div className="bf-field">
-                  <label>Số khách <span className="bf-req">*</span></label>
-                  <input
-                    type="number"
-                    min="1"
-                    max={room.capacity}
-                    value={bookingData.guestCount}
-                    onChange={(e) => updateBookingData({ guestCount: parseInt(e.target.value) || 1 })}
-                    className={errors.guestCount ? "bf-input error" : "bf-input"}
-                  />
-                  <span className="bf-hint">Tối đa {room.capacity} khách cho phòng này</span>
-                  {errors.guestCount && <span className="bf-error">{errors.guestCount}</span>}
-                </div>
-
-                <div className="bf-actions">
-                  <button
-                    onClick={handleNext}
-                    disabled={dateConflict || checkingDate}
-                    className="bf-btn-next"
-                  >
-                    {checkingDate ? "Đang kiểm tra..." : "Tiếp tục →"}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* ========== STEP 1: Guest Info ========== */}
-            {step === 1 && (
-              <div className="bf-card">
-                <h2>Thông tin khách</h2>
-
-                <div className="bf-form-row">
-                  <div className="bf-field">
-                    <label>Tên khách <span className="bf-req">*</span></label>
-                    <input
-                      type="text"
-                      placeholder="Nguyễn Văn A"
-                      value={bookingData.guestName}
-                      onChange={(e) => updateBookingData({ guestName: e.target.value })}
-                      className={errors.guestName ? "bf-input error" : "bf-input"}
-                    />
-                    {errors.guestName && <span className="bf-error">{errors.guestName}</span>}
-                  </div>
-                  <div className="bf-field">
-                    <label>Email</label>
-                    <input
-                      type="email"
-                      placeholder="email@example.com"
-                      value={bookingData.guestEmail}
-                      onChange={(e) => updateBookingData({ guestEmail: e.target.value })}
-                      className="bf-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="bf-form-row">
-                  <div className="bf-field">
-                    <label>Số điện thoại <span className="bf-req">*</span></label>
-                    <input
-                      type="tel"
-                      pattern="[0-9]{10}"
-                      title="Vui lòng nhập đúng 10 chữ số"
-                      placeholder="0xx xxx xxxx"
-                      value={bookingData.guestPhone}
-                      onChange={(e) => updateBookingData({ guestPhone: e.target.value })}
-                      className={errors.guestPhone ? "bf-input error" : "bf-input"}
-                    />
-                    {errors.guestPhone && <span className="bf-error">{errors.guestPhone}</span>}
-                  </div>
-                  <div className="bf-field">
-                    <label>CMND / Hộ chiếu <span className="bf-req">*</span></label>
-                    <input
-                      type="text"
-                      pattern="[0-9]{12}"
-                      placeholder="12 chữ số CMND hoặc số hộ chiếu"
-                      value={bookingData.guestIdNumber}
-                      onChange={(e) => updateBookingData({ guestIdNumber: e.target.value })}
-                      className={errors.guestIdNumber ? "bf-input error" : "bf-input"}
-                    />
-                    {errors.guestIdNumber && <span className="bf-error">{errors.guestIdNumber}</span>}
-                  </div>
-                </div>
-
-                <div className="bf-form-row">
-                  <div className="bf-field">
-                    <label>Quốc tịch</label>
-                    <input
-                      type="text"
-                      placeholder="Việt Nam"
-                      value={bookingData.guestNationality}
-                      onChange={(e) => updateBookingData({ guestNationality: e.target.value })}
-                      className="bf-input"
-                    />
-                  </div>
-                  <div className="bf-field">
-                    <label>Địa chỉ</label>
-                    <input
-                      type="text"
-                      placeholder="Đđịa chỉ của bạn"
-                      value={bookingData.guestAddress}
-                      onChange={(e) => updateBookingData({ guestAddress: e.target.value })}
-                      className="bf-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="bf-field">
-                  <label>Yêu cầu đặc biệt</label>
-                  <textarea
-                    placeholder="Ví dụ: cần thêm gối, baby cot, ..."
-                    value={bookingData.specialRequest}
-                    onChange={(e) => updateBookingData({ specialRequest: e.target.value })}
-                    className="bf-input bf-textarea"
-                    rows={3}
-                  />
-                </div>
-
-                <div className="bf-checkboxes">
-                  <label className="bf-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={bookingData.earlyCheckin}
-                      onChange={(e) => updateBookingData({ earlyCheckin: e.target.checked })}
-                    />
-                    <span>Yêu cầu check-in sớm</span>
-                  </label>
-                  <label className="bf-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={bookingData.lateCheckout}
-                      onChange={(e) => updateBookingData({ lateCheckout: e.target.checked })}
-                    />
-                    <span>Yêu cầu check-out muộn</span>
-                  </label>
-                </div>
-
-                <div className="bf-actions">
-                  <button onClick={() => { setErrors({}); setStep(0); }} className="bf-btn-back">← Quay lại</button>
-                  <button onClick={handleNext} className="bf-btn-next">Xem lại đặt phòng →</button>
-                </div>
-              </div>
-            )}
-
-            {/* ========== STEP 2: Review & Confirm ========== */}
-            {step === 2 && (
-              <div className="bf-card">
-                <h2>Xem lại đặt phòng</h2>
-                {/* Room info */}
-                <div className="bf-review-section">
-                  <h4>Phòng</h4>
-                  <div className="bf-review-row"><span>Tên phòng</span><span>{room.name}</span></div>
-                  <div className="bf-review-row"><span>Loại</span><span>{room.categoryName}</span></div>
-                  <div className="bf-review-row"><span>Check-in</span><span>{formatDate(bookingData.checkinDate)}</span></div>
-                  <div className="bf-review-row"><span>Check-out</span><span>{formatDate(bookingData.checkoutDate)}</span></div>
-                  <div className="bf-review-row"><span>Số đêm</span><span>{nights}</span></div>
-                  <div className="bf-review-row"><span>Số khách</span><span>{bookingData.guestCount}</span></div>
-                </div>
-
-                {/* Guest info */}
-                <div className="bf-review-section">
-                  <h4>Thông tin khách</h4>
-                  <div className="bf-review-row"><span>Tên</span><span>{bookingData.guestName}</span></div>
-                  {bookingData.guestEmail && <div className="bf-review-row"><span>Email</span><span>{bookingData.guestEmail}</span></div>}
-                  <div className="bf-review-row"><span>Điện thoại</span><span>{bookingData.guestPhone}</span></div>
-                  <div className="bf-review-row"><span>CMND/Hộ chiếu</span><span>{bookingData.guestIdNumber}</span></div>
-                  {bookingData.guestNationality && <div className="bf-review-row"><span>Quốc tịch</span><span>{bookingData.guestNationality}</span></div>}
-                  {bookingData.specialRequest && <div className="bf-review-row"><span>Yêu cầu đặc biệt</span><span>{bookingData.specialRequest}</span></div>}
-                  {(bookingData.earlyCheckin || bookingData.lateCheckout) && (
-                    <div className="bf-review-row">
-                      <span>Tùy chọng</span>
-                      <span>
-                        {bookingData.earlyCheckin && "Check-in sớm"}
-                        {bookingData.earlyCheckin && bookingData.lateCheckout && " · "}
-                        {bookingData.lateCheckout && "Check-out muộn"}
-                      </span>
+                  {dateConflict && (
+                    <div className="bf-error" style={{ marginTop: "10px" }}>
+                      ❌ Khoảng thời gian này phòng đã được đặt. Vui lòng chọn ngày khác.
                     </div>
                   )}
-                </div>
 
-                {/* Price breakdown */}
-                <div className="bf-review-section bf-price-breakdown">
-                  <h4>Tổng giá</h4>
-                  <div className="bf-review-row"><span>Tạm tính ({nights} đêm)</span><span>{formatPrice(room.price * nights)} đ</span></div>
-                  {dynamicPrice !== null && dynamicPrice !== (room.price * nights) && (
-                    <div className="bf-review-row" style={{ color: '#ff6b6b' }}>
-                      <span>Phụ phí (Cuối tuần / Lễ)</span>
-                      <span>+ {formatPrice(dynamicPrice - (room.price * nights))} đ</span>
+                  <div className="bf-field">
+                    <label>Số khách <span className="bf-req">*</span></label>
+                    <input
+                      type="number"
+                      min="1"
+                      max={room.capacity}
+                      value={bookingData.guestCount}
+                      onChange={(e) => updateBookingData({ guestCount: parseInt(e.target.value) || 1 })}
+                      className={errors.guestCount ? "bf-input error" : "bf-input"}
+                    />
+                    <span className="bf-hint">Tối đa {room.capacity} khách cho phòng này</span>
+                    {errors.guestCount && <span className="bf-error">{errors.guestCount}</span>}
+                  </div>
+
+                  <div className="bf-actions">
+                    <button
+                      onClick={handleNext}
+                      disabled={dateConflict || checkingDate}
+                      className="bf-btn-next"
+                    >
+                      {checkingDate ? "Đang kiểm tra..." : "Tiếp tục →"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ========== STEP 1: Guest Info ========== */}
+              {step === 1 && (
+                <div className="bf-card">
+                  <h2>Thông tin khách</h2>
+
+                  <div className="bf-form-row">
+                    <div className="bf-field">
+                      <label>Tên khách <span className="bf-req">*</span></label>
+                      <input
+                        type="text"
+                        placeholder="Nguyễn Văn A"
+                        value={bookingData.guestName}
+                        onChange={(e) => updateBookingData({ guestName: e.target.value })}
+                        className={errors.guestName ? "bf-input error" : "bf-input"}
+                      />
+                      {errors.guestName && <span className="bf-error">{errors.guestName}</span>}
                     </div>
-                  )}
-                  <div className="bf-review-row bf-total"><span>Tổng cần thanh toán</span><span>{formatPrice(totalPrice)} đ</span></div>
-                </div>
+                    <div className="bf-field">
+                      <label>Email</label>
+                      <input
+                        type="email"
+                        placeholder="email@example.com"
+                        value={bookingData.guestEmail}
+                        onChange={(e) => updateBookingData({ guestEmail: e.target.value })}
+                        className="bf-input"
+                      />
+                    </div>
+                  </div>
 
-                <div className="bf-actions">
-                  <button onClick={() => { setErrors({}); setStep(1); }} className="bf-btn-back">← Quay lại</button>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className="bf-btn-confirm"
-                  >
-                    {submitting ? "Đang xử lý..." : "✓ Xác nhận đặt phòng"}
-                  </button>
+                  <div className="bf-form-row">
+                    <div className="bf-field">
+                      <label>Số điện thoại <span className="bf-req">*</span></label>
+                      <input
+                        type="tel"
+                        pattern="[0-9]{10}"
+                        title="Vui lòng nhập đúng 10 chữ số"
+                        placeholder="0xx xxx xxxx"
+                        value={bookingData.guestPhone}
+                        onChange={(e) => updateBookingData({ guestPhone: e.target.value })}
+                        className={errors.guestPhone ? "bf-input error" : "bf-input"}
+                      />
+                      {errors.guestPhone && <span className="bf-error">{errors.guestPhone}</span>}
+                    </div>
+                    <div className="bf-field">
+                      <label>CMND / Hộ chiếu <span className="bf-req">*</span></label>
+                      <input
+                        type="text"
+                        pattern="[0-9]{12}"
+                        placeholder="12 chữ số CMND hoặc số hộ chiếu"
+                        value={bookingData.guestIdNumber}
+                        onChange={(e) => updateBookingData({ guestIdNumber: e.target.value })}
+                        className={errors.guestIdNumber ? "bf-input error" : "bf-input"}
+                      />
+                      {errors.guestIdNumber && <span className="bf-error">{errors.guestIdNumber}</span>}
+                    </div>
+                  </div>
+
+                  <div className="bf-form-row">
+                    <div className="bf-field">
+                      <label>Quốc tịch</label>
+                      <input
+                        type="text"
+                        placeholder="Việt Nam"
+                        value={bookingData.guestNationality}
+                        onChange={(e) => updateBookingData({ guestNationality: e.target.value })}
+                        className="bf-input"
+                      />
+                    </div>
+                    <div className="bf-field">
+                      <label>Địa chỉ</label>
+                      <input
+                        type="text"
+                        placeholder="Đđịa chỉ của bạn"
+                        value={bookingData.guestAddress}
+                        onChange={(e) => updateBookingData({ guestAddress: e.target.value })}
+                        className="bf-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bf-field">
+                    <label>Yêu cầu đặc biệt</label>
+                    <textarea
+                      placeholder="Ví dụ: cần thêm gối, baby cot, ..."
+                      value={bookingData.specialRequest}
+                      onChange={(e) => updateBookingData({ specialRequest: e.target.value })}
+                      className="bf-input bf-textarea"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="bf-checkboxes">
+                    <label className="bf-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={bookingData.earlyCheckin}
+                        onChange={(e) => updateBookingData({ earlyCheckin: e.target.checked })}
+                      />
+                      <span>Yêu cầu check-in sớm</span>
+                    </label>
+                    <label className="bf-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={bookingData.lateCheckout}
+                        onChange={(e) => updateBookingData({ lateCheckout: e.target.checked })}
+                      />
+                      <span>Yêu cầu check-out muộn</span>
+                    </label>
+                  </div>
+
+                  <div className="bf-actions">
+                    <button onClick={() => { setErrors({}); setStep(0); }} className="bf-btn-back">← Quay lại</button>
+                    <button onClick={handleNext} className="bf-btn-next">Xem lại đặt phòng →</button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* ========== STEP 2: Review & Confirm ========== */}
+              {step === 2 && (
+                <div className="bf-card">
+                  <h2>Xem lại đặt phòng</h2>
+                  {/* Room info */}
+                  <div className="bf-review-section">
+                    <h4>Phòng</h4>
+                    <div className="bf-review-row"><span>Tên phòng</span><span>{room.name}</span></div>
+                    <div className="bf-review-row"><span>Loại</span><span>{room.categoryName}</span></div>
+                    <div className="bf-review-row"><span>Check-in</span><span>{formatDate(bookingData.checkinDate)}</span></div>
+                    <div className="bf-review-row"><span>Check-out</span><span>{formatDate(bookingData.checkoutDate)}</span></div>
+                    <div className="bf-review-row"><span>Số đêm</span><span>{nights}</span></div>
+                    <div className="bf-review-row"><span>Số khách</span><span>{bookingData.guestCount}</span></div>
+                  </div>
+
+                  {/* Guest info */}
+                  <div className="bf-review-section">
+                    <h4>Thông tin khách</h4>
+                    <div className="bf-review-row"><span>Tên</span><span>{bookingData.guestName}</span></div>
+                    {bookingData.guestEmail && <div className="bf-review-row"><span>Email</span><span>{bookingData.guestEmail}</span></div>}
+                    <div className="bf-review-row"><span>Điện thoại</span><span>{bookingData.guestPhone}</span></div>
+                    <div className="bf-review-row"><span>CMND/Hộ chiếu</span><span>{bookingData.guestIdNumber}</span></div>
+                    {bookingData.guestNationality && <div className="bf-review-row"><span>Quốc tịch</span><span>{bookingData.guestNationality}</span></div>}
+                    {bookingData.specialRequest && <div className="bf-review-row"><span>Yêu cầu đặc biệt</span><span>{bookingData.specialRequest}</span></div>}
+                    {(bookingData.earlyCheckin || bookingData.lateCheckout) && (
+                      <div className="bf-review-row">
+                        <span>Tùy chọng</span>
+                        <span>
+                          {bookingData.earlyCheckin && "Check-in sớm"}
+                          {bookingData.earlyCheckin && bookingData.lateCheckout && " · "}
+                          {bookingData.lateCheckout && "Check-out muộn"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Price breakdown */}
+                  <div className="bf-review-section bf-price-breakdown">
+                    <h4>Tổng giá</h4>
+                    <div className="bf-review-row"><span>Tạm tính ({nights} đêm)</span><span>{formatPrice(room.price * nights)} đ</span></div>
+                    {dynamicPrice !== null && dynamicPrice !== (room.price * nights) && (
+                      <div className="bf-review-row" style={{ color: '#ff6b6b' }}>
+                        <span>Phụ phí (Cuối tuần / Lễ)</span>
+                        <span>+ {formatPrice(dynamicPrice - (room.price * nights))} đ</span>
+                      </div>
+                    )}
+                    <div className="bf-review-row bf-total"><span>Tổng cần thanh toán</span><span>{formatPrice(totalPrice)} đ</span></div>
+                  </div>
+
+                  <div className="bf-actions">
+                    <button onClick={() => { setErrors({}); setStep(1); }} className="bf-btn-back">← Quay lại</button>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={submitting}
+                      className="bf-btn-confirm"
+                    >
+                      {submitting ? "Đang xử lý..." : "✓ Xác nhận đặt phòng"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ─── Sidebar summary ─── */}
+            <RoomSummary room={room} bookingData={bookingData} dynamicPrice={dynamicPrice} />
           </div>
-
-          {/* ─── Sidebar summary ─── */}
-          <RoomSummary room={room} bookingData={bookingData} dynamicPrice={dynamicPrice} />
         </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 }
