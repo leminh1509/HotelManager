@@ -120,10 +120,7 @@ export default function PaymentList() {
             </div>
 
             {totalPages > 1 && (
-                <div className="d-flex justify-content-between align-items-center mt-3 pb-5">
-                    <div className="text-muted small">
-                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredPayments.length)} of {filteredPayments.length} entries
-                    </div>
+                <div className="d-flex justify-content-end mt-3">
                     <nav>
                         <ul className="pagination pagination-sm mb-0">
                             <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
@@ -141,6 +138,11 @@ export default function PaymentList() {
                     </nav>
                 </div>
             )}
+
+            <div className="text-center text-muted mt-2 small">
+                Showing {filteredPayments.length === 0 ? 0 : indexOfFirstItem + 1}–{Math.min(indexOfLastItem, filteredPayments.length)} of {filteredPayments.length} entries
+                {searchTerm && ` (filtered from ${payments.length} total)`}
+            </div>
         </div>
     );
 }

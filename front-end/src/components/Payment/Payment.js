@@ -12,7 +12,7 @@ const Payment = ({ user, role, onLogout }) => {
   const { bookingId, totalAmount, room, bookingData, nights } = location.state || {};
 
   // 2. State
-  const [paymentMethod, setPaymentMethod] = useState('cash'); // cash, transfer, vnpay, vnpay_atm, vnpay_intl, vnpay_merchant
+  const [paymentMethod, setPaymentMethod] = useState('cash'); // cash, vnpay
   const [isProcessing, setIsProcessing] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -24,29 +24,10 @@ const Payment = ({ user, role, onLogout }) => {
   const displayRoomName = room?.name || 'Phòng mẫu';
   const displayNights = nights || 1;
 
-  // Bank Info for Transfer
-  const bankInfo = {
-    bankId: 'VCB',
-    accountNumber: '123456789000',
-    accountName: 'HOTEL 36',
-    template: 'qr_only'
-  };
-
-  const vnpayMerchantInfo = {
-    bankId: 'VCB', // Example bank for VNPAY Merchant
-    accountNumber: '0987654321', // Example merchant account
-    accountName: 'VNPAY MERCHANT - HOTEL 36',
-    template: 'qr_only'
-  };
-
   const mapMethodToBackend = (method) => {
     switch (method) {
       case 'cash': return 'Cash';
-      case 'transfer':
-      case 'vnpay_merchant': return 'BankTransfer';
-      case 'vnpay':
-      case 'vnpay_atm':
-      case 'vnpay_intl': return 'PaymentGateway';
+      case 'vnpay': return 'PaymentGateway';
       default: return 'Cash';
     }
   };
@@ -55,14 +36,11 @@ const Payment = ({ user, role, onLogout }) => {
     setIsProcessing(true);
     setError('');
 
-    if (['vnpay', 'vnpay_atm', 'vnpay_intl'].includes(paymentMethod)) {
+    if (paymentMethod === 'vnpay') {
       try {
         const orderInfo = `VNPAY BK-${displayId}`;
         const amount = Math.round(displayAmount);
-        let bankCode = '';
-        if (paymentMethod === 'vnpay') bankCode = 'VNPAYQR';
-        else if (paymentMethod === 'vnpay_atm') bankCode = 'VNBANK';
-        else if (paymentMethod === 'vnpay_intl') bankCode = 'INTCARD';
+        const bankCode = 'VNPAYQR';
 
         const url = `http://localhost:9999/api/payments/vnpay-payment?amount=${amount}&orderInfo=${encodeURIComponent(orderInfo)}&bankCode=${bankCode}`;
 
@@ -97,12 +75,8 @@ const Payment = ({ user, role, onLogout }) => {
           invoiceId: displayId,
           amount: parseFloat(displayAmount),
           method: mapMethodToBackend(paymentMethod),
-          bankName: ['transfer', 'vnpay_merchant'].includes(paymentMethod)
-            ? (paymentMethod === 'vnpay_merchant' ? vnpayMerchantInfo.bankId : bankInfo.bankId)
-            : null,
-          bankAccount: ['transfer', 'vnpay_merchant'].includes(paymentMethod)
-            ? (paymentMethod === 'vnpay_merchant' ? vnpayMerchantInfo.accountNumber : bankInfo.accountNumber)
-            : null,
+          bankName: null,
+          bankAccount: null,
         }),
       });
 
@@ -119,32 +93,20 @@ const Payment = ({ user, role, onLogout }) => {
   const formatPrice = (n) => new Intl.NumberFormat("vi-VN").format(n);
 
   const getQrTitle = () => {
-    if (paymentMethod === 'vnpay') return 'Quét mã VNPay để thanh toán';
-    if (paymentMethod === 'vnpay_merchant') return 'Chuyển khoản VNPAY Merchant';
-    return 'Quét mã ngân hàng để thanh toán';
+    return 'Quét mã VNPay để thanh toán';
   };
 
   const getQrContent = () => {
-    if (paymentMethod === 'vnpay') return `VNPAY ${displayId}`;
-    if (paymentMethod === 'vnpay_merchant') return `VNPAY MERCHANT ${displayId}`;
-    return `INV ${displayId}`;
+    return `VNPAY ${displayId}`;
   };
 
   const getQrNote = () => {
-    if (paymentMethod === 'vnpay') return 'Mở ứng dụng Ví VNPAY hoặc App Ngân hàng';
-    return 'Mở App Ngân hàng';
+    return 'Mở ứng dụng Ví VNPAY hoặc App Ngân hàng';
   };
 
   // Helper to render QR
   const renderQrCode = () => {
-    // 1. Bank Transfer -> Use VietQR (renders Bank template + Logo)
-    if (paymentMethod === 'transfer' || paymentMethod === 'vnpay_merchant') {
-      const info = paymentMethod === 'vnpay_merchant' ? vnpayMerchantInfo : bankInfo;
-      const qrUrl = `https://img.vietqr.io/image/${info.bankId}-${info.accountNumber}-${info.template}.png?amount=${displayAmount}&addInfo=${getQrContent()}&accountName=${encodeURIComponent(info.accountName)}`;
-      return <img src={qrUrl} alt="Bank QR" style={{ width: '200px', height: 'auto' }} />;
-    }
-
-    // 2. VNPay -> Use Generic QR to avoid VCB branding
+    // VNPay -> Use Generic QR to avoid VCB branding
     // Use quickchart or api.qrserver
     const qrData = encodeURIComponent(`AMOUNT:${displayAmount}|MSG:${getQrContent()}`);
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}`;
@@ -213,45 +175,6 @@ const Payment = ({ user, role, onLogout }) => {
                 <span className="method-name">VNPay QR</span>
               </div>
 
-              {/* VNPay ATM */}
-              <div
-                className={`method-card ${paymentMethod === 'vnpay_atm' ? 'active' : ''}`}
-                onClick={() => setPaymentMethod('vnpay_atm')}
-              >
-                <span className="method-icon" style={{ fontSize: 24 }}>💳</span>
-                <span className="method-name">Thẻ ATM / Tài khoản</span>
-              </div>
-
-              {/* VNPay International */}
-              <div
-                className={`method-card ${paymentMethod === 'vnpay_intl' ? 'active' : ''}`}
-                onClick={() => setPaymentMethod('vnpay_intl')}
-              >
-                <div style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
-                  <img src="https://vnpay.vn/wp-content/uploads/2020/07/visa-mastercard-jcb.png" alt="Visa/Master" style={{ height: 20, objectFit: 'contain' }} />
-                </div>
-                <span className="method-name">Thẻ Quốc tế</span>
-              </div>
-
-
-              {/* Error Message */}
-              <div
-                className={`method-card ${paymentMethod === 'vnpay_merchant' ? 'active' : ''}`}
-                onClick={() => setPaymentMethod('vnpay_merchant')}
-              >
-                <img src="https://vnpay.vn/wp-content/uploads/2020/07/vnpay-logo.png" alt="VNPay Merchant" className="method-logo" />
-                <span className="method-name">VNPAY Merchant</span>
-              </div>
-
-              {/* Bank Transfer */}
-              <div
-                className={`method-card ${paymentMethod === 'transfer' ? 'active' : ''}`}
-                onClick={() => setPaymentMethod('transfer')}
-              >
-                <span className="method-icon" style={{ fontSize: 24 }}>🏦</span>
-                <span className="method-name">Chuyển khoản</span>
-              </div>
-
               {/* Cash */}
               <div
                 className={`method-card ${paymentMethod === 'cash' ? 'active' : ''}`}
@@ -261,43 +184,6 @@ const Payment = ({ user, role, onLogout }) => {
                 <span className="method-name">Tiền mặt</span>
               </div>
             </div>
-
-            {/* Manual Bank Details section */}
-            {['transfer', 'vnpay_merchant'].includes(paymentMethod) && (
-              <div style={{ marginTop: 25, padding: 25, background: '#fff', borderRadius: 12, border: '1px solid #e0e0e0', boxShadow: '0 4px 15px rgba(0,0,0,0.06)' }}>
-                <h5 style={{ color: '#007bff', marginBottom: 20, borderBottom: '2px solid #f0f0f0', paddingBottom: 10, display: 'flex', alignItems: 'center' }}>
-                  <span style={{ marginRight: 10 }}>🏦</span> Thông tin chuyển khoản qua Số tài khoản
-                </h5>
-                <div style={{ display: 'grid', gap: '15px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#666', fontSize: '14px' }}>Ngân hàng:</span>
-                    <strong style={{ fontSize: '16px' }}>{paymentMethod === 'vnpay_merchant' ? vnpayMerchantInfo.bankId : bankInfo.bankId}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8f9fa', padding: '12px', borderRadius: '8px', border: '1px solid #eaedf0' }}>
-                    <span style={{ color: '#666', fontSize: '14px' }}>Số tài khoản:</span>
-                    <strong style={{ fontSize: '22px', color: '#007bff', letterSpacing: '1px', fontFamily: 'monospace' }}>
-                      {paymentMethod === 'vnpay_merchant' ? vnpayMerchantInfo.accountNumber : bankInfo.accountNumber}
-                    </strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#666', fontSize: '14px' }}>Chủ tài khoản:</span>
-                    <strong style={{ fontSize: '16px' }}>{paymentMethod === 'vnpay_merchant' ? vnpayMerchantInfo.accountName : bankInfo.accountName}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed #ccc', paddingTop: '10px' }}>
-                    <span style={{ color: '#666', fontSize: '14px' }}>Nội dung chuyển khoản:</span>
-                    <strong style={{ fontSize: '17px', background: '#fff3cd', padding: '4px 10px', borderRadius: '4px', border: '1px solid #ffeeba', color: '#856404' }}>{getQrContent()}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#666', fontSize: '14px' }}>Số tiền:</span>
-                    <strong style={{ fontSize: '18px', color: '#28a745' }}>{formatPrice(displayAmount)} đ</strong>
-                  </div>
-                </div>
-                <div style={{ marginTop: 20, padding: '12px', background: '#e7f3ff', borderRadius: 8, fontSize: '13px', color: '#0056b3', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                  <span>💡</span>
-                  <span><strong>Gợi ý:</strong> Bạn có thể sao chép số tài khoản và nội dung ở trên để thực hiện chuyển khoản trong App Ngân hàng của mình.</span>
-                </div>
-              </div>
-            )}
 
             {/* QR Section (Only for Automated VNPay Gateway) */}
             {['vnpay'].includes(paymentMethod) && (
@@ -314,9 +200,7 @@ const Payment = ({ user, role, onLogout }) => {
                   <p style={{ margin: '5px 0' }}>Tổng tiền: <strong style={{ color: '#008000', fontSize: 18 }}>{formatPrice(displayAmount)} đ</strong></p>
                   <p style={{ margin: '5px 0', fontSize: 14 }}>Nội dung: <strong style={{ background: '#eee', padding: '2px 6px', borderRadius: 4 }}>{getQrContent()}</strong></p>
 
-                  <p style={{ fontSize: 13, color: '#666', marginTop: 10, fontStyle: 'italic' }}>
-                    {paymentMethod === 'vnpay_merchant' ? "Dùng App Ngân hàng quét mã để chuyển khoản Merchant" : `${getQrNote()} để quét mã.`}
-                  </p>
+                  {getQrNote()} để quét mã.
                 </div>
               </div>
             )}
@@ -375,7 +259,7 @@ const Payment = ({ user, role, onLogout }) => {
                 ? `Đang chuyển hướng...`
                 : (isProcessing
                   ? 'Đang xử lý...'
-                  : (['vnpay', 'vnpay_atm', 'vnpay_intl'].includes(paymentMethod) ? 'Thanh toán với VNPAY' : (['transfer', 'vnpay_merchant'].includes(paymentMethod) ? 'Xác nhận đã thanh toán' : 'Tiếp tục thanh toán'))
+                  : (paymentMethod === 'vnpay' ? 'Thanh toán với VNPAY' : 'Tiếp tục thanh toán')
                 )
               }
             </button>

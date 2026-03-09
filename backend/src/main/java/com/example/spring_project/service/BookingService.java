@@ -14,6 +14,7 @@ import com.example.spring_project.repository.UserRepository;
 import com.example.spring_project.util.BookingMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,15 +28,18 @@ public class BookingService {
     private final BookingRepository bookingRepo;
     private final RoomService roomService;
     private final UserRepository userRepo;
+    private final SimpMessagingTemplate messagingTemplate;
     private final ServiceRequestService serviceRequestService;
 
     public BookingService(BookingRepository bookingRepo,
             RoomService roomService,
             UserRepository userRepo,
+            SimpMessagingTemplate messagingTemplate,
             ServiceRequestService serviceRequestService) {
         this.bookingRepo = bookingRepo;
         this.roomService = roomService;
         this.userRepo = userRepo;
+        this.messagingTemplate = messagingTemplate;
         this.serviceRequestService = serviceRequestService;
     }
 
@@ -75,11 +79,12 @@ public class BookingService {
             throw new ConflictException("Room is not available for the selected dates");
         }
 
-        // 6) tính giá: price × số đêm
-        long nights = ChronoUnit.DAYS.between(
-                req.getCheckinTime(),
-                req.getCheckoutTime());
-        double totalPrice = room.getPrice() * Math.max(nights, 1);
+        // 6) tính giá: linh động theo Cuối tuần / Lễ
+        double totalPrice = calculateTotalPrice(room, req.getCheckinTime(), req.getCheckoutTime());
+        // prevent 0 or negative price on edge cases
+        if (totalPrice <= 0) {
+            totalPrice = room.getPrice();
+        }
 
         // 7) build entity
         LocalDateTime now = LocalDateTime.now();
@@ -108,6 +113,64 @@ public class BookingService {
         Booking saved = bookingRepo.save(booking);
 
         return BookingMapper.toBookingResponse(saved);
+    }
+
+    // ─────────────────────────────────────────────────────
+    // Tính tổng giá tiền linh động (Holiday +50%, Weekend +20%)
+    // ─────────────────────────────────────────────────────
+    public double calculateTotalPrice(Room room, LocalDate checkin, LocalDate checkout) {
+        if (!checkin.isBefore(checkout)) {
+            return 0.0;
+        }
+
+        double totalPrice = 0.0;
+        double basePrice = room.getPrice();
+        LocalDate currentDate = checkin;
+
+        while (currentDate.isBefore(checkout)) {
+            if (isHoliday(currentDate)) {
+                totalPrice += basePrice * 1.5; // +50% for holidays
+            } else if (isWeekend(currentDate)) {
+                totalPrice += basePrice * 1.2; // +20% for weekends
+            } else {
+                totalPrice += basePrice;
+            }
+            currentDate = currentDate.plusDays(1);
+        }
+
+        return totalPrice;
+    }
+
+    private boolean isHoliday(LocalDate date) {
+        int month = date.getMonthValue();
+        int day = date.getDayOfMonth();
+
+        // Tết Dương lịch (Jan 1)
+        if (month == 1 && day == 1)
+            return true;
+        // Giải phóng Miền Nam & Quốc tế Lao động (Apr 30, May 1)
+        if ((month == 4 && day == 30) || (month == 5 && day == 1))
+            return true;
+        // Quốc khánh (Sep 2)
+        if (month == 9 && day == 2)
+            return true;
+
+        return false;
+    }
+
+    // ─────────────────────────────────────────────────────
+    // Lấy trước tổng giá
+    // ─────────────────────────────────────────────────────
+    @Transactional(readOnly = true)
+    public double previewPrice(Integer roomId, LocalDate checkin, LocalDate checkout) {
+        Room room = roomService.getEntityById(roomId);
+        double price = calculateTotalPrice(room, checkin, checkout);
+        return price <= 0 ? room.getPrice() : price;
+    }
+
+    private boolean isWeekend(LocalDate date) {
+        java.time.DayOfWeek day = date.getDayOfWeek();
+        return day == java.time.DayOfWeek.FRIDAY || day == java.time.DayOfWeek.SATURDAY;
     }
 
     // ─────────────────────────────────────────────────────
@@ -195,7 +258,7 @@ public class BookingService {
 
         List<Booking> bookings = bookingRepo.findByStatus(status);
         return bookings.stream()
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .sorted((a, b) -> b.getBookingId().compareTo(a.getBookingId()))
                 .map(BookingMapper::toBookingResponse)
                 .collect(Collectors.toList());
     }
@@ -204,7 +267,7 @@ public class BookingService {
     public List<BookingResponse> getAllBookings() {
         List<Booking> list = bookingRepo.findAll();
         return list.stream()
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .sorted((a, b) -> b.getBookingId().compareTo(a.getBookingId()))
                 .map(BookingMapper::toBookingResponse)
                 .collect(Collectors.toList());
     }
@@ -238,14 +301,44 @@ public class BookingService {
             }
         }
 
+        if (newStatus == Status.CheckedOut) {
+            // When checking out, change the room status to 'Cleaning' to trigger automatic
+            // maintenance
+            try {
+                roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Cleaning");
+            } catch (Exception e) {
+                // Fallback to integer IDs if name-based lookup fails (assuming 3 is Cleaning)
+                roomService.updateStatus(booking.getRoom().getRoomId(), 3);
+            }
+            // Broadcast realtime notification
+            messagingTemplate.convertAndSend("/topic/maintenance",
+                    "Room " + booking.getRoom().getRoomNumber() + " requires cleaning after checkout.");
+        } else if (newStatus == Status.CheckedIn) {
+            try {
+                roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Occupied");
+            } catch (Exception e) {
+                roomService.updateStatus(booking.getRoom().getRoomId(), 2);
+            }
+        }
+
         booking.setStatus(newStatus);
         booking.setUpdatedAt(LocalDateTime.now());
 
+        // Cập nhật trạng thái phòng khi check-in
+        if (newStatus == Status.CheckedIn) {
+            roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Occupied");
+        }
+
         Booking saved = bookingRepo.save(booking);
 
-        // Tự động tạo cleaning request khi check-out
+        // Tự động tạo cleaning request và đổi trạng thái phòng khi check-out
         if (newStatus == Status.CheckedOut) {
             Room room = booking.getRoom();
+
+            // Đổi trạng thái phòng → Cleaning
+            roomService.updateRoomStatus(room.getRoomId(), "Cleaning");
+
+            // Tạo cleaning request tự động
             String description = "Room " + room.getRoomNumber() + " needs cleaning after guest check-out.";
             serviceRequestService.createRequest(
                     room.getRoomId(),
