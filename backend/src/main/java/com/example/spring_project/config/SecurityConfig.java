@@ -101,8 +101,6 @@ public class SecurityConfig {
                 )
 
                 // ── 4. Xử lý lỗi xác thực ── trả về JSON thay vì HTML mặc định
-                        .anyRequest().authenticated())
-                // ✅ trả JSON rõ ràng thay vì 403/HTML khó debug
                 .exceptionHandling(ex -> ex
                         // 401 Unauthorized: chưa đăng nhập hoặc token không hợp lệ
                         .authenticationEntryPoint((req, res, e) -> {
@@ -120,7 +118,6 @@ public class SecurityConfig {
 
                 // ── 5. Stateless session ──
                 // Không lưu session trên server, mỗi request phải tự mang JWT
-                        }))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 // ── 6. Đăng ký AuthenticationProvider (cách xác thực username/password) ──
