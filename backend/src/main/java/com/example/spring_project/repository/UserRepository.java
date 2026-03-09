@@ -14,35 +14,26 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
-
     Optional<User> findByEmail(String email);
 
     Boolean existsByEmail(String email);
 
     Boolean existsByMobilePhone(String mobilePhone);
 
-    // ✅ Tìm users theo role name
     List<User> findByRole_Name(String roleName);
 
-    // ✅ Tìm users theo Role object
     List<User> findByRole(Role role);
 
-    // ✅ Với pagination
     Page<User> findByRole_Name(String roleName, Pageable pageable);
 
-    // ✅ Đếm users theo role
     Long countByRole_Name(String roleName);
 
-    // ✅ Đếm active users
     Long countByIsActiveTrue();
 
-    // ✅ Đếm blacklisted users
     Long countByIsBlackListTrue();
 
-    // ✅ Tìm active users
     List<User> findByIsActiveTrue();
 
-    // ✅ Search with filter and pagination
     @Query("SELECT u FROM User u WHERE " +
             "(:roleName IS NULL OR u.role.name = :roleName) AND " +
             "(:keyword IS NULL OR " +
