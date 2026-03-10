@@ -393,6 +393,49 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 100%;
   pointer-events: none;
+}
+
+/* Custom QR Layout Styles */
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px dashed #e6e6e6;
+}
+
+.detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-label {
+  font-size: 13px;
+  color: #777;
+}
+
+.detail-value {
+  font-size: 15px;
+  color: #222;
+  font-weight: 600;
+}
+
+.btn-copy {
+  background-color: #f0f7ff;
+  color: #007bff;
+  border: 1px solid #cce5ff;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-copy:hover {
+  background-color: #007bff;
+  color: white;
 }

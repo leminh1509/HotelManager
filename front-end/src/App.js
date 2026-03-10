@@ -107,7 +107,8 @@ export default function App() {
       {/* ===== BOOKING ===== */}
       <Route element={<ProtectedRoute />}>
         <Route path="/payment" element={<Payment user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
-        <Route path="/payment/vnpay-return" element={<PaymentResult user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        <Route path="/payment/payos-return" element={<PaymentResult user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        <Route path="/payment/payos-cancel" element={<PaymentResult user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
 
         {/* ===== BOOKING ===== */}
 

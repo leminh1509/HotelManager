@@ -21,10 +21,11 @@ function calcNights(checkin, checkout) {
   return diff > 0 ? diff : 1;
 }
 
-function formatDate(dateStr) {
+function formatDate(dateStr, timeStr = "") {
   if (!dateStr) return "—";
-  const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("vi-VN", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
+  const d = new Date(dateStr + (timeStr ? `T${timeStr}:00` : "T00:00:00"));
+  const datePart = d.toLocaleDateString("vi-VN", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
+  return timeStr ? `${datePart} - ${timeStr}` : datePart;
 }
 
 function formatPrice(n) {
@@ -64,11 +65,11 @@ function RoomSummary({ room, bookingData, dynamicPrice }) {
       <div className="bf-summary-rows">
         <div className="bf-summary-row">
           <span>Check-in</span>
-          <span>{formatDate(bookingData.checkinDate)}</span>
+          <span>{formatDate(bookingData.checkinDate, bookingData.checkinTime)}</span>
         </div>
         <div className="bf-summary-row">
           <span>Check-out</span>
-          <span>{formatDate(bookingData.checkoutDate)}</span>
+          <span>{formatDate(bookingData.checkoutDate, bookingData.checkoutTime)}</span>
         </div>
         <div className="bf-summary-row">
           <span>Số đêm</span>
@@ -317,8 +318,8 @@ export default function BookingForm({ user, role, onLogout }) {
     try {
       const payload = {
         roomId: room.roomId,
-        checkinTime: bookingData.checkinDate + "T14:00:00",
-        checkoutTime: bookingData.checkoutDate + "T11:00:00",
+        checkinTime: bookingData.checkinDate + "T" + (bookingData.checkinTime || "14:00") + ":00",
+        checkoutTime: bookingData.checkoutDate + "T" + (bookingData.checkoutTime || "12:00") + ":00",
         guestCount: bookingData.guestCount,
         guestName: bookingData.guestName,
         guestEmail: bookingData.guestEmail,
@@ -389,23 +390,39 @@ export default function BookingForm({ user, role, onLogout }) {
                   <div className="bf-form-row">
                     <div className="bf-field">
                       <label>Ngày Check-in <span className="bf-req">*</span></label>
-                      <input
-                        type="date"
-                        value={bookingData.checkinDate || ""}
-                        onChange={(e) => updateBookingData({ checkinDate: e.target.value })}
-                        className={errors.checkinDate ? "bf-input error" : "bf-input"}
-                      />
+                      <div className="bf-datetime-group">
+                        <input
+                          type="date"
+                          value={bookingData.checkinDate || ""}
+                          onChange={(e) => updateBookingData({ checkinDate: e.target.value })}
+                          className={errors.checkinDate ? "bf-input error" : "bf-input"}
+                        />
+                        <input
+                          type="time"
+                          value={bookingData.checkinTime || "14:00"}
+                          onChange={(e) => updateBookingData({ checkinTime: e.target.value })}
+                          className="bf-input bf-time-input"
+                        />
+                      </div>
                       {errors.checkinDate && <span className="bf-error">{errors.checkinDate}</span>}
                     </div>
                     <div className="bf-field">
                       <label>Ngày Check-out <span className="bf-req">*</span></label>
-                      <input
-                        type="date"
-                        value={bookingData.checkoutDate || ""}
-                        min={bookingData.checkinDate || undefined}
-                        onChange={(e) => updateBookingData({ checkoutDate: e.target.value })}
-                        className={errors.checkoutDate ? "bf-input error" : "bf-input"}
-                      />
+                      <div className="bf-datetime-group">
+                        <input
+                          type="date"
+                          value={bookingData.checkoutDate || ""}
+                          min={bookingData.checkinDate || undefined}
+                          onChange={(e) => updateBookingData({ checkoutDate: e.target.value })}
+                          className={errors.checkoutDate ? "bf-input error" : "bf-input"}
+                        />
+                        <input
+                          type="time"
+                          value={bookingData.checkoutTime || "12:00"}
+                          onChange={(e) => updateBookingData({ checkoutTime: e.target.value })}
+                          className="bf-input bf-time-input"
+                        />
+                      </div>
                       {errors.checkoutDate && <span className="bf-error">{errors.checkoutDate}</span>}
                     </div>
                   </div>
@@ -567,8 +584,8 @@ export default function BookingForm({ user, role, onLogout }) {
                     <h4>Phòng</h4>
                     <div className="bf-review-row"><span>Tên phòng</span><span>{room.name}</span></div>
                     <div className="bf-review-row"><span>Loại</span><span>{room.categoryName}</span></div>
-                    <div className="bf-review-row"><span>Check-in</span><span>{formatDate(bookingData.checkinDate)}</span></div>
-                    <div className="bf-review-row"><span>Check-out</span><span>{formatDate(bookingData.checkoutDate)}</span></div>
+                    <div className="bf-review-row"><span>Check-in</span><span>{formatDate(bookingData.checkinDate, bookingData.checkinTime)}</span></div>
+                    <div className="bf-review-row"><span>Check-out</span><span>{formatDate(bookingData.checkoutDate, bookingData.checkoutTime)}</span></div>
                     <div className="bf-review-row"><span>Số đêm</span><span>{nights}</span></div>
                     <div className="bf-review-row"><span>Số khách</span><span>{bookingData.guestCount}</span></div>
                   </div>

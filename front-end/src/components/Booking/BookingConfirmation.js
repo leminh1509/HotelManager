@@ -15,15 +15,16 @@ export default function BookingConfirmation() {
     // return () => clearTimeout(timer);
   }, []);
 
-  const formatDate = (dateStr) => {
+  const formatDate = (dateStr, timeStr = "") => {
     if (!dateStr) return "—";
-    const d = new Date(dateStr + "T00:00:00");
-    return d.toLocaleDateString("vi-VN", {
+    const d = new Date(dateStr + (timeStr ? `T${timeStr}:00` : "T00:00:00"));
+    const datePart = d.toLocaleDateString("vi-VN", {
       weekday: "long",
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
     });
+    return timeStr ? `${datePart} - ${timeStr}` : datePart;
   };
 
   const calcNights = (a, b) => {
@@ -81,11 +82,11 @@ export default function BookingConfirmation() {
             </div>
             <div className="bc-row">
               <span>Check-in</span>
-              <span>{formatDate(bookingData.checkinDate)}</span>
+              <span>{formatDate(bookingData.checkinDate, bookingData.checkinTime)}</span>
             </div>
             <div className="bc-row">
               <span>Check-out</span>
-              <span>{formatDate(bookingData.checkoutDate)}</span>
+              <span>{formatDate(bookingData.checkoutDate, bookingData.checkoutTime)}</span>
             </div>
             <div className="bc-row">
               <span>Số đêm</span>

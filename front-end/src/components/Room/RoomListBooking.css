@@ -1,0 +1,459 @@
+/* src/components/Room/RoomListBooking.css */
+:root {
+    --booking-blue: #003580;
+    --booking-yellow: #febb02;
+    --booking-light-blue: #0071c2;
+    --booking-bg: #f5f5f5;
+    --booking-border: #e7e7e7;
+    --booking-text: #1a1a1a;
+    --booking-muted: #6b6b6b;
+    --booking-green: #008009;
+}
+
+.rl-page {
+    background-color: #fff;
+    min-height: 100vh;
+    padding-bottom: 50px;
+    padding-top: 10px;
+}
+
+.rl-container {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+/* Breadcrumbs */
+.rl-breadcrumbs {
+    font-size: 13px;
+    color: var(--booking-light-blue);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rl-breadcrumbs a {
+    text-decoration: none;
+    color: var(--booking-light-blue);
+}
+
+.rl-breadcrumbs i {
+    color: #333;
+    font-size: 10px;
+}
+
+.rl-breadcrumbs span {
+    color: #333;
+}
+
+/* Layout */
+.rl-layout {
+    display: flex;
+    gap: 20px;
+}
+
+/* Sidebar */
+.rl-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+}
+
+.rl-search-card {
+    background-color: var(--booking-yellow);
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.rl-search-card h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #1a1a1a;
+}
+
+.rl-input-group {
+    margin-bottom: 12px;
+}
+
+.rl-input-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #1a1a1a;
+}
+
+.rl-input-group input {
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 2px;
+    font-size: 14px;
+    outline: none;
+}
+
+.rl-search-submit {
+    width: 100%;
+    background-color: var(--booking-light-blue);
+    color: #fff;
+    border: none;
+    padding: 10px;
+    border-radius: 2px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.2s;
+}
+
+.rl-search-submit:hover {
+    background-color: #005a9c;
+}
+
+.rl-filter-section {
+    border: 1px solid var(--booking-border);
+    padding: 15px;
+    border-radius: 4px;
+}
+
+.rl-filter-section h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--booking-border);
+    padding-bottom: 10px;
+}
+
+.rl-filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rl-checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+/* Main Content */
+.rl-main {
+    flex: 1;
+}
+
+.rl-results-header h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.rl-sort-bar {
+    display: flex;
+    border: 1px solid var(--booking-border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.rl-sort-bar span {
+    padding: 10px 15px;
+    background-color: #f5f5f5;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.rl-sort-bar button {
+    flex: 1;
+    background: none;
+    border: none;
+    border-left: 1px solid var(--booking-border);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--booking-light-blue);
+    cursor: pointer;
+    padding: 10px;
+    transition: background 0.2s;
+}
+
+.rl-sort-bar button.active {
+    background-color: #e7f1f9;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+/* Room Cards */
+.rl-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.rl-card {
+    display: flex;
+    border: 1px solid var(--booking-border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.rl-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.rl-card-img {
+    width: 240px;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.rl-card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.rl-heart-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #fff;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.rl-card-info {
+    flex: 1;
+    display: flex;
+    padding: 15px;
+}
+
+.rl-card-main-info {
+    flex: 1;
+    padding-right: 15px;
+    border-right: 1px solid #f0f0f0;
+}
+
+.rl-card-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 5px;
+}
+
+.rl-card-title-row h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--booking-light-blue);
+    margin: 0;
+}
+
+.rl-card-title-row a {
+    text-decoration: none;
+}
+
+.rl-stars {
+    color: var(--booking-yellow);
+    font-size: 10px;
+    display: flex;
+    gap: 2px;
+}
+
+.rl-stars .fa-thumbs-up {
+    color: var(--booking-yellow);
+    margin-left: 5px;
+    font-size: 12px;
+}
+
+.rl-card-location {
+    font-size: 12px;
+    color: var(--booking-light-blue);
+    font-weight: 600;
+    margin-bottom: 12px;
+    text-decoration: underline;
+}
+
+.rl-card-features {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.rl-feature-tag {
+    color: var(--booking-green);
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.rl-room-desc {
+    font-size: 12px;
+    color: #333;
+    margin: 5px 0;
+}
+
+.rl-room-status-text {
+    font-size: 12px;
+    color: var(--booking-green);
+    font-weight: 700;
+}
+
+/* Pricing Column */
+.rl-card-pricing {
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+}
+
+.rl-rating-box {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.rl-rating-text {
+    text-align: right;
+}
+
+.rl-rating-text span {
+    display: block;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.rl-rating-text small {
+    font-size: 11px;
+    color: var(--booking-muted);
+}
+
+.rl-rating-score {
+    background-color: var(--booking-blue);
+    color: #fff;
+    padding: 5px 8px;
+    border-radius: 4px 4px 4px 0;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.rl-price-container {
+    text-align: right;
+    width: 100%;
+}
+
+.rl-price-label {
+    font-size: 12px;
+    color: var(--booking-muted);
+}
+
+.rl-price-value {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 2px 0;
+}
+
+.rl-price-tax {
+    font-size: 11px;
+    color: var(--booking-muted);
+    margin-bottom: 10px;
+}
+
+.rl-btn-primary {
+    display: block;
+    background-color: var(--booking-light-blue);
+    color: #fff;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 15px;
+    text-align: center;
+    transition: background 0.2s;
+}
+
+.rl-btn-primary:hover {
+    background-color: #005a9c;
+}
+
+/* Pagination */
+.rl-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    gap: 5px;
+}
+
+/* Spinner */
+.rl-loading {
+    text-align: center;
+    padding: 50px 0;
+}
+
+.rl-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: var(--booking-light-blue);
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 992px) {
+    .rl-layout {
+        flex-direction: column;
+    }
+
+    .rl-sidebar {
+        width: 100%;
+    }
+
+    .rl-card {
+        flex-direction: column;
+    }
+
+    .rl-card-img {
+        width: 100%;
+        height: 200px;
+    }
+
+    .rl-card-info {
+        flex-direction: column;
+    }
+
+    .rl-card-main-info {
+        border-right: none;
+        border-bottom: 1px solid #f0f0f0;
+        padding-right: 0;
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+    }
+
+    .rl-card-pricing {
+        width: 100%;
+        flex-direction: row;
+        align-items: flex-end;
+    }
+
+    .rl-rating-box {
+        display: none;
+        /* Hide rating box on mobile for space */
+    }
+}

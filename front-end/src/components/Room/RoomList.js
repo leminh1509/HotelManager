@@ -37,15 +37,17 @@ export default function RoomList({ user, role, onLogout }) {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
 
-  // Pagination states
+  // Pagination and Sort states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalRooms, setTotalRooms] = useState(0);
+  const [sortOrder, setSortOrder] = useState("price,asc");
   const itemsPerPage = 6;
 
   // Initial load
   useEffect(() => {
     fetchRooms(currentPage);
-  }, [filterStatus, currentPage]);
+  }, [filterStatus, currentPage, sortOrder]);
 
   const fetchRooms = async (page = 1) => {
     setLoading(true);
@@ -59,28 +61,34 @@ export default function RoomList({ user, role, onLogout }) {
           minPrice: minPrice || null,
           maxPrice: maxPrice || null,
           page: page - 1,
-          size: itemsPerPage
+          size: itemsPerPage,
+          sort: sortOrder
         };
         const res = await searchRoomsPaginated(params);
         if (res.data && res.data.content) {
           setRooms(res.data.content);
           setTotalPages(res.data.totalPages);
+          setTotalRooms(res.data.totalElements || 0);
         } else {
           setRooms([]);
+          setTotalRooms(0);
         }
       } else {
         // Fallback to all rooms
         const params = {
           status: filterStatus === "all" ? "" : filterStatus,
           page: page - 1,
-          size: itemsPerPage
+          size: itemsPerPage,
+          sort: sortOrder
         };
         const res = await getAllRoomsPaginated(params);
         if (res.data && res.data.content) {
           setRooms(res.data.content);
           setTotalPages(res.data.totalPages);
+          setTotalRooms(res.data.totalElements || 0);
         } else {
           setRooms([]);
+          setTotalRooms(0);
         }
       }
     } catch (err) {
@@ -113,19 +121,20 @@ export default function RoomList({ user, role, onLogout }) {
     for (let i = start; i <= end; i++) pages.push(i);
 
     return (
-      <div className="pagination-container" style={{ display: "flex", justifyContent: "center", alignItems: "center", marginTop: "30px", gap: "5px" }}>
+      <div className="rl-pagination">
         <button
           disabled={currentPage === 1}
           onClick={() => paginate(currentPage - 1)}
-          style={{ padding: "8px 12px", border: "1px solid #ddd", borderRadius: "4px", backgroundColor: currentPage === 1 ? "#f5f5f5" : "#fff", cursor: currentPage === 1 ? "not-allowed" : "pointer" }}
+          className="rl-pagination-btn"
+          aria-label="Previous Page"
         >
-          Trước
+          <i className="fa fa-chevron-left" />
         </button>
 
         {start > 1 && (
           <>
-            <button onClick={() => paginate(1)} style={{ padding: "8px 12px", border: "1px solid #ddd", borderRadius: "4px", backgroundColor: "#fff", cursor: "pointer" }}>1</button>
-            {start > 2 && <span style={{ padding: "8px 4px" }}>...</span>}
+            <button onClick={() => paginate(1)} className="rl-pagination-btn">1</button>
+            {start > 2 && <span className="rl-pagination-ellipsis">...</span>}
           </>
         )}
 
@@ -133,7 +142,7 @@ export default function RoomList({ user, role, onLogout }) {
           <button
             key={i}
             onClick={() => paginate(i)}
-            style={{ padding: "8px 12px", border: "1px solid #ddd", borderRadius: "4px", backgroundColor: currentPage === i ? "#ff385c" : "#fff", color: currentPage === i ? "#fff" : "#333", cursor: "pointer" }}
+            className={`rl-pagination-btn ${currentPage === i ? "active" : ""}`}
           >
             {i}
           </button>
@@ -141,17 +150,18 @@ export default function RoomList({ user, role, onLogout }) {
 
         {end < totalPages && (
           <>
-            {end < totalPages - 1 && <span style={{ padding: "8px 4px" }}>...</span>}
-            <button onClick={() => paginate(totalPages)} style={{ padding: "8px 12px", border: "1px solid #ddd", borderRadius: "4px", backgroundColor: "#fff", cursor: "pointer" }}>{totalPages}</button>
+            {end < totalPages - 1 && <span className="rl-pagination-ellipsis">...</span>}
+            <button onClick={() => paginate(totalPages)} className="rl-pagination-btn">{totalPages}</button>
           </>
         )}
 
         <button
           disabled={currentPage === totalPages}
           onClick={() => paginate(currentPage + 1)}
-          style={{ padding: "8px 12px", border: "1px solid #ddd", borderRadius: "4px", backgroundColor: currentPage === totalPages ? "#f5f5f5" : "#fff", cursor: currentPage === totalPages ? "not-allowed" : "pointer" }}
+          className="rl-pagination-btn"
+          aria-label="Next Page"
         >
-          Tiếp
+          <i className="fa fa-chevron-right" />
         </button>
       </div>
     );
@@ -161,131 +171,166 @@ export default function RoomList({ user, role, onLogout }) {
     <>
       <Header user={user} role={role} onLogout={onLogout} />
 
-      <div className="mb-page" style={{ paddingTop: "80px", minHeight: "80vh" }}>
-        <div className="mb-container">
-
-          <div className="mb-header">
-            <h1>Danh sách phòng</h1>
-            <p>Tìm và đặt phòng tốt nhất cho kỳ nghỉ của bạn</p>
+      <div className="rl-page">
+        <div className="rl-container">
+          {/* Breadcrumbs */}
+          <div className="rl-breadcrumbs">
+            <Link to="/home">Trang chủ</Link>
+            <i className="fa fa-angle-right"></i>
+            <span>Kết quả tìm kiếm</span>
           </div>
 
-          {/* Search Form */}
-          <form className="room-search-form" onSubmit={handleSearch}>
-            <div className="search-inputs">
-              <div className="input-group">
-                <label>Check-in</label>
-                <input type="date" value={checkin} onChange={e => setCheckin(e.target.value)} />
+          <div className="rl-layout">
+            {/* SIDEBAR */}
+            <aside className="rl-sidebar">
+              <div className="rl-search-card">
+                <h3>Tìm kiếm</h3>
+                <form onSubmit={handleSearch}>
+                  <div className="rl-input-group">
+                    <label><i className="fa fa-calendar"></i> Ngày nhận phòng</label>
+                    <input type="date" value={checkin} onChange={e => setCheckin(e.target.value)} />
+                  </div>
+                  <div className="rl-input-group">
+                    <label><i className="fa fa-calendar"></i> Ngày trả phòng</label>
+                    <input type="date" value={checkout} onChange={e => setCheckout(e.target.value)} />
+                  </div>
+                  <div className="rl-input-group">
+                    <label><i className="fa fa-user"></i> Số khách</label>
+                    <input type="number" min="1" placeholder="Số người" value={guestCount} onChange={e => setGuestCount(e.target.value)} />
+                  </div>
+                  <div className="rl-input-group">
+                    <label><i className="fa fa-money"></i> Giá tối thiểu (VNĐ)</label>
+                    <input type="number" placeholder="Min" value={minPrice} onChange={e => setMinPrice(e.target.value)} />
+                  </div>
+                  <div className="rl-input-group">
+                    <label><i className="fa fa-money"></i> Giá tối đa (VNĐ)</label>
+                    <input type="number" placeholder="Max" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} />
+                  </div>
+                  <button type="submit" className="rl-search-submit">Tìm kiếm</button>
+                </form>
               </div>
-              <div className="input-group">
-                <label>Check-out</label>
-                <input type="date" value={checkout} onChange={e => setCheckout(e.target.value)} />
-              </div>
-              <div className="input-group">
-                <label>Số người</label>
-                <input type="number" min="1" placeholder="Khách" value={guestCount} onChange={e => setGuestCount(e.target.value)} />
-              </div>
-              <div className="input-group">
-                <label>Giá từ (VNĐ)</label>
-                <input type="number" placeholder="Tối thiểu" value={minPrice} onChange={e => setMinPrice(e.target.value)} />
-              </div>
-              <div className="input-group">
-                <label>Đến (VNĐ)</label>
-                <input type="number" placeholder="Tối đa" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} />
-              </div>
-              <button type="submit" className="mb-btn mb-btn-book search-btn">Tìm phòng</button>
-            </div>
-          </form>
 
-          {/* Filter tabs */}
-          <div className="mb-filters">
-            {["all", "available", "booked", "unavailable"].map((f) => (
-              <button
-                key={f}
-                className={`mb-filter-btn ${filterStatus === f ? "active" : ""}`}
-                onClick={() => { setFilterStatus(f); setCurrentPage(1); }}
-              >
-                {f === "all" && "Tất cả"}
-                {f === "available" && "Còn Trống"}
-                {f === "booked" && "Đã Đặt"}
-                {f === "unavailable" && "Khác"}
-              </button>
-            ))}
-          </div>
+              <div className="rl-filter-section">
+                <h4>Trạng thái phòng</h4>
+                <div className="rl-filter-options">
+                  {["all", "available", "booked", "unavailable"].map((f) => (
+                    <label key={f} className="rl-checkbox-container">
+                      <input
+                        type="radio"
+                        name="status"
+                        checked={filterStatus === f}
+                        onChange={() => { setFilterStatus(f); setCurrentPage(1); }}
+                      />
+                      <span className="rl-checkmark"></span>
+                      {f === "all" && "Tất cả"}
+                      {f === "available" && "Còn Trống"}
+                      {f === "booked" && "Đã Đặt"}
+                      {f === "unavailable" && "Khác"}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </aside>
 
-          {/* Loading handling */}
-          {loading ? (
-            <div className="mb-loading" style={{ margin: "50px auto", textAlign: "center" }}>
-              <div className="mb-spinner" style={{ display: "inline-block", border: "4px solid rgba(0,0,0,0.1)", borderLeftColor: "#ff385c", borderRadius: "50%", width: "40px", height: "40px", animation: "spin 1s linear infinite" }} />
-              <p>Đang tải danh sách phòng...</p>
-            </div>
-          ) : (
-            <>
-              {/* Rooms list */}
-              {currentItems.length === 0 ? (
-                <div className="mb-empty">
-                  <p>Không tìm thấy phòng nào phù hợp.</p>
-                  <button onClick={() => { setCheckin(""); setCheckout(""); fetchRooms(); }} className="mb-empty-link btn-link" style={{ background: "none", border: "none", cursor: "pointer", color: "#ff385c" }}>Xóa bộ lọc tìm kiếm →</button>
+            {/* MAIN CONTENT */}
+            <main className="rl-main">
+              <div className="rl-results-header">
+                <h2>Tìm thấy {totalRooms} phòng cho bạn</h2>
+                <div className="rl-sort-bar">
+                  <span>Sắp xếp theo:</span>
+                  <button
+                    className={sortOrder === "price,asc" ? "active" : ""}
+                    onClick={() => setSortOrder("price,asc")}
+                  >
+                    Giá thấp nhất
+                  </button>
+                  <button
+                    className={sortOrder === "price,desc" ? "active" : ""}
+                    onClick={() => setSortOrder("price,desc")}
+                  >
+                    Giá cao nhất
+                  </button>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="rl-loading">
+                  <div className="rl-spinner" />
+                  <p>Đang tải ưu đãi tốt nhất...</p>
                 </div>
               ) : (
-                <div className="mb-list">
-                  {currentItems.map((r) => (
-                    <div key={r.roomId} className="mb-card">
-                      <div className="mb-card-body">
-                        <div className="mb-card-top">
-                          <div>
-                            <h3>Phòng {r.roomNumber}</h3>
-                            <span className="mb-category">{r.categoryName}</span>
-                          </div>
-                          <span className={`mb-status ${STATUS_COLORS[r.statusName] || ""}`}>
-                            {STATUS_LABELS[r.statusName] || r.statusName}
-                          </span>
-                        </div>
-
-                        <div className="mb-card-details">
-                          <div className="mb-detail">
-                            <span className="mb-detail-label">Tầng</span>
-                            <span className="mb-detail-value">Tầng {r.floor}</span>
-                          </div>
-                          <div className="mb-detail">
-                            <span className="mb-detail-label">Diện tích</span>
-                            <span className="mb-detail-value">{r.sizem2} m²</span>
-                          </div>
-                          <div className="mb-detail">
-                            <span className="mb-detail-label">Sức chứa</span>
-                            <span className="mb-detail-value">{r.capacity} khách</span>
-                          </div>
-                          <div className="mb-detail">
-                            <span className="mb-detail-label">Giường</span>
-                            <span className="mb-detail-value">{r.bedConfiguration}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mb-card-aside">
-                        <div className="mb-price">{formatPrice(r.price)} đ/đêm</div>
-                        <div style={{ fontSize: '12px', color: '#ff6b6b', marginTop: '4px', textAlign: 'center', fontWeight: '500' }}>
-                          *Giá linh động (Cuối tuần / Lễ)
-                        </div>
-                        <div className="mb-card-actions" style={{ marginTop: '12px' }}>
-                          <Link to={`/rooms/${r.roomId}`} className="mb-btn mb-btn-view">
-                            Xem chi tiết
-                          </Link>
-                          {r.statusName === "Available" && (
-                            <Link to={`/booking/${r.roomId}`} className="mb-btn mb-btn-book">
-                              Đặt phòng
-                            </Link>
-                          )}
-                        </div>
-                      </div>
+                <div className="rl-list">
+                  {rooms.length === 0 ? (
+                    <div className="rl-empty">
+                      <i className="fa fa-search"></i>
+                      <p>Rất tiếc, không tìm thấy phòng nào phù hợp.</p>
+                      <button onClick={() => { setCheckin(""); setCheckout(""); fetchRooms(); }}>Xóa tất cả bộ lọc</button>
                     </div>
-                  ))}
+                  ) : (
+                    rooms.map((r, idx) => (
+                      <div key={r.roomId} className="rl-card">
+                        <div className="rl-card-img">
+                          <img src={`/hms/img/room/room-${(idx % 6) + 1}.jpg`} alt={`Phòng ${r.roomNumber}`} />
+                          <button className="rl-heart-btn"><i className="fa fa-heart-o"></i></button>
+                        </div>
+                        <div className="rl-card-info">
+                          <div className="rl-card-main-info">
+                            <div className="rl-card-header">
+                              <div className="rl-card-title-row">
+                                <Link to={`/rooms/${r.roomId}`}><h3>Phòng {r.roomNumber} - {r.categoryName}</h3></Link>
+                                <div className="rl-stars">
+                                  <i className="fa fa-star"></i>
+                                  <i className="fa fa-star"></i>
+                                  <i className="fa fa-star"></i>
+                                  <i className="fa fa-star"></i>
+                                  <i className="fa fa-thumbs-up"></i>
+                                </div>
+                              </div>
+                              <div className="rl-card-location">
+                                <i className="fa fa-map-marker"></i> Tầng {r.floor}, 37 Hotel
+                              </div>
+                            </div>
+
+                            <div className="rl-card-features">
+                              <div className="rl-feature-tag">Miễn phí hủy phòng</div>
+                              <div className="rl-feature-tag">Không cần thanh toán trước</div>
+                              <p className="rl-room-desc">
+                                <span>{r.bedConfiguration}</span> • <span>{r.capacity} người lớn</span> • <span>{r.sizem2} m²</span>
+                              </p>
+                              <p className="rl-room-status-text">
+                                <i className="fa fa-check"></i> {STATUS_LABELS[r.statusName] || r.statusName}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="rl-card-pricing">
+                            <div className="rl-rating-box">
+                              <div className="rl-rating-text">
+                                <span>Tuyệt vời</span>
+                                <small>456 đánh giá</small>
+                              </div>
+                              <div className="rl-rating-score">8.9</div>
+                            </div>
+
+                            <div className="rl-price-container">
+                              <div className="rl-price-label">Giá 1 đêm</div>
+                              <div className="rl-price-value">{formatPrice(r.price)} đ</div>
+                              <div className="rl-price-tax">+65.000 đ thuế và phí</div>
+                              <Link to={`/rooms/${r.roomId}`} className="rl-btn-primary">
+                                Xem phòng trống <i className="fa fa-angle-right"></i>
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
 
-              {/* Pagination Controls */}
               {renderPagination()}
-            </>
-          )}
+            </main>
+          </div>
         </div>
       </div>
 
