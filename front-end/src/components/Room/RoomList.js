@@ -25,7 +25,7 @@ function formatPrice(n) {
 }
 
 // ─── Main Component ──────────────────────────────────────
-export default function RoomList() {
+export default function RoomList({ user, role, onLogout }) {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -159,7 +159,7 @@ export default function RoomList() {
 
   return (
     <>
-      <Header user={null} role="guest" />
+      <Header user={user} role={role} onLogout={onLogout} />
 
       <div className="mb-page" style={{ paddingTop: "80px", minHeight: "80vh" }}>
         <div className="mb-container">

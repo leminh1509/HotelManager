@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useBooking } from "../../context/BookingContext";
 import { getRoomById } from "../../services/bookingAPI";
+import Header from "../Header/Header";
+import Footer from "../Footer/Footer";
 import "./RoomDetail.css";
 
 // ─── Mock fallback (xóa khi có API thật) ────────────────
@@ -84,7 +86,7 @@ const AMENITY_ICONS = {
   Parking: "🅿️",
 };
 
-export default function RoomDetail() {
+export default function RoomDetail({ user, role, onLogout }) {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { setSelectedRoom, updateBookingData } = useBooking();
@@ -158,100 +160,104 @@ export default function RoomDetail() {
   const formatPrice = (n) => new Intl.NumberFormat("vi-VN").format(n);
 
   return (
-    <div className="rd-page">
-      <div className="rd-container">
-        {/* Breadcrumb */}
-        <nav className="rd-breadcrumb">
-          <Link to="/home">Tìm kiếm phòng</Link>
-          <span>/</span>
-          <span>{room.name}</span>
-        </nav>
+    <>
+      <Header user={user} role={role} onLogout={onLogout} />
+      <div className="rd-page">
+        <div className="rd-container">
+          {/* Breadcrumb */}
+          <nav className="rd-breadcrumb">
+            <Link to="/home">Tìm kiếm phòng</Link>
+            <span>/</span>
+            <span>{room.name}</span>
+          </nav>
 
-        {/* Hero image */}
-        <div className="rd-hero">
-          <img src={room.imgUrl} alt={room.name} />
-          <div className="rd-rating-badge">
-            <span className="rd-star">★</span>
-            <span>{room.rating}</span>
-            <span className="rd-review-count">({room.reviewCount} đánh giá)</span>
-          </div>
-        </div>
-
-        <div className="rd-body">
-          {/* Left: room info */}
-          <div className="rd-info">
-            <h1>{room.name}</h1>
-            <p className="rd-category">{room.categoryName}</p>
-
-            {/* Specs grid */}
-            <div className="rd-specs">
-              <div className="rd-spec">
-                <span className="rd-spec-icon">👥</span>
-                <span>Sức chứa: {room.capacity} khách</span>
-              </div>
-              <div className="rd-spec">
-                <span className="rd-spec-icon">📐</span>
-                <span>Diện tích: {room.sizem2} m²</span>
-              </div>
-              <div className="rd-spec">
-                <span className="rd-spec-icon">🛏️</span>
-                <span>{room.bedConfiguration}</span>
-              </div>
-              <div className="rd-spec">
-                <span className="rd-spec-icon">🏢</span>
-                <span>Tầng {room.floor}</span>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="rd-section">
-              <h3>Mô tả</h3>
-              <p>{room.description}</p>
-            </div>
-
-            {/* Amenities */}
-            <div className="rd-section">
-              <h3>Tiện nghi</h3>
-              <div className="rd-amenities">
-                {room.amenities?.map((a) => (
-                  <div key={a} className="rd-amenity">
-                    <span>{AMENITY_ICONS[a] || "✓"}</span>
-                    <span>{a}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Cancellation policy */}
-            <div className="rd-section">
-              <h3>Chính sách hủy</h3>
-              <p className="rd-policy">{room.cancellationPolicy}</p>
+          {/* Hero image */}
+          <div className="rd-hero">
+            <img src={room.imgUrl} alt={room.name} />
+            <div className="rd-rating-badge">
+              <span className="rd-star">★</span>
+              <span>{room.rating}</span>
+              <span className="rd-review-count">({room.reviewCount} đánh giá)</span>
             </div>
           </div>
 
-          {/* Right: pricing card */}
-          <aside className="rd-price-card">
-            <div className="rd-price-main">
-              <span className="rd-price-amount">
-                {formatPrice(room.price)}
-              </span>
-              <span className="rd-price-unit">đ / đêm</span>
+          <div className="rd-body">
+            {/* Left: room info */}
+            <div className="rd-info">
+              <h1>{room.name}</h1>
+              <p className="rd-category">{room.categoryName}</p>
+
+              {/* Specs grid */}
+              <div className="rd-specs">
+                <div className="rd-spec">
+                  <span className="rd-spec-icon">👥</span>
+                  <span>Sức chứa: {room.capacity} khách</span>
+                </div>
+                <div className="rd-spec">
+                  <span className="rd-spec-icon">📐</span>
+                  <span>Diện tích: {room.sizem2} m²</span>
+                </div>
+                <div className="rd-spec">
+                  <span className="rd-spec-icon">🛏️</span>
+                  <span>{room.bedConfiguration}</span>
+                </div>
+                <div className="rd-spec">
+                  <span className="rd-spec-icon">🏢</span>
+                  <span>Tầng {room.floor}</span>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="rd-section">
+                <h3>Mô tả</h3>
+                <p>{room.description}</p>
+              </div>
+
+              {/* Amenities */}
+              <div className="rd-section">
+                <h3>Tiện nghi</h3>
+                <div className="rd-amenities">
+                  {room.amenities?.map((a) => (
+                    <div key={a} className="rd-amenity">
+                      <span>{AMENITY_ICONS[a] || "✓"}</span>
+                      <span>{a}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Cancellation policy */}
+              <div className="rd-section">
+                <h3>Chính sách hủy</h3>
+                <p className="rd-policy">{room.cancellationPolicy}</p>
+              </div>
             </div>
 
-            <div className="rd-price-meta">
-              <span>★ {room.rating}</span>
-              <span>·</span>
-              <span>{room.reviewCount} đánh giá</span>
-            </div>
+            {/* Right: pricing card */}
+            <aside className="rd-price-card">
+              <div className="rd-price-main">
+                <span className="rd-price-amount">
+                  {formatPrice(room.price)}
+                </span>
+                <span className="rd-price-unit">đ / đêm</span>
+              </div>
 
-            <button onClick={handleBook} className="rd-book-btn">
-              Đặt phòng ngay
-            </button>
+              <div className="rd-price-meta">
+                <span>★ {room.rating}</span>
+                <span>·</span>
+                <span>{room.reviewCount} đánh giá</span>
+              </div>
 
-            <p className="rd-price-note">Bạn sẽ được nhập ngày và chi tiết ở bước tiếp theo</p>
-          </aside>
+              <button onClick={handleBook} className="rd-book-btn">
+                Đặt phòng ngay
+              </button>
+
+              <p className="rd-price-note">Bạn sẽ được nhập ngày và chi tiết ở bước tiếp theo</p>
+            </aside>
+          </div>
         </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 }
