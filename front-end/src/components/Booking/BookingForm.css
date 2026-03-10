@@ -4,11 +4,13 @@
   background: #f5f7fa;
   padding: 24px 0 48px;
 }
+
 .bf-container {
   max-width: 1050px;
   margin: 0 auto;
   padding: 0 16px;
 }
+
 .bf-back {
   display: inline-block;
   color: #3b82f6;
@@ -16,6 +18,7 @@
   font-size: 13px;
   margin-bottom: 20px;
 }
+
 .bf-back:hover {
   text-decoration: underline;
 }
@@ -28,6 +31,7 @@
   gap: 0;
   margin-bottom: 28px;
 }
+
 .bf-step {
   display: flex;
   flex-direction: column;
@@ -36,20 +40,24 @@
   position: relative;
   z-index: 1;
 }
+
 .bf-step span {
   font-size: 12px;
   color: #9ca3af;
   font-weight: 500;
   white-space: nowrap;
 }
+
 .bf-step.active span {
   color: #3b82f6;
   font-weight: 600;
 }
+
 .bf-step.done span {
   color: #22c55e;
   font-weight: 600;
 }
+
 .bf-step-dot {
   width: 32px;
   height: 32px;
@@ -62,14 +70,17 @@
   background: #e5e7eb;
   color: #6b7280;
 }
+
 .bf-step.active .bf-step-dot {
   background: #3b82f6;
   color: #fff;
 }
+
 .bf-step.done .bf-step-dot {
   background: #22c55e;
   color: #fff;
 }
+
 .bf-step-line {
   width: 80px;
   height: 3px;
@@ -78,6 +89,7 @@
   margin-bottom: 22px;
   border-radius: 2px;
 }
+
 .bf-step-line.done {
   background: #22c55e;
 }
@@ -97,6 +109,7 @@
   padding: 32px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
+
 .bf-card h2 {
   font-size: 20px;
   font-weight: 700;
@@ -113,20 +126,24 @@
   gap: 16px;
   margin-bottom: 16px;
 }
+
 .bf-field {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin-bottom: 16px;
 }
+
 .bf-field label {
   font-size: 13px;
   font-weight: 600;
   color: #374151;
 }
+
 .bf-req {
   color: #ef4444;
 }
+
 .bf-input {
   padding: 10px 12px;
   border: 1px solid #d1d5db;
@@ -136,27 +153,45 @@
   background: #fafafa;
   transition: border 0.2s, box-shadow 0.2s;
 }
+
 .bf-input:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
   background: #fff;
 }
+
 .bf-input.error {
   border-color: #ef4444;
 }
+
 .bf-textarea {
   resize: vertical;
   min-height: 80px;
 }
+
 .bf-hint {
   font-size: 11px;
   color: #9ca3af;
 }
+
 .bf-error {
   font-size: 12px;
   color: #ef4444;
   font-weight: 500;
+}
+
+.bf-datetime-group {
+  display: flex;
+  gap: 8px;
+}
+
+.bf-datetime-group .bf-input {
+  flex: 1;
+}
+
+.bf-time-input {
+  max-width: 100px;
 }
 
 /* checkboxes */
@@ -165,6 +200,7 @@
   gap: 24px;
   margin-bottom: 8px;
 }
+
 .bf-checkbox {
   display: flex;
   align-items: center;
@@ -174,6 +210,7 @@
   cursor: pointer;
   user-select: none;
 }
+
 .bf-checkbox input {
   accent-color: #3b82f6;
   width: 17px;
@@ -187,6 +224,7 @@
   gap: 12px;
   margin-top: 28px;
 }
+
 .bf-btn-back {
   padding: 10px 20px;
   border: 1px solid #d1d5db;
@@ -198,9 +236,11 @@
   cursor: pointer;
   transition: background 0.15s;
 }
+
 .bf-btn-back:hover {
   background: #f3f4f6;
 }
+
 .bf-btn-next {
   padding: 10px 24px;
   border: none;
@@ -212,9 +252,11 @@
   cursor: pointer;
   transition: background 0.2s;
 }
+
 .bf-btn-next:hover {
   background: #2563eb;
 }
+
 .bf-btn-confirm {
   padding: 12px 28px;
   border: none;
@@ -226,12 +268,15 @@
   cursor: pointer;
   transition: background 0.2s, transform 0.1s;
 }
+
 .bf-btn-confirm:hover:not(:disabled) {
   background: #15803d;
 }
+
 .bf-btn-confirm:active:not(:disabled) {
   transform: scale(0.97);
 }
+
 .bf-btn-confirm:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -244,6 +289,7 @@
   padding: 16px 20px;
   margin-bottom: 16px;
 }
+
 .bf-review-section h4 {
   font-size: 13px;
   font-weight: 700;
@@ -252,6 +298,7 @@
   letter-spacing: 0.5px;
   margin: 0 0 12px;
 }
+
 .bf-review-row {
   display: flex;
   justify-content: space-between;
@@ -260,27 +307,33 @@
   font-size: 14px;
   border-bottom: 1px solid #f3f4f6;
 }
+
 .bf-review-row:last-child {
   border-bottom: none;
 }
+
 .bf-review-row span:first-child {
   color: #6b7280;
 }
+
 .bf-review-row span:last-child {
   color: #1f2937;
   font-weight: 500;
 }
+
 .bf-review-row.bf-total {
   margin-top: 8px;
   padding-top: 10px;
   border-top: 2px solid #e5e7eb;
   border-bottom: none;
 }
+
 .bf-review-row.bf-total span:first-child {
   font-weight: 700;
   color: #1f2937;
   font-size: 15px;
 }
+
 .bf-review-row.bf-total span:last-child {
   font-size: 18px;
   color: #16a34a;
@@ -297,25 +350,30 @@
   position: sticky;
   top: 24px;
 }
+
 .bf-summary-img {
   width: 100%;
   height: 180px;
   object-fit: cover;
 }
+
 .bf-summary h3 {
   font-size: 16px;
   font-weight: 700;
   color: #1f2937;
   margin: 16px 16px 2px;
 }
+
 .bf-summary-cat {
   font-size: 13px;
   color: #6b7280;
   margin: 0 16px 16px;
 }
+
 .bf-summary-rows {
   padding: 0 16px;
 }
+
 .bf-summary-row {
   display: flex;
   justify-content: space-between;
@@ -323,13 +381,16 @@
   padding: 7px 0;
   border-bottom: 1px solid #f3f4f6;
 }
+
 .bf-summary-row span:first-child {
   color: #6b7280;
 }
+
 .bf-summary-row span:last-child {
   color: #1f2937;
   font-weight: 500;
 }
+
 .bf-summary-price {
   display: flex;
   flex-direction: column;
@@ -339,10 +400,12 @@
   background: #f0fdf4;
   border-top: 1px solid #bbf7d0;
 }
+
 .bf-summary-price span {
   font-size: 12px;
   color: #6b7280;
 }
+
 .bf-summary-price strong {
   font-size: 18px;
   color: #16a34a;
@@ -359,6 +422,7 @@
   gap: 12px;
   color: #6b7280;
 }
+
 .bf-spinner {
   width: 34px;
   height: 34px;
@@ -367,8 +431,11 @@
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
+
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ─── Responsive ── */
@@ -376,6 +443,7 @@
   .bf-layout {
     grid-template-columns: 1fr;
   }
+
   .bf-summary {
     position: static;
     order: -1;
@@ -383,13 +451,16 @@
     grid-template-columns: 200px 1fr;
     grid-template-rows: auto;
   }
+
   .bf-summary-img {
     height: 100%;
     grid-row: 1 / -1;
   }
+
   .bf-form-row {
     grid-template-columns: 1fr;
   }
+
   .bf-checkboxes {
     flex-direction: column;
     gap: 10px;
@@ -400,10 +471,12 @@
   .bf-summary {
     grid-template-columns: 1fr;
   }
+
   .bf-summary-img {
     height: 160px;
     grid-row: auto;
   }
+
   .bf-card {
     padding: 20px 16px;
   }

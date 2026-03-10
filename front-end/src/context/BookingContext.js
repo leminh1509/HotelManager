@@ -10,7 +10,9 @@ export function BookingProvider({ children }) {
   const [bookingData, setBookingData] = useState({
     // Từ search
     checkinDate: null,
+    checkinTime: "14:00",
     checkoutDate: null,
+    checkoutTime: "12:00",
     guestCount: 1,
     // Guest info (step 1)
     guestName: "",
@@ -35,7 +37,9 @@ export function BookingProvider({ children }) {
     setSelectedRoom(null);
     setBookingData({
       checkinDate: null,
+      checkinTime: "14:00",
       checkoutDate: null,
+      checkoutTime: "12:00",
       guestCount: 1,
       guestName: "",
       guestEmail: "",
