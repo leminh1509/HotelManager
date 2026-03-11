@@ -55,7 +55,7 @@ public class BookingService {
 
         // 2) load room (validate tồn tại)
         Room room = roomService.getEntityById(req.getRoomId());
-        roomService.updateStatus(req.getRoomId(), 2);
+        roomService.updateStatus(req.getRoomId(), 5);
 
         // 3) validate capacity
         if (req.getGuestCount() > room.getCapacity()) {
@@ -104,7 +104,7 @@ public class BookingService {
         booking.setLateCheckout(req.getLateCheckout() != null && req.getLateCheckout());
         booking.setCheckinTime(req.getCheckinTime());
         booking.setCheckoutTime(req.getCheckoutTime());
-        booking.setStatus(Status.Pending);
+        booking.setStatus(Status.Confirmed);
         booking.setTotalPrice(totalPrice);
         booking.setCreatedAt(now);
         booking.setUpdatedAt(now);
@@ -293,10 +293,13 @@ public class BookingService {
         if (newStatus == Status.Confirmed || newStatus == Status.CheckedIn) {
             Room room = booking.getRoom();
             String roomStatusName = room.getStatus().getName();
-            if (!"Available".equalsIgnoreCase(roomStatusName)) {
+            
+            // Per requirement: Check-in is only allowed if the room status is 'Reserved'.
+            // (Walk-in bookings set the room to 'Reserved' upon creation).
+            if (!"Reserved".equalsIgnoreCase(roomStatusName)) {
                 throw new ConflictException("Room " + room.getRoomNumber()
                         + " is not ready. Current status: " + roomStatusName
-                        + ". Room must be 'Available' before "
+                        + ". Room must be 'Reserved' before "
                         + (newStatus == Status.Confirmed ? "confirming" : "checking in") + ".");
             }
         }
