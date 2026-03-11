@@ -9,6 +9,9 @@ import com.example.spring_project.service.AuthService;
 import com.example.spring_project.service.Googleauthservice;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,63 +23,75 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * AuthController - Xử lý các request liên quan đến xác thực
- * Đây là lớp Controller trong mô hình MVC, chịu trách nhiệm:
- * - Nhận HTTP request từ client (frontend/Postman)
- * - Validate dữ liệu đầu vào
- * - Gọi Service xử lý nghiệp vụ
- * - Trả về HTTP response phù hợp
- * Base URL: /api/auth
- */
-@RestController   // Kết hợp @Controller + @ResponseBody: tự động chuyển return value thành JSON
-@RequestMapping("/api/auth") // Tất cả endpoint trong class này đều bắt đầu bằng /api/auth
+@RestController
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:5173"})
-// CrossOrigin: cho phép frontend ở các địa chỉ này gọi API (CORS cấp controller)
 public class AuthController {
 
-    private final AuthService authService;           // Xử lý đăng ký/đăng nhập thường
-    private final Googleauthservice googleAuthService; // Xử lý đăng nhập Google
+    private final AuthService     authService;
+    private final Googleauthservice googleAuthService;
 
-    /**
-     * POST /api/auth/register
-     * Đăng ký tài khoản mới
-     * @Valid: tự động kiểm tra các annotation trong RegisterRequest (NotBlank, Email, ...)
-     * Nếu validation lỗi -> ném MethodArgumentNotValidException -> xử lý ở handler bên dưới
-     */
+    // ════════════════════════════════════════════════════════════════════════════
+    // BƯỚC 1: Nhận thông tin đăng ký → backend sinh OTP → gửi email
+    // Frontend nhận 200 OK → chuyển sang màn nhập OTP
+    // ════════════════════════════════════════════════════════════════════════════
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         try {
-            AuthResponse response = authService.register(request);
-            return ResponseEntity.ok(response); // HTTP 200 + body là AuthResponse
+            authService.sendRegisterOtp(request);
+            Map<String, String> body = new HashMap<>();
+            body.put("message", "Mã OTP đã được gửi đến " + request.getEmail() + ". Vui lòng kiểm tra hộp thư.");
+            return ResponseEntity.ok(body);
         } catch (RuntimeException e) {
-            // Lỗi nghiệp vụ (email đã tồn tại, ...) -> trả 400 Bad Request
-            return buildError(HttpStatus.BAD_REQUEST, "Registration Failed", e.getMessage(), null);
+            return buildError(HttpStatus.BAD_REQUEST, "Đăng ký thất bại", e.getMessage(), null);
         }
     }
 
-    /**
-     * POST /api/auth/login
-     * Đăng nhập bằng email và password
-     */
+    // ════════════════════════════════════════════════════════════════════════════
+    // BƯỚC 2: Xác thực OTP → tạo tài khoản → trả JWT
+    // ════════════════════════════════════════════════════════════════════════════
+    @PostMapping("/verify-register-otp")
+    public ResponseEntity<?> verifyRegisterOtp(@Valid @RequestBody VerifyOtpRequest request) {
+        try {
+            AuthResponse response = authService.verifyRegisterOtp(request.getEmail(), request.getOtp());
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return buildError(HttpStatus.BAD_REQUEST, "Xác thực OTP thất bại", e.getMessage(), null);
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
+    // GỬI LẠI OTP (dùng cho cả Register và ForgotPassword nếu muốn)
+    // ════════════════════════════════════════════════════════════════════════════
+    @PostMapping("/resend-otp")
+    public ResponseEntity<?> resendOtp(@Valid @RequestBody ResendOtpRequest request) {
+        try {
+            authService.resendRegisterOtp(request.getEmail());
+            Map<String, String> body = new HashMap<>();
+            body.put("message", "Mã OTP mới đã được gửi đến " + request.getEmail());
+            return ResponseEntity.ok(body);
+        } catch (RuntimeException e) {
+            return buildError(HttpStatus.BAD_REQUEST, "Gửi lại OTP thất bại", e.getMessage(), null);
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
+    // LOGIN
+    // ════════════════════════════════════════════════════════════════════════════
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         try {
             AuthResponse response = authService.login(request);
-            return ResponseEntity.ok(response); // HTTP 200 + JWT token
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            // Sai email/password hoặc tài khoản bị khóa -> trả 401 Unauthorized
-            return buildError(HttpStatus.UNAUTHORIZED, "Authentication Failed", e.getMessage(), null);
+            return buildError(HttpStatus.UNAUTHORIZED, "Đăng nhập thất bại", e.getMessage(), null);
         }
     }
 
-    /**
-     * POST /api/auth/google
-     * Đăng nhập bằng Google OAuth2
-     * Frontend gửi lên: { "idToken": "<Google ID Token>" }
-     * Backend xác thực với Google và trả về JWT của hệ thống
-     */
+    // ════════════════════════════════════════════════════════════════════════════
+    // GOOGLE LOGIN
+    // ════════════════════════════════════════════════════════════════════════════
     @PostMapping("/google")
     public ResponseEntity<?> loginWithGoogle(@Valid @RequestBody Googleauthrequest request) {
         try {
@@ -87,55 +102,60 @@ public class AuthController {
         }
     }
 
-    /**
-     * POST /api/auth/logout
-     * Đăng xuất
-     * Vì dùng JWT stateless, server không lưu session nên không cần làm gì đặc biệt.
-     * Frontend tự xóa token khỏi localStorage/cookie là xong.
-     * Endpoint này chỉ để trả về message xác nhận.
-     */
+    // ════════════════════════════════════════════════════════════════════════════
+    // LOGOUT
+    // ════════════════════════════════════════════════════════════════════════════
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Logout successful");
+        response.put("message", "Đăng xuất thành công");
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Xử lý lỗi validation từ @Valid
-     * Khi request body không hợp lệ (thiếu field, sai format...), Spring tự gọi handler này
-     * Ví dụ: gửi email sai format -> trả về:
-     * { "email": "Email should be valid", "password": "Password is required" }
-     */
+    // ════════════════════════════════════════════════════════════════════════════
+    // Validation exception handler
+    // ════════════════════════════════════════════════════════════════════════════
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationExceptions(
-            MethodArgumentNotValidException ex,
-            HttpServletRequest request
-    ) {
-        // Gom tất cả lỗi validation vào Map: fieldName -> errorMessage
+    public ResponseEntity<ErrorResponse> handleValidation(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
         Map<String, String> validationErrors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            validationErrors.put(fieldName, errorMessage);
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String field   = ((FieldError) error).getField();
+            String message = error.getDefaultMessage();
+            validationErrors.put(field, message);
         });
-
-        // Xây dựng response lỗi đầy đủ thông tin
-        ErrorResponse error = ErrorResponse.builder()
+        ErrorResponse err = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value()) // 400
+                .status(HttpStatus.BAD_REQUEST.value())
                 .error("Validation Failed")
-                .message("Invalid input data")
-                .path(request.getRequestURI()) // Endpoint nào bị lỗi
+                .message("Dữ liệu không hợp lệ")
+                .path(request.getRequestURI())
                 .validationErrors(validationErrors)
                 .build();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
     }
 
-    /**
-     * Helper: Tạo ErrorResponse nhất quán cho các lỗi runtime
-     */
+    // ════════════════════════════════════════════════════════════════════════════
+    // DTO nội bộ cho verify-otp và resend-otp
+    // ════════════════════════════════════════════════════════════════════════════
+    @Data
+    public static class VerifyOtpRequest {
+        @NotBlank(message = "Email không được để trống")
+        @Email(message = "Email không hợp lệ")
+        private String email;
+
+        @NotBlank(message = "OTP không được để trống")
+        private String otp;
+    }
+
+    @Data
+    public static class ResendOtpRequest {
+        @NotBlank(message = "Email không được để trống")
+        @Email(message = "Email không hợp lệ")
+        private String email;
+    }
+
+    // Helper
     private ResponseEntity<ErrorResponse> buildError(HttpStatus status, String error, String message, String path) {
         return ResponseEntity.status(status).body(
                 ErrorResponse.builder()
