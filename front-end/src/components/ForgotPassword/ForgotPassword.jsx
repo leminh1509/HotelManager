@@ -1,11 +1,27 @@
 // src/components/ForgotPassword/ForgotPassword.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Header, { AuthHeader } from '../Header/Header';
-import Footer from '../Footer/Footer';
+import { AuthHeader } from '../Header/Header';
 import './ForgotPassword.css';
 
 const STEPS = { EMAIL: 1, OTP: 2, NEW_PASSWORD: 3, SUCCESS: 4 };
+
+const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+
+const getPasswordStrength = (pw) => {
+  if (!pw) return { level: 0, label: '', color: '' };
+  let score = 0;
+  if (pw.length >= 8)                                                    score++;
+  if (/[A-Z]/.test(pw))                                                  score++;
+  if (/[a-z]/.test(pw))                                                  score++;
+  if (/\d/.test(pw))                                                     score++;
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pw))                score++;
+  if (score <= 2) return { level: score, label: 'Yếu',        color: '#e53e3e' };
+  if (score === 3) return { level: score, label: 'Trung bình', color: '#dd6b20' };
+  if (score === 4) return { level: score, label: 'Khá mạnh',   color: '#d69e2e' };
+  return              { level: score, label: 'Mạnh',           color: '#38a169' };
+};
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -14,11 +30,14 @@ const ForgotPassword = () => {
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
 
-  // Đếm ngược resend
+  const strength = getPasswordStrength(newPassword);
+
   const startResendTimer = () => {
     setResendTimer(60);
     const interval = setInterval(() => {
@@ -29,7 +48,6 @@ const ForgotPassword = () => {
     }, 1000);
   };
 
-  // Bước 1: Gửi OTP
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setError('');
@@ -51,7 +69,6 @@ const ForgotPassword = () => {
     }
   };
 
-  // Bước 2: Xác thực OTP
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setError('');
@@ -72,16 +89,15 @@ const ForgotPassword = () => {
     }
   };
 
-  // Bước 3: Đặt lại mật khẩu
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setError('');
-    if (newPassword !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp.');
+    if (!PASSWORD_REGEX.test(newPassword)) {
+      setError('Mật khẩu phải ≥8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt (!@#$%...)');
       return;
     }
-    if (newPassword.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự.');
+    if (newPassword !== confirmPassword) {
+      setError('Mật khẩu xác nhận không khớp.');
       return;
     }
     setLoading(true);
@@ -129,13 +145,11 @@ const ForgotPassword = () => {
       <div className="fp-container">
         <div className="fp-card">
 
-          {/* Header */}
           <div className="fp-header">
             <h2>Quên mật khẩu</h2>
             <p>Đặt lại mật khẩu qua email của bạn</p>
           </div>
 
-          {/* Step indicator */}
           {step !== STEPS.SUCCESS && (
             <div className="fp-steps">
               {stepLabels.map((label, i) => (
@@ -147,10 +161,9 @@ const ForgotPassword = () => {
             </div>
           )}
 
-          {/* Error */}
           {error && <div className="fp-alert">{error}</div>}
 
-          {/* STEP 1: Nhập email */}
+          {/* STEP 1: Email */}
           {step === STEPS.EMAIL && (
             <form onSubmit={handleSendOtp}>
               <p className="fp-desc">Nhập email đã đăng ký, chúng tôi sẽ gửi mã OTP đến hộp thư của bạn.</p>
@@ -168,7 +181,7 @@ const ForgotPassword = () => {
             </form>
           )}
 
-          {/* STEP 2: Nhập OTP */}
+          {/* STEP 2: OTP */}
           {step === STEPS.OTP && (
             <form onSubmit={handleVerifyOtp}>
               <p className="fp-desc">
@@ -197,27 +210,101 @@ const ForgotPassword = () => {
             </form>
           )}
 
-          {/* STEP 3: Nhập mật khẩu mới */}
+          {/* STEP 3: Mật khẩu mới — ĐÃ NÂNG CẤP */}
           {step === STEPS.NEW_PASSWORD && (
             <form onSubmit={handleResetPassword}>
               <p className="fp-desc">Nhập mật khẩu mới cho tài khoản của bạn.</p>
+
+              {/* Mật khẩu mới */}
               <div className="fp-group">
-                <label>Mật khẩu mới</label>
-                <input
-                  type="password" className="fp-input" required
-                  placeholder="Ít nhất 6 ký tự"
-                  value={newPassword} onChange={e => setNewPassword(e.target.value)}
-                />
+                <label>Mật khẩu mới <span className="fp-required">*</span></label>
+                <div className="fp-pw-wrapper">
+                  <input
+                    type={showNewPw ? 'text' : 'password'}
+                    className="fp-input" required
+                    placeholder="≥8 ký tự, chữ hoa, số, ký tự đặc biệt"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button" className="fp-pw-toggle"
+                    onClick={() => setShowNewPw(v => !v)}
+                    tabIndex={-1}
+                  >
+                    {showNewPw ? '🙈' : '👁️'}
+                  </button>
+                </div>
+
+                {/* Strength bar */}
+                {newPassword && (
+                  <div className="fp-strength">
+                    <div className="fp-strength-bar">
+                      {[1,2,3,4,5].map(i => (
+                        <div key={i} className="fp-strength-seg"
+                          style={{ backgroundColor: i <= strength.level ? strength.color : '#e2e8f0' }}
+                        />
+                      ))}
+                    </div>
+                    <span className="fp-strength-label" style={{ color: strength.color }}>
+                      {strength.label}
+                    </span>
+                  </div>
+                )}
+
+                {/* Checklist */}
+                {newPassword && (
+                  <ul className="fp-checklist">
+                    <li className={newPassword.length >= 8 ? 'ok' : ''}>
+                      {newPassword.length >= 8 ? '✓' : '○'} Ít nhất 8 ký tự
+                    </li>
+                    <li className={/[A-Z]/.test(newPassword) ? 'ok' : ''}>
+                      {/[A-Z]/.test(newPassword) ? '✓' : '○'} Có chữ hoa (A–Z)
+                    </li>
+                    <li className={/[a-z]/.test(newPassword) ? 'ok' : ''}>
+                      {/[a-z]/.test(newPassword) ? '✓' : '○'} Có chữ thường (a–z)
+                    </li>
+                    <li className={/\d/.test(newPassword) ? 'ok' : ''}>
+                      {/\d/.test(newPassword) ? '✓' : '○'} Có chữ số (0–9)
+                    </li>
+                    <li className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword) ? 'ok' : ''}>
+                      {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword) ? '✓' : '○'} Có ký tự đặc biệt (!@#$%...)
+                    </li>
+                  </ul>
+                )}
               </div>
+
+              {/* Xác nhận mật khẩu */}
               <div className="fp-group">
-                <label>Xác nhận mật khẩu</label>
-                <input
-                  type="password" className="fp-input" required
-                  placeholder="Nhập lại mật khẩu"
-                  value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                />
+                <label>Xác nhận mật khẩu <span className="fp-required">*</span></label>
+                <div className="fp-pw-wrapper">
+                  <input
+                    type={showConfirmPw ? 'text' : 'password'}
+                    className="fp-input" required
+                    placeholder="Nhập lại mật khẩu"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button" className="fp-pw-toggle"
+                    onClick={() => setShowConfirmPw(v => !v)}
+                    tabIndex={-1}
+                  >
+                    {showConfirmPw ? '🙈' : '👁️'}
+                  </button>
+                </div>
+                {confirmPassword && (
+                  newPassword === confirmPassword
+                    ? <p className="fp-match ok">✅ Mật khẩu khớp</p>
+                    : <p className="fp-match err">❌ Mật khẩu chưa khớp</p>
+                )}
               </div>
-              <button type="submit" className="fp-btn" disabled={loading}>
+
+              <button
+                type="submit" className="fp-btn"
+                disabled={loading || !PASSWORD_REGEX.test(newPassword) || newPassword !== confirmPassword}
+              >
                 {loading ? <span className="spinner" /> : 'Đặt lại mật khẩu'}
               </button>
             </form>
@@ -229,13 +316,12 @@ const ForgotPassword = () => {
               <div className="fp-success-icon">✅</div>
               <h3>Thành công!</h3>
               <p>Mật khẩu của bạn đã được đặt lại. Bạn có thể đăng nhập ngay bây giờ.</p>
-              <button className="fp-btn" onClick={() => navigate('/login')}>
+              <button className="fp-btn" onClick={() => navigate('/login', { replace: true, state: { prefillEmail: email, prefillPassword: newPassword } })}>
                 Đăng nhập
               </button>
             </div>
           )}
 
-          {/* Footer */}
           {step === STEPS.EMAIL && (
             <div className="fp-footer">
               <Link to="/login" className="fp-login-link">← Quay lại đăng nhập</Link>

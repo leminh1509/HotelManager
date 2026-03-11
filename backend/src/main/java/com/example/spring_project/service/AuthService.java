@@ -16,61 +16,108 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepository userRepository;       // Truy cập database bảng users
-    private final RoleRepository roleRepository;       // Truy cập database bảng role
-    private final PasswordEncoder passwordEncoder;     // Mã hóa mật khẩu (BCrypt)
-    private final JwtUtil jwtUtil;                     // Tạo JWT token
-    private final AuthenticationManager authenticationManager; // Xác thực username/password
+    private final UserRepository        userRepository;
+    private final RoleRepository        roleRepository;
+    private final PasswordEncoder       passwordEncoder;
+    private final JwtUtil               jwtUtil;
+    private final AuthenticationManager authenticationManager;
+    private final EmailService          emailService;
+    private final OtpStore              otpStore;       // ← inject OtpStore
 
-    /**
-     * ═══════════════════════════════
-     * ĐĂNG KÝ TÀI KHOẢN MỚI
-     * ═══════════════════════════════
-     * @Transactional: nếu có lỗi giữa chừng, rollback toàn bộ (không lưu nửa vời vào DB)
-     */
-    @Transactional
-    public AuthResponse register(RegisterRequest request) {
-
-        // ── Kiểm tra email đã tồn tại chưa ──
+    // ════════════════════════════════════════════════════════════════════════════
+    // BƯỚC 1: Validate → sinh OTP → lưu tạm → gửi email
+    // POST /api/auth/register  →  trả { message: "OTP đã gửi..." }
+    // ════════════════════════════════════════════════════════════════════════════
+    public void sendRegisterOtp(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
+            throw new RuntimeException("Email đã được đăng ký");
+        }
+        if (request.getMobilePhone() != null
+                && !request.getMobilePhone().isBlank()
+                && userRepository.existsByMobilePhone(request.getMobilePhone())) {
+            throw new RuntimeException("Số điện thoại đã được đăng ký");
         }
 
-        // ── Kiểm tra số điện thoại đã tồn tại chưa (nếu user có nhập) ──
-        if (request.getMobilePhone() != null && userRepository.existsByMobilePhone(request.getMobilePhone())) {
-            throw new RuntimeException("Mobile phone already registered");
+        String otp = generateOtp();
+
+        otpStore.savePending(request.getEmail(), request);
+        otpStore.saveOtp(request.getEmail(), otp);
+
+        // Gửi email OTP (async)
+        emailService.sendRegisterOtpEmail(request.getEmail(), request.getFirstName(), otp);
+
+        // Debug log — xóa sau khi test xong
+        System.out.println("[OTP] sendRegisterOtp"
+                + " | email=" + request.getEmail().toLowerCase().trim()
+                + " | otp=" + otp
+                + " | otpStore.instance=" + otpStore.hashCode());
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
+    // BƯỚC 2: Xác thực OTP → tạo User trong DB → trả JWT
+    // POST /api/auth/verify-register-otp  →  trả AuthResponse + token
+    // ════════════════════════════════════════════════════════════════════════════
+    @Transactional
+    public AuthResponse verifyRegisterOtp(String email, String otp) {
+        // Debug log
+        OtpStore.OtpEntry stored = otpStore.getOtpEntry(email);
+        System.out.println("[OTP] verifyRegisterOtp"
+                + " | email=" + email.toLowerCase().trim()
+                + " | input=" + otp.trim()
+                + " | stored=" + (stored != null ? stored.getCode() : "NULL")
+                + " | expired=" + (stored != null ? stored.isExpired() : "N/A")
+                + " | hasPending=" + otpStore.hasPending(email)
+                + " | otpStore.instance=" + otpStore.hashCode());
+
+        if (!otpStore.isOtpValid(email, otp)) {
+            if (stored == null) {
+                throw new RuntimeException("OTP không tồn tại. Vui lòng yêu cầu lại.");
+            } else if (stored.isExpired()) {
+                otpStore.clear(email);
+                throw new RuntimeException("OTP đã hết hạn. Vui lòng yêu cầu mã mới.");
+            } else {
+                throw new RuntimeException("Mã OTP không đúng. Vui lòng kiểm tra lại.");
+            }
         }
 
-        // ── Lấy role mặc định "customer" từ database ──
-        // Tất cả người đăng ký mới đều là CUSTOMER
+        RegisterRequest request = otpStore.getPending(email);
+        if (request == null) {
+            throw new RuntimeException("Không tìm thấy phiên đăng ký. Vui lòng điền lại thông tin.");
+        }
+
+        // Kiểm tra lại email chưa bị đăng ký bởi người khác trong lúc chờ
+        if (userRepository.existsByEmail(request.getEmail())) {
+            otpStore.clear(email);
+            throw new RuntimeException("Email đã được đăng ký. Vui lòng đăng nhập.");
+        }
+
         Role customerRole = roleRepository.findByName("customer")
-                .orElseThrow(() -> new RuntimeException("Customer role not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy role customer"));
 
-        // ── Tạo đối tượng User mới và fill thông tin ──
         User user = new User();
         user.setFirstName(request.getFirstName());
         user.setMiddleName(request.getMiddleName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword())); // Mã hóa password trước khi lưu!
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setMobilePhone(request.getMobilePhone());
         user.setBirthday(request.getBirthday());
         user.setRole(customerRole);
-        user.setIsActive(true);       // Tài khoản mới mặc định đang hoạt động
-        user.setIsBlackList(false);   // Chưa bị blacklist
+        user.setIsActive(true);
+        user.setIsBlackList(false);
 
-        // ── Lưu user vào database ──
         User savedUser = userRepository.save(user);
 
-        // ── Tạo JWT token cho user vừa đăng ký (đăng nhập luôn sau khi đăng ký) ──
-        String token = jwtUtil.generateToken(savedUser);
+        // Dọn dẹp OTP + pending
+        otpStore.clear(email);
 
-        // ── Trả về response với token và thông tin user ──
+        String token = jwtUtil.generateToken(savedUser);
         return AuthResponse.builder()
                 .token(token)
                 .type("Bearer")
@@ -79,48 +126,46 @@ public class AuthService {
                 .firstName(savedUser.getFirstName())
                 .lastName(savedUser.getLastName())
                 .role(savedUser.getRole().getName())
-                .message("Registration successful")
+                .message("Đăng ký thành công")
                 .build();
     }
 
-    /**
-     * ═══════════════════════════════
-     * ĐĂNG NHẬP
-     * ═══════════════════════════════
-     */
-    public AuthResponse login(LoginRequest request) {
+    // ════════════════════════════════════════════════════════════════════════════
+    // GỬI LẠI OTP
+    // POST /api/auth/resend-otp
+    // ════════════════════════════════════════════════════════════════════════════
+    public void resendRegisterOtp(String email) {
+        if (!otpStore.hasPending(email)) {
+            throw new RuntimeException("Không tìm thấy phiên đăng ký. Vui lòng điền lại thông tin.");
+        }
 
-        // ── Bước 1: Xác thực email và password ──
-        // authenticationManager sẽ: load user từ DB -> so sánh password đã mã hóa
+        RegisterRequest request = otpStore.getPending(email);
+        String otp = generateOtp();
+        otpStore.saveOtp(email, otp);
+        emailService.sendRegisterOtpEmail(email, request.getFirstName(), otp);
+
+        System.out.println("[OTP] resendRegisterOtp | email=" + email.toLowerCase().trim() + " | otp=" + otp);
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
+    // LOGIN
+    // ════════════════════════════════════════════════════════════════════════════
+    public AuthResponse login(LoginRequest request) {
         try {
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
-                            request.getPassword()
-                    )
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
         } catch (BadCredentialsException e) {
-            // Sai email hoặc sai password
-            throw new RuntimeException("Invalid email or password");
+            throw new RuntimeException("Email hoặc mật khẩu không đúng");
         }
 
-        // ── Bước 2: Load đầy đủ thông tin user từ DB ──
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
 
-        // ── Bước 3: Kiểm tra trạng thái tài khoản ──
-        if (!user.getIsActive()) {
-            throw new RuntimeException("Account is inactive"); // Tài khoản bị vô hiệu hóa
-        }
+        if (!user.getIsActive())   throw new RuntimeException("Tài khoản chưa được kích hoạt");
+        if (user.getIsBlackList()) throw new RuntimeException("Tài khoản đã bị khóa");
 
-        if (user.getIsBlackList()) {
-            throw new RuntimeException("Account is blacklisted"); // Tài khoản bị cấm
-        }
-
-        // ── Bước 4: Tạo JWT token ──
         String token = jwtUtil.generateToken(user);
-
-        // ── Bước 5: Trả về response ──
         return AuthResponse.builder()
                 .token(token)
                 .type("Bearer")
@@ -129,7 +174,12 @@ public class AuthService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .role(user.getRole().getName())
-                .message("Login successful")
+                .message("Đăng nhập thành công")
                 .build();
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
+    private String generateOtp() {
+        return String.valueOf(100_000 + new SecureRandom().nextInt(900_000));
     }
 }
