@@ -1,6 +1,7 @@
 package com.example.spring_project.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.List;
  */
 @Entity                  // Đánh dấu đây là JPA Entity (ánh xạ với bảng DB)
 @Table(name = "users")   // Tên bảng trong database
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 @Data                    // Lombok: tự tạo getter, setter, toString, equals, hashCode
 @NoArgsConstructor       // Lombok: tạo constructor không tham số (JPA yêu cầu)
 @AllArgsConstructor      // Lombok: tạo constructor với tất cả tham số

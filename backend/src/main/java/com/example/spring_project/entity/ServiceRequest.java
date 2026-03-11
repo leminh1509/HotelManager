@@ -1,5 +1,8 @@
 package com.example.spring_project.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -10,6 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @Table(name = "maintenance_request")
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class ServiceRequest {
 
     @Id
@@ -17,46 +21,65 @@ public class ServiceRequest {
     @Column(name = "request_id")
     private Long id;
 
+    // booking_id NOT NULL in DB
+    @JsonIgnore  // Don't serialize full booking; use getRoom() getter instead
     @ManyToOne
-    @JoinColumn(name = "room_id", nullable = true) // Nullable if it's a general facility request
-    private Room room;
+    @JoinColumn(name = "booking_id", nullable = false)
+    private Booking booking;
+
+    // user_id NOT NULL in DB
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User requester;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "password", "authorities", "roles" })
     @JoinColumn(name = "assigned_to", nullable = true)
     private User assignedTo;
 
-    // e.g., "Air conditioner broken", "Need fresh towels"
+    @Column(name = "request_type")
+    private String type; // MAINTENANCE, CLEANING
+
+    private String title;
+
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    private ServiceRequestType type;
+    @Column(name = "photo_url")
+    private String itemsImage;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = ServiceRequestStatusConverter.class)
     private ServiceRequestStatus status;
 
-    private String priority; // LIGHT, MEDIUM, HIGH, URGENT
+    /**
+     * Frontend compatibility: expose room info from booking
+     */
+    @JsonProperty("room")
+    public Room getRoom() {
+        return booking != null ? booking.getRoom() : null;
+    }
 
-    @Column(name = "items_image")
-    private String itemsImage; // Optional image URL
+    private String priority; // Low, Medium, High, Urgent
 
-    @Column(name = "reported_at")
+    @Column(name = "notes")
+    private String resolutionNotes;
+
+    @Column(name = "created_at")
     private LocalDateTime reportedAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    // Notes added by maintenance staff
-    @Column(name = "resolution_notes")
-    private String resolutionNotes;
 
     @PrePersist
     protected void onCreate() {
         reportedAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         if (status == null)
-            status = ServiceRequestStatus.PENDING;
+            status = ServiceRequestStatus.New;
         if (priority == null)
-            priority = "MEDIUM";
+            priority = "Low";
+        if (title == null && description != null) {
+            title = description.length() > 50 ? description.substring(0, 47) + "..." : description;
+        }
     }
 
     @PreUpdate

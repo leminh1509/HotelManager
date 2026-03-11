@@ -99,11 +99,22 @@ public class AutoCheckoutScheduler {
         // ── Step C: Create CLEANING service request ──────────────────────
         User assignedStaff = pickLeastBusyStaff(staffList);
 
+        // Requester is the assigned staff (or first staff found, or fallback to admin)
+        User requester = assignedStaff;
+        if (requester == null && !staffList.isEmpty()) {
+            requester = staffList.get(0);
+        }
+        if (requester == null) {
+            // Fallback to admin (ID=1) if no staff available
+            requester = userRepository.findById(1).orElse(null);
+        }
+
         ServiceRequest cleaningRequest = ServiceRequest.builder()
-                .room(room)
-                .type(ServiceRequestType.CLEANING)
-                .priority("HIGH")
-                .status(ServiceRequestStatus.PENDING)
+                .booking(booking)
+                .requester(requester)
+                .type(ServiceRequestType.CLEANING.name())
+                .priority("High")
+                .status(ServiceRequestStatus.New)
                 .description(String.format(
                         "Auto-checkout: Phòng %s cần dọn dẹp sau khi khách trả phòng (Booking #%d)",
                         room.getRoomNumber(), bookingId))
