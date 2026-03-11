@@ -21,6 +21,10 @@ public class ServiceRequest {
     @JoinColumn(name = "room_id", nullable = true) // Nullable if it's a general facility request
     private Room room;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to", nullable = true)
+    private User assignedTo;
+
     // e.g., "Air conditioner broken", "Need fresh towels"
     private String description;
 

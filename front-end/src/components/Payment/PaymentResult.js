@@ -1,46 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import './Payment.css'; // Re-use styling
 
 const PaymentResult = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [status, setStatus] = useState('processing'); // processing, success, failed
 
     useEffect(() => {
         const verifyPayment = async () => {
-            const vnp_ResponseCode = searchParams.get('vnp_ResponseCode');
+            const code = searchParams.get('code');
+            const cancel = searchParams.get('cancel');
+            const payosStatus = searchParams.get('status');
 
-            if (vnp_ResponseCode === '00') {
-                // Success - Verify with backend
-                try {
-                    const params = Object.fromEntries(searchParams.entries());
-                    const response = await fetch('http://localhost:9999/api/payments/vnpay-verify', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`
-                        },
-                        body: JSON.stringify(params)
-                    });
-
-                    if (response.ok) {
-                        setStatus('success');
-                    } else {
-                        console.error('Backend verification failed');
-                        setStatus('failed');
-                    }
-                } catch (err) {
-                    console.error('Error verifying payment:', err);
-                    setStatus('failed');
-                }
+            if (location.pathname.includes('payos-cancel') || cancel === 'true' || payosStatus === 'CANCELLED') {
+                setStatus('failed');
+            } else if (location.pathname.includes('payos-return') && (code === '00' || payosStatus === 'PAID')) {
+                setStatus('success');
             } else {
                 setStatus('failed');
             }
         };
 
         verifyPayment();
-    }, [searchParams]);
+    }, [searchParams, location.pathname]);
 
     return (
         <div className="payment-card shadow-lg p-5 text-center" style={{ maxWidth: '500px', margin: '100px auto', borderRadius: '16px' }}>
@@ -59,16 +43,16 @@ const PaymentResult = () => {
                     <div className="success-icon-wrapper">
                         <span className="success-icon">✓</span>
                     </div>
-                    <h2 className="success-title">Payment Successful</h2>
+                    <h2 className="success-title">Thanh toán thành công!</h2>
                     <p className="success-desc">
-                        Your VNPay transaction was successful.
+                        Giao dịch PayOS của bạn đã được xác nhận thành công.
                     </p>
                     <button
                         className="btn btn-primary"
-                        style={{ width: '100%' }}
+                        style={{ width: '100%', padding: '12px', fontSize: '16px', borderRadius: '8px' }}
                         onClick={() => navigate('/my-bookings')}
                     >
-                        Go to My Bookings
+                        Đến danh sách đặt phòng
                     </button>
                 </div>
             )}
@@ -78,16 +62,16 @@ const PaymentResult = () => {
                     <div className="success-icon-wrapper" style={{ backgroundColor: '#fef2f2' }}>
                         <span className="success-icon" style={{ color: '#ef4444' }}>✕</span>
                     </div>
-                    <h2 className="success-title">Payment Failed</h2>
+                    <h2 className="success-title">Thanh toán thất bại</h2>
                     <p className="success-desc">
-                        Your transaction was not completed or was cancelled.
+                        Giao dịch đã bị hủy hoặc không thể hoàn thành.
                     </p>
                     <button
                         className="btn btn-secondary"
-                        style={{ width: '100%' }}
-                        onClick={() => navigate('/payment')}
+                        style={{ width: '100%', padding: '12px', fontSize: '16px', borderRadius: '8px' }}
+                        onClick={() => navigate(-2)}
                     >
-                        Try Again
+                        Quay lại
                     </button>
                 </div>
             )}
