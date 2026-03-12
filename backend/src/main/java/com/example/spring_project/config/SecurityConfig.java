@@ -88,9 +88,11 @@ public class SecurityConfig {
                         .requestMatchers(new AntPathRequestMatcher("/api/customer/**"))
                         .hasAnyRole("CUSTOMER", "ADMIN")
 
-                        // Xem danh sách phòng và danh mục: công khai (không cần login)
+                        // Xem danh sách phòng, danh mục và guidelines: công khai (không cần login)
                         .requestMatchers(new AntPathRequestMatcher("/api/rooms/**", "GET")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/categories/**", "GET")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/guidelines/**", "GET")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/guidelines", "GET")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/ws/**")).permitAll()
 
                         // Đặt phòng: phải đăng nhập

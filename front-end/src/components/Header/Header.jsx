@@ -49,6 +49,7 @@ export default function Header({
     { key: "bills",          label: "Bills",          to: "/receptionist/bills" },
     { key: "rules",          label: "Rules",          to: "/receptionist/rules" },
     { key: "rooms",          label: "Rooms",          to: "/receptionist/rooms" },
+    { key: "guidelines",     label: "Guidelines",     to: "/receptionist/guidelines" },
   ];
 
   const maintenanceItems = [
