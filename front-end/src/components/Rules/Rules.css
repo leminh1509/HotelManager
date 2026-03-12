@@ -1,0 +1,112 @@
+/* src/components/Rules/Rules.css */
+
+.rules-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.rules-main-content {
+  flex: 1;
+  background-color: #f8f9fa;
+  padding-bottom: 60px;
+}
+
+.rules-header-banner {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  color: white;
+  padding: 60px 20px;
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.rules-header-banner h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+.rules-header-banner p {
+  margin: 0;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.rules-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.rules-loading,
+.rules-error,
+.rules-empty {
+  text-align: center;
+  padding: 40px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  font-size: 1.1rem;
+  color: #555;
+}
+
+.rules-error {
+  color: #d32f2f;
+}
+
+.rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.rule-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rule-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+}
+
+.rule-card-header {
+  border-bottom: 1px solid #eee;
+  padding: 20px 24px;
+  background-color: #fafafa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.rule-card-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.rule-date {
+  font-size: 0.85rem;
+  color: #777;
+  font-style: italic;
+}
+
+.rule-card-body {
+  padding: 24px;
+  color: #444;
+  line-height: 1.6;
+}
+
+.rule-card-body p {
+  margin: 0 0 10px 0;
+}
+
+.rule-card-body p:last-child {
+  margin-bottom: 0;
+}
