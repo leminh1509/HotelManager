@@ -26,6 +26,8 @@ import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard"
 import RoomList1 from "./components/Room/RoomList";
 import BookingList1 from "./components/Booking/BookingList";
 import Profile from "./components/Profile/Profile";
+import Guidelines from "./components/Guidelines/Guidelines";
+import GuidelinesManagement from "./components/Receptionist/GuidelinesManagement";
 
 const Forbidden = () => (
   <div style={{ padding: 40, textAlign: "center" }}>
@@ -97,6 +99,8 @@ export default function App() {
       {/*List room */}
       <Route path="/rooms" element={<RoomList1 user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
 
+      {/* Guidelines (publicly available with Header/Footer) */}
+      <Route path="/guidelines" element={<Guidelines user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
 
       {/* login/register phải truyền callback */}
       <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
@@ -140,6 +144,7 @@ export default function App() {
             <Route path="bookings/:id" element={<BookingDetail />} />
             <Route path="rooms" element={<RoomList />} />
             <Route path="rooms/:id" element={<ReceptionistRoomDetail />} />
+            <Route path="guidelines" element={<GuidelinesManagement />} />
           </Route>
         </Route>
       </Route>

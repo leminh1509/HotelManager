@@ -15,6 +15,8 @@ import com.example.spring_project.util.BookingMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -341,13 +343,33 @@ public class BookingService {
             // Đổi trạng thái phòng → Cleaning
             roomService.updateRoomStatus(room.getRoomId(), "Cleaning");
 
+            // Lấy user hiện tại (lễ tân)
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String currentUserEmail = auth != null ? auth.getName() : null;
+            User currentUser = null;
+            if (currentUserEmail != null) {
+                currentUser = userRepo.findByEmail(currentUserEmail).orElse(null);
+            }
+            // Fallback: use receptionist or booking owner if no auth (e.g. internal call)
+            if (currentUser == null) {
+                currentUser = saved.getReceptionist();
+            }
+            if (currentUser == null) {
+                currentUser = saved.getUser();
+            }
+
             // Tạo cleaning request tự động
             String description = "Room " + room.getRoomNumber() + " needs cleaning after guest check-out.";
             serviceRequestService.createRequest(
+                    saved,
+                    currentUser,
                     room.getRoomId(),
                     description,
                     ServiceRequestType.CLEANING,
-                    "HIGH");
+                    "High");
+
+            // Real-time WebSocket notification
+            messagingTemplate.convertAndSend("/topic/maintenance", "New cleaning request for room " + room.getRoomNumber());
         }
 
         return BookingMapper.toBookingResponse(saved);

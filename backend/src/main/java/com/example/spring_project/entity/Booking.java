@@ -4,8 +4,11 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @Entity
 @Table(name = "booking")
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Booking {
 
     public enum Status {

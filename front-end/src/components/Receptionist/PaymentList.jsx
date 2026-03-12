@@ -59,56 +59,80 @@ export default function PaymentList() {
         setCurrentPage(1);
     };
 
-    const exportPDF = () => {
-        const doc = new jsPDF({ orientation: "landscape" });
-
-        // Title
-        doc.setFontSize(16);
+    const exportSinglePDF = (booking) => {
+        const doc = new jsPDF();
+        
+        // Header
+        doc.setFontSize(22);
         doc.setFont("helvetica", "bold");
-        doc.text("Payment Report - Checked-out Bookings", 14, 16);
+        doc.text("HOTEL INVOICE", 105, 20, { align: "center" });
 
-        // Subtitle with date
+        // Hotel Info
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
-        doc.setTextColor(120);
-        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 23);
-        if (searchTerm) {
-            doc.text(`Filter: "${searchTerm}"  —  ${filteredPayments.length} of ${payments.length} records`, 14, 29);
-        }
-        doc.setTextColor(0);
+        doc.text("Grand Oasis Hotel", 14, 30);
+        doc.text("123 Luxury Avenue, District 1, HCMC", 14, 35);
+        doc.text("Phone: +84 (123) 456-789", 14, 40);
+        doc.text("Email: contact@grandoasis.com", 14, 45);
 
-        // Table
+        // Invoice Info
+        doc.setFont("helvetica", "bold");
+        doc.text(`INVOICE NO: INV-${booking.bookingId}`, 150, 30);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Date: ${new Date().toLocaleDateString()}`, 150, 35);
+        
+        // Line break
+        doc.setLineWidth(0.5);
+        doc.line(14, 50, 196, 50);
+
+        // Guest Info
+        doc.setFont("helvetica", "bold");
+        doc.text("Bill To:", 14, 60);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Guest Name: ${booking.guestName}`, 14, 66);
+        doc.text(`Guest ID/Email: ${booking.guestId}`, 14, 72);
+
+        // Booking Info
+        doc.setFont("helvetica", "bold");
+        doc.text("Booking Details:", 110, 60);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Booking ID: #${booking.bookingId}`, 110, 66);
+        doc.text(`Room Number: ${booking.roomNumber}`, 110, 72);
+        doc.text(`Check-in: ${new Date(booking.checkinTime).toLocaleDateString()}`, 110, 78);
+        doc.text(`Check-out: ${new Date(booking.checkoutTime).toLocaleDateString()}`, 110, 84);
+
+        // Items Table
         autoTable(doc, {
-            startY: searchTerm ? 34 : 28,
-            head: [["Booking ID", "Guest Name", "Room", "Check-in", "Check-out", "Total Amount", "Payment Status"]],
-            body: filteredPayments.map(b => [
-                `#${b.bookingId}`,
-                b.guestName,
-                b.roomNumber,
-                new Date(b.checkinTime).toLocaleDateString(),
-                new Date(b.checkoutTime).toLocaleDateString(),
-                `${(b.totalPrice || 0).toLocaleString()} VND`,
-                "Completed",
-            ]),
-            headStyles: { fillColor: [33, 37, 41], textColor: 255, fontStyle: "bold" },
+            startY: 95,
+            head: [["Description", "Amount"]],
+            body: [
+                [`Room Stay (${booking.roomNumber})`, `${(booking.totalPrice || 0).toLocaleString()} VND`]
+            ],
+            headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: "bold" },
             alternateRowStyles: { fillColor: [245, 245, 245] },
-            styles: { fontSize: 9, cellPadding: 4 },
-            columnStyles: {
-                0: { cellWidth: 25 },
-                5: { halign: "right" },
-            },
+            margin: { left: 14, right: 14 }
         });
 
-        // Footer page numbers
-        const pageCount = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.setFontSize(8);
-            doc.setTextColor(150);
-            doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.getWidth() - 20, doc.internal.pageSize.getHeight() - 8);
-        }
+        // Totals
+        const finalY = doc.lastAutoTable.finalY || 120;
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("Total Paid:", 120, finalY + 15);
+        doc.setTextColor(39, 174, 96); // Green text
+        doc.text(`${(booking.totalPrice || 0).toLocaleString()} VND`, 160, finalY + 15);
+        
+        // Status Stamp
+        doc.setTextColor(0);
+        doc.setFontSize(14);
+        doc.text("Status: COMPLETED", 14, finalY + 15);
 
-        doc.save(`payment_report_${new Date().toISOString().split('T')[0]}.pdf`);
+        // Footer
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "italic");
+        doc.setTextColor(120);
+        doc.text("Thank you for your stay with us!", 105, 280, { align: "center" });
+
+        doc.save(`Invoice_INV-${booking.bookingId}_${booking.guestName.replace(/ /g, "_")}.pdf`);
     };
 
     const exportExcel = () => {
@@ -160,9 +184,6 @@ export default function PaymentList() {
                             />
                         </div>
                     </div>
-                    <button className="btn btn-danger" onClick={exportPDF} title="Export all filtered payments to PDF">
-                        <i className="fa fa-file-pdf-o me-1"></i> Export PDF
-                    </button>
                     <button className="btn btn-success" onClick={exportExcel} title="Export all filtered payments to Excel">
                         <i className="fa fa-file-excel-o me-1"></i> Export Excel
                     </button>
@@ -182,6 +203,7 @@ export default function PaymentList() {
                             <th>Check-out</th>
                             <th>Total Amount</th>
                             <th>Payment Status</th>
+                            <th className="text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -202,6 +224,15 @@ export default function PaymentList() {
                                     <td className="fw-bold text-success">${booking.totalPrice}</td>
                                     <td>
                                         <span className="badge bg-success">Completed</span>
+                                    </td>
+                                    <td className="text-center">
+                                        <button 
+                                            className="btn btn-sm btn-outline-danger" 
+                                            onClick={() => exportSinglePDF(booking)}
+                                            title="Download PDF Invoice"
+                                        >
+                                            <i className="fa fa-file-pdf-o"></i> Invoice
+                                        </button>
                                     </td>
                                 </tr>
                             ))
