@@ -88,15 +88,17 @@ public class SecurityConfig {
                         .requestMatchers(new AntPathRequestMatcher("/api/customer/**"))
                         .hasAnyRole("CUSTOMER", "ADMIN")
 
-                        // Xem danh sách phòng, danh mục và guidelines: công khai (không cần login)
-                        .requestMatchers(new AntPathRequestMatcher("/api/rooms/**", "GET")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/api/categories/**", "GET")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/api/guidelines/**", "GET")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/api/guidelines", "GET")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/ws/**")).permitAll()
+                        // Xem danh sách phòng, danh mục, guidelines, và rules: công khai (không cần login)
+                        .requestMatchers(HttpMethod.GET, "/api/rooms/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/guidelines/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/guidelines").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/rules/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/rules").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
 
                         // Đặt phòng: phải đăng nhập
-                        .requestMatchers(new AntPathRequestMatcher("/api/bookings/**")).authenticated()
+                        .requestMatchers("/api/bookings/**").authenticated()
 
                         // Tất cả endpoint còn lại: phải đăng nhập
                         .anyRequest().authenticated()
@@ -178,7 +180,9 @@ public class SecurityConfig {
         config.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",  // React app thường dùng port này
                 "http://localhost:3001",  // Port dự phòng
-                "http://localhost:5173"   // Vite dev server
+                "http://localhost:5173",  // Vite dev server
+                "http://127.0.0.1:5173",  // Vite dev server (IP)
+                "http://127.0.0.1:3000"   // IP fallback
         ));
 
         // Các HTTP method được cho phép (thêm PATCH để hỗ trợ cập nhật một phần)

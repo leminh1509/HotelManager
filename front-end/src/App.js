@@ -28,6 +28,8 @@ import BookingList1 from "./components/Booking/BookingList";
 import Profile from "./components/Profile/Profile";
 import Guidelines from "./components/Guidelines/Guidelines";
 import GuidelinesManagement from "./components/Receptionist/GuidelinesManagement";
+import Rules from "./components/Rules/Rules";
+import RulesManagement from "./components/Receptionist/RulesManagement";
 
 const Forbidden = () => (
   <div style={{ padding: 40, textAlign: "center" }}>
@@ -99,8 +101,9 @@ export default function App() {
       {/*List room */}
       <Route path="/rooms" element={<RoomList1 user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
 
-      {/* Guidelines (publicly available with Header/Footer) */}
+      {/* Guidelines & Rules (publicly available with Header/Footer) */}
       <Route path="/guidelines" element={<Guidelines user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+      <Route path="/rules" element={<Rules user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
 
       {/* login/register phải truyền callback */}
       <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
@@ -145,6 +148,7 @@ export default function App() {
             <Route path="rooms" element={<RoomList />} />
             <Route path="rooms/:id" element={<ReceptionistRoomDetail />} />
             <Route path="guidelines" element={<GuidelinesManagement />} />
+            <Route path="rules" element={<RulesManagement />} />
           </Route>
         </Route>
       </Route>
