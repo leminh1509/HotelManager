@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 public class ServiceRequestService {
 
     private final ServiceRequestRepository repository;
+    private final com.example.spring_project.repository.UserRepository userRepo;
 
     public List<ServiceRequest> getAllRequests() {
         return repository.findAll();
@@ -33,9 +34,14 @@ public class ServiceRequestService {
     public ServiceRequest createRequest(Booking booking, User requester, Integer roomId, String description,
             ServiceRequestType type, String priority) {
 
+        // Auto-assign to least busy staff if it's a cleaning request or if assignedTo
+        // is null
+        User assignee = findLeastBusyStaff("MAINTENANCE");
+
         ServiceRequest request = ServiceRequest.builder()
                 .booking(booking)
                 .requester(requester)
+                .assignedTo(assignee)
                 .description(description)
                 .type(type != null ? type.name() : null)
                 .status(ServiceRequestStatus.New)
@@ -43,6 +49,29 @@ public class ServiceRequestService {
                 .build();
 
         return repository.save(request);
+    }
+
+    /**
+     * Finds the staff member with the specified role who has the fewest active
+     * tasks.
+     */
+    private User findLeastBusyStaff(String roleName) {
+        List<User> staffMembers = userRepo.findByRole_Name(roleName);
+        if (staffMembers == null || staffMembers.isEmpty()) {
+            return null;
+        }
+
+        User leastBusy = null;
+        long minTasks = Long.MAX_VALUE;
+
+        for (User staff : staffMembers) {
+            long activeTasks = repository.countActiveTasksByUser(staff.getUserId());
+            if (activeTasks < minTasks) {
+                minTasks = activeTasks;
+                leastBusy = staff;
+            }
+        }
+        return leastBusy;
     }
 
     public ServiceRequest updateStatus(Long id, ServiceRequestStatus status, String notes) {
