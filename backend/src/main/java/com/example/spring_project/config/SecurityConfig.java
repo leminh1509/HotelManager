@@ -35,14 +35,14 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
  * - Cấu hình CORS (cho phép frontend gọi API)
  * - Cấu hình mã hóa mật khẩu
  */
-@Configuration        // Đánh dấu đây là lớp cấu hình Spring
-@EnableWebSecurity    // Bật Spring Security
+@Configuration // Đánh dấu đây là lớp cấu hình Spring
+@EnableWebSecurity // Bật Spring Security
 @EnableMethodSecurity // Cho phép dùng @PreAuthorize trên từng method/controller
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter; // Filter JWT đã tạo ở trên
-    private final UserDetailsService userDetailsService;  // Service load user từ DB
+    private final UserDetailsService userDetailsService; // Service load user từ DB
 
     /**
      * ══════════════════════════════════════════
@@ -88,21 +88,22 @@ public class SecurityConfig {
                         .requestMatchers(new AntPathRequestMatcher("/api/customer/**"))
                         .hasAnyRole("CUSTOMER", "ADMIN")
 
-                        // Xem danh sách phòng, danh mục, guidelines, và rules: công khai (không cần login)
+                        // Xem danh sách phòng, danh mục, guidelines, và rules: công khai (không cần
+                        // login)
                         .requestMatchers(HttpMethod.GET, "/api/rooms/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/guidelines/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/guidelines").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/rules/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/rules").permitAll()
+                        .requestMatchers("/api/users/avatars/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
 
                         // Đặt phòng: phải đăng nhập
                         .requestMatchers("/api/bookings/**").authenticated()
 
                         // Tất cả endpoint còn lại: phải đăng nhập
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
 
                 // ── 4. Xử lý lỗi xác thực ── trả về JSON thay vì HTML mặc định
                 .exceptionHandling(ex -> ex
@@ -117,8 +118,7 @@ public class SecurityConfig {
                             res.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             res.setContentType("application/json");
                             res.getWriter().write("{\"message\":\"Forbidden\"}");
-                        })
-                )
+                        }))
 
                 // ── 5. Stateless session ──
                 // Không lưu session trên server, mỗi request phải tự mang JWT
@@ -144,7 +144,7 @@ public class SecurityConfig {
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService); // Cách load user
-        authProvider.setPasswordEncoder(passwordEncoder());     // Cách kiểm tra password
+        authProvider.setPasswordEncoder(passwordEncoder()); // Cách kiểm tra password
         return authProvider;
     }
 
@@ -159,7 +159,8 @@ public class SecurityConfig {
 
     /**
      * PasswordEncoder - Mã hóa mật khẩu bằng BCrypt
-     * BCrypt tự thêm "salt" ngẫu nhiên -> cùng password sẽ ra hash khác nhau mỗi lần
+     * BCrypt tự thêm "salt" ngẫu nhiên -> cùng password sẽ ra hash khác nhau mỗi
+     * lần
      * Rất an toàn, không thể reverse được
      */
     @Bean
@@ -178,11 +179,11 @@ public class SecurityConfig {
 
         // Danh sách origin (địa chỉ frontend) được phép gọi API
         config.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000",  // React app thường dùng port này
-                "http://localhost:3001",  // Port dự phòng
-                "http://localhost:5173",  // Vite dev server
-                "http://127.0.0.1:5173",  // Vite dev server (IP)
-                "http://127.0.0.1:3000"   // IP fallback
+                "http://localhost:3000", // React app thường dùng port này
+                "http://localhost:3001", // Port dự phòng
+                "http://localhost:5173", // Vite dev server
+                "http://127.0.0.1:5173", // Vite dev server (IP)
+                "http://127.0.0.1:3000" // IP fallback
         ));
 
         // Các HTTP method được cho phép (thêm PATCH để hỗ trợ cập nhật một phần)

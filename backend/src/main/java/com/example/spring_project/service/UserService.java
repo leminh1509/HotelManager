@@ -9,6 +9,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -27,6 +34,7 @@ public class UserService {
 
     /**
      * Lấy thông tin profile của user theo ID
+     * 
      * @Transactional(readOnly = true): chỉ đọc, không ghi -> tối ưu hiệu năng DB
      */
     @Transactional(readOnly = true)
@@ -45,6 +53,7 @@ public class UserService {
     /**
      * Cập nhật thông tin profile (họ tên, số điện thoại, ngày sinh)
      * User chỉ được sửa thông tin của chính mình (kiểm tra ở Controller)
+     * 
      * @param updatedBy: ID của người thực hiện sửa (để ghi audit log)
      */
     @Transactional
@@ -58,10 +67,10 @@ public class UserService {
 
         // ── Chuẩn hóa dữ liệu đầu vào ──
         // requireTrimmed: trim khoảng trắng và bắt buộc không được rỗng
-        String firstName   = requireTrimmed(request.getFirstName(), "First name is required");
-        String lastName    = requireTrimmed(request.getLastName(), "Last name is required");
+        String firstName = requireTrimmed(request.getFirstName(), "First name is required");
+        String lastName = requireTrimmed(request.getLastName(), "Last name is required");
         // trimToNull: trim khoảng trắng, nếu rỗng thì trả về null
-        String middleName  = trimToNull(request.getMiddleName());
+        String middleName = trimToNull(request.getMiddleName());
         String mobilePhone = trimToNull(request.getMobilePhone());
 
         // ── Validate số điện thoại (nếu có nhập) ──
@@ -130,10 +139,51 @@ public class UserService {
         userRepository.save(user);
     }
 
+    private final String UPLOAD_DIR = "uploads/avatars/";
+
+    /**
+     * Cập nhật ảnh đại diện
+     */
+    @Transactional
+    public UserResponse updateAvatar(Integer userId, MultipartFile file) throws IOException {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (file.isEmpty()) {
+            throw new RuntimeException("File is empty");
+        }
+
+        // Tạo thư mục nếu chưa có
+        Path uploadPath = Paths.get(UPLOAD_DIR);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        // Tên file: userId_timestamp_originalName
+        String fileName = userId + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        Path filePath = uploadPath.resolve(fileName);
+
+        // Lưu file vào local storage
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        // Lưu URL vào DB
+        // Với local dev, ta sẽ trả về link dẫn tới chính backend (cần config static
+        // resource)
+        // Hoặc đơn giản là tên file để frontend tự ghép
+        String avatarUrl = "http://localhost:9999/api/users/avatars/" + fileName;
+        user.setAvatarUrl(avatarUrl);
+        User saved = userRepository.save(user);
+
+        return toResponse(saved);
+    }
+
     // ═══════════════════════════════════════════════════════
     // Các phương thức helper nội bộ
     // ═══════════════════════════════════════════════════════
-    /** Chuyển User entity thành UserResponse DTO (che giấu thông tin nhạy cảm như password) */
+    /**
+     * Chuyển User entity thành UserResponse DTO (che giấu thông tin nhạy cảm như
+     * password)
+     */
     private UserResponse toResponse(User u) {
         return UserResponse.builder()
                 .userId(u.getUserId())
@@ -155,7 +205,8 @@ public class UserService {
 
     /** Trim chuỗi, trả về null nếu chuỗi rỗng */
     private String trimToNull(String s) {
-        if (s == null) return null;
+        if (s == null)
+            return null;
         String t = s.trim();
         return t.isEmpty() ? null : t;
     }
@@ -163,7 +214,8 @@ public class UserService {
     /** Trim chuỗi, ném exception nếu kết quả là null/rỗng */
     private String requireTrimmed(String s, String msgIfBlank) {
         String t = trimToNull(s);
-        if (t == null) throw new RuntimeException(msgIfBlank);
+        if (t == null)
+            throw new RuntimeException(msgIfBlank);
         return t;
     }
 
@@ -174,7 +226,8 @@ public class UserService {
      */
     private LocalDate parseBirthdayOrNull(String birthday) {
         String b = trimToNull(birthday);
-        if (b == null) return null;
+        if (b == null)
+            return null;
 
         try {
             LocalDate date = LocalDate.parse(b); // Mặc định parse theo format "yyyy-MM-dd"

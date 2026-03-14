@@ -1,5 +1,6 @@
 // src/components/Footer/Footer.jsx
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import "./Footer.css";
 
 export default function Footer({ onSubscribe }) {
@@ -14,8 +15,8 @@ export default function Footer({ onSubscribe }) {
       return;
     }
 
- 
-    
+
+
     try {
       const res = await fetch("/subscribe", {
         method: "POST",
@@ -30,27 +31,25 @@ export default function Footer({ onSubscribe }) {
   };
 
   return (
-    <footer className="footer-section footer-bg">
+    <footer className="footer-section">
       <div className="container">
         <div className="footer-text">
           <div className="row">
             <div className="col-lg-4">
               <div className="ft-about">
-                <div className="logo">
-                  <a href="/">
+                <div className="footer-logo">
+                  <Link to="/">
                     <img
                       src="/hms/img/36x.png"
                       alt="36 Hotel Logo"
-                      className="footer-logo-img"
-                      onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-                      onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                      className="logo-img"
                     />
-                  </a>
+                  </Link>
                 </div>
 
-                <p className="footer-black">
-                  We inspire and reach millions of travelers
-                  <br /> across 90 local websites
+                <p>
+                  Truyền cảm hứng và tiếp cận hàng triệu du khách
+                  <br /> trên khắp thế giới với dịch vụ đẳng cấp.
                 </p>
 
                 <div className="fa-social">
@@ -65,25 +64,25 @@ export default function Footer({ onSubscribe }) {
 
             <div className="col-lg-3 offset-lg-1">
               <div className="ft-contact">
-                <h6>Contact Us</h6>
+                <h6>Kết nối với chúng tôi</h6>
                 <ul>
-                  <li className="footer-black">(84) 359 797 703</li>
-                  <li className="footer-black">36hotel@gmail.com</li>
-                  <li className="footer-black">Thanh Hoa, Viet Nam</li>
+                  <li><i className="fa fa-phone" /> (84) 359 797 703</li>
+                  <li><i className="fa fa-envelope" /> 37hotel@gmail.com</li>
+                  <li><i className="fa fa-map-marker" /> Thanh Hoa, Viet Nam</li>
                 </ul>
               </div>
             </div>
 
             <div className="col-lg-3 offset-lg-1">
               <div className="ft-newslatter">
-                <h6>New latest</h6>
-                <p className="footer-black">Get the latest updates and offers.</p>
+                <h6>Bản tin mới nhất</h6>
+                <p>Nhận ngay thông tin cập nhật và ưu đãi đặc biệt.</p>
 
                 <form onSubmit={handleSubmit} className="fn-form">
                   <input
                     type="email"
                     name="email"
-                    placeholder="Email"
+                    placeholder="Email của bạn"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -98,22 +97,22 @@ export default function Footer({ onSubscribe }) {
         </div>
       </div>
 
-      <div className="copyright-option copyright-bg">
+      <div className="copyright-option">
         <div className="container">
           <div className="row">
             <div className="col-lg-7">
               <ul>
-                <li><a href="#" className="footer-black">Contact</a></li>
-                <li><a href="#" className="footer-black">Terms of use</a></li>
-                <li><a href="#" className="footer-black">Privacy</a></li>
-                <li><a href="#" className="footer-black">Environmental Policy</a></li>
+                <li><Link to="/contact">Liên hệ</Link></li>
+                <li><Link to="/terms">Điều khoản</Link></li>
+                <li><Link to="/privacy">Bảo mật</Link></li>
+                <li><Link to="/policy">Chính sách</Link></li>
               </ul>
             </div>
 
             <div className="col-lg-5">
               <div className="co-text">
-                <p className="footer-black">
-                  Copyright &copy; {new Date().getFullYear()} All rights reserved by 36 Hotel
+                <p>
+                  Bản quyền &copy; {new Date().getFullYear()} Bảo lưu mọi quyền | 36 Hotel
                 </p>
               </div>
             </div>

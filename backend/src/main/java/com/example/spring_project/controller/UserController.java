@@ -15,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -26,13 +27,14 @@ import java.util.Map;
  * Khác UserManagementController (admin quản lý tất cả),
  * controller này cho phép user xem/sửa thông tin của chính mình.
  * Quy tắc truy cập:
- * - User thường: chỉ xem/sửa profile của mình (id phải khớp với id đang đăng nhập)
+ * - User thường: chỉ xem/sửa profile của mình (id phải khớp với id đang đăng
+ * nhập)
  * - Admin: có thể xem/sửa profile của bất kỳ ai
  */
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
+@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:3001" })
 public class UserController {
 
     private final UserService userService;
@@ -40,8 +42,11 @@ public class UserController {
     /**
      * GET /api/users/{id}
      * Lấy thông tin profile của user theo ID
-     * @AuthenticationPrincipal: Spring tự inject đối tượng User đang đăng nhập vào đây
-     * (Lấy từ SecurityContext, do JwtAuthenticationFilter đã set trước đó)
+     * 
+     * @AuthenticationPrincipal: Spring tự inject đối tượng User đang đăng nhập vào
+     *                           đây
+     *                           (Lấy từ SecurityContext, do JwtAuthenticationFilter
+     *                           đã set trước đó)
      */
     @GetMapping("/{id}")
     public ResponseEntity<?> getProfile(
@@ -122,6 +127,30 @@ public class UserController {
     }
 
     /**
+     * POST /api/users/{id}/avatar
+     * Cập nhật ảnh đại diện cho user
+     */
+    @PostMapping("/{id}/avatar")
+    public ResponseEntity<?> updateAvatar(
+            @PathVariable Integer id,
+            @RequestParam("avatar") MultipartFile file,
+            @AuthenticationPrincipal User currentUser) {
+
+        if (!canAccess(currentUser, id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(buildError(HttpStatus.FORBIDDEN, "Access denied", "/api/users/" + id + "/avatar"));
+        }
+
+        try {
+            UserResponse updated = userService.updateAvatar(id, file);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(buildError(HttpStatus.BAD_REQUEST, e.getMessage(), "/api/users/" + id + "/avatar"));
+        }
+    }
+
+    /**
      * Xử lý lỗi validation từ @Valid (khi dữ liệu request không hợp lệ)
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -152,7 +181,8 @@ public class UserController {
      * Điều kiện PASS: là ADMIN, HOẶC đang thao tác với chính mình
      */
     private boolean canAccess(User currentUser, Integer targetId) {
-        if (currentUser == null) return false;
+        if (currentUser == null)
+            return false;
         boolean isAdmin = currentUser.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         return isAdmin || currentUser.getUserId().equals(targetId);

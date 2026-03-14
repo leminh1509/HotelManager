@@ -43,27 +43,27 @@ export default function Header({
   }, [role, pageActive]);
 
   const receptionistItems = [
-    { key: "booking-list",   label: "Booking List",   to: "/receptionist/booking-list" },
+    { key: "booking-list", label: "Booking List", to: "/receptionist/booking-list" },
     { key: "create-booking", label: "Create Booking", to: "/receptionist/create-booking" },
-    { key: "room-fees",      label: "Room Fees",      to: "/receptionist/room-fees" },
-    { key: "bills",          label: "Bills",          to: "/receptionist/bills" },
-    { key: "rules",          label: "Rules",          to: "/receptionist/rules" },
-    { key: "rooms",          label: "Rooms",          to: "/receptionist/rooms" },
-    { key: "guidelines",     label: "Guidelines",     to: "/receptionist/guidelines" },
+    { key: "room-fees", label: "Room Fees", to: "/receptionist/room-fees" },
+    { key: "bills", label: "Bills", to: "/receptionist/bills" },
+    { key: "rules", label: "Rules", to: "/receptionist/rules" },
+    { key: "rooms", label: "Rooms", to: "/receptionist/rooms" },
+    { key: "guidelines", label: "Guidelines", to: "/receptionist/guidelines" },
   ];
 
   const maintenanceItems = [
     { key: "dashboard", label: "Dashboard", to: "/maintenance/dashboard", end: true },
-    { key: "requests",  label: "Requests",  to: "/maintenance/requests" },
-    { key: "schedule",  label: "Schedule",  to: "/maintenance/schedule" },
+    { key: "requests", label: "Requests", to: "/maintenance/requests" },
+    { key: "schedule", label: "Schedule", to: "/maintenance/schedule" },
     { key: "inventory", label: "Inventory", to: "/maintenance/inventory" },
   ];
 
   const guestItems = [
-    { label: "Home",        to: "/home",          end: true },
-    { label: "Rooms",       to: "/rooms" },
-    { label: "Guidelines",  to: "/guidelines" },
-    { label: "Rules",       to: "/rules" },
+    { label: "Home", to: "/home", end: true },
+    { label: "Rooms", to: "/rooms" },
+    { label: "Guidelines", to: "/guidelines" },
+    { label: "Rules", to: "/rules" },
     { label: "My Requests", to: "/user/requests" },
   ];
 
@@ -130,7 +130,7 @@ export default function Header({
                     alt="36 Hotel Logo"
                     className="logo-img"
                     onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-                    onMouseOut={(e)  => (e.currentTarget.style.transform = "scale(1)")}
+                    onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
                   />
                 </Link>
               </div>
@@ -144,7 +144,7 @@ export default function Header({
                   aria-label="Toggle menu"
                   aria-expanded={mobileOpen}
                 >
-                  <i className="fa fa-bars" />
+                  <i className={mobileOpen ? "fa fa-times" : "fa fa-bars"} />
                 </button>
                 <nav className={`mainmenu ${mobileOpen ? "open" : ""}`}>
                   {role === "receptionist" || pageActive === "receptionist" ? (
