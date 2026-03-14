@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/requests")
 @CrossOrigin(origins = "http://localhost:3000")
+@PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_MAINTENANCE')")
 public class ServiceRequestController {
 
     @Autowired
@@ -68,6 +70,7 @@ public class ServiceRequestController {
     }
 
     @PostMapping("/cleaning")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
     public ServiceRequest createCleaningRequest(@RequestBody Map<String, Object> payload) {
         payload.put("type", "CLEANING");
         return createRequest(payload);
@@ -88,12 +91,14 @@ public class ServiceRequestController {
     }
 
     @PostMapping("/maintenance")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
     public ServiceRequest createMaintenanceRequest(@RequestBody Map<String, Object> payload) {
         payload.put("type", "MAINTENANCE");
         return createRequest(payload);
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
     public ServiceRequest createRequest(@RequestBody Map<String, Object> payload) {
         Object roomIdObj = payload.get("roomId");
         Integer roomId = null;
@@ -128,7 +133,8 @@ public class ServiceRequestController {
         }
 
         if (booking == null) {
-            throw new RuntimeException("Yêu cầu bảo trì/dọn dẹp phải liên kết với một Booking đang hoạt động tại phòng này.");
+            throw new RuntimeException(
+                    "Yêu cầu bảo trì/dọn dẹp phải liên kết với một Booking đang hoạt động tại phòng này.");
         }
 
         String description = (String) payload.get("description");
@@ -148,6 +154,7 @@ public class ServiceRequestController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
     public void deleteRequest(@PathVariable Long id) {
         service.deleteRequest(id);
     }
