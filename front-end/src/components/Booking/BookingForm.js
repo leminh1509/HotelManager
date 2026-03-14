@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useBooking } from "../../context/BookingContext";
 import { getRoomById, createBooking, getBookingByRoomId } from "../../services/bookingAPI";
 import { previewBookingPrice } from "../../services/roomAPI";
+import { getAllCountries } from "../../services/externalAPI";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
 import "./BookingForm.css";
@@ -112,6 +113,10 @@ export default function BookingForm({ user, role, onLogout }) {
   // Dynamic price state
   const [dynamicPrice, setDynamicPrice] = useState(null);
 
+  // Countries state
+  const [countries, setCountries] = useState([]);
+  const [loadingCountries, setLoadingCountries] = useState(false);
+
   // Fetch room nếu chưa có trong context
   useEffect(() => {
     if (room) return;
@@ -132,6 +137,26 @@ export default function BookingForm({ user, role, onLogout }) {
     }
     fetch();
   }, [roomId, room, setSelectedRoom, navigate]);
+
+  // Fetch countries
+  useEffect(() => {
+    async function fetchCountries() {
+      setLoadingCountries(true);
+      try {
+        const data = await getAllCountries();
+        setCountries(data);
+        // Set default nationality if not already set
+        if (!bookingData.guestNationality) {
+          updateBookingData({ guestNationality: "Việt Nam" });
+        }
+      } catch (error) {
+        console.error("Failed to fetch countries", error);
+      } finally {
+        setLoadingCountries(false);
+      }
+    }
+    fetchCountries();
+  }, []);
 
   // ─── Auto fill date từ query params ───
   useEffect(() => {
@@ -518,13 +543,19 @@ export default function BookingForm({ user, role, onLogout }) {
                   <div className="bf-form-row">
                     <div className="bf-field">
                       <label>Quốc tịch</label>
-                      <input
-                        type="text"
-                        placeholder="Việt Nam"
-                        value={bookingData.guestNationality}
+                      <select
+                        value={bookingData.guestNationality || "Việt Nam"}
                         onChange={(e) => updateBookingData({ guestNationality: e.target.value })}
                         className="bf-input"
-                      />
+                        disabled={loadingCountries}
+                      >
+                        {loadingCountries && <option>Đang tải...</option>}
+                        {countries.map((c) => (
+                          <option key={c.cca2 || c.name.common} value={c.name.common}>
+                            {c.name.common}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="bf-field">
                       <label>Địa chỉ</label>

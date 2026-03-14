@@ -1,29 +1,140 @@
-/* src/components/Footer/Footer.css */
-
+/* src/components/Footer/Footer.css - Premium Redesign */
 .footer-section {
-  margin-top: 60px;
+  background: #0f172a;
+  color: #94a3b8;
+  padding: 100px 0 0;
+  margin-top: 80px;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
-.footer-bg {
-  background-color: #eae1df;
+.ft-about .logo-img {
+  height: 50px;
+  margin-bottom: 24px;
+  filter: brightness(0) invert(1);
 }
 
-.copyright-bg {
-  background-color: #e4d7d6;
+.ft-about p {
+  font-size: 15px;
+  line-height: 1.8;
+  margin-bottom: 32px;
 }
 
-.footer-black {
-  color: #000000;
+.fa-social {
+  display: flex;
+  gap: 16px;
 }
 
-.footer-logo-img {
-  width: 70px;
-  height: auto;
-  display: block;
-  max-width: 100%;
-  object-fit: contain;
-  transition: transform 0.3s ease;
-  margin: 0 auto;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+.fa-social a {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  color: white;
+  transition: all 0.3s ease;
+  text-decoration: none;
 }
 
+.fa-social a:hover {
+  background: #f59e0b;
+  transform: translateY(-3px);
+}
+
+.ft-contact h6,
+.ft-newslatter h6 {
+  color: white;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 32px;
+  position: relative;
+}
+
+.ft-contact h6::after,
+.ft-newslatter h6::after {
+  content: "";
+  position: absolute;
+  bottom: -12px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: #f59e0b;
+}
+
+.ft-contact ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ft-contact ul li {
+  margin-bottom: 16px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fn-form {
+  position: relative;
+  margin-top: 24px;
+}
+
+.fn-form input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 14px 20px;
+  border-radius: 12px;
+  color: white;
+  outline: none;
+  transition: border 0.3s;
+}
+
+.fn-form input:focus {
+  border-color: #f59e0b;
+}
+
+.fn-form button {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  padding: 8px 16px;
+  background: #f59e0b;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+}
+
+.copyright-option {
+  margin-top: 80px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 32px 0;
+}
+
+.copyright-option ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 24px;
+}
+
+.copyright-option ul li a {
+  color: #64748b;
+  font-size: 14px;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.copyright-option ul li a:hover {
+  color: white;
+}
+
+.co-text p {
+  font-size: 14px;
+  text-align: right;
+  margin: 0;
+}

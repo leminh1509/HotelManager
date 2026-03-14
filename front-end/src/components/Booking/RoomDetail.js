@@ -6,74 +6,13 @@ import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
 import "./RoomDetail.css";
 
-// ─── Mock fallback (xóa khi có API thật) ────────────────
-const MOCK_ROOMS = {
-  1: {
-    roomId: 1,
-    roomNumber: "101",
-    name: "Deluxe Ocean View",
-    categoryName: "Deluxe Room",
-    capacity: 2,
-    size_m2: 35,
-    price: 3000000,
-    floor: 1,
-    bedConfiguration: "1 King Bed",
-    cancellationPolicy: "Miễn phí hủy trước 24h check-in",
-    description:
-      "Phòng deluxe sang trọng với tầm nhìn ra biển. Được trang bị đầy đủ tiện nghi hiện đại, bao gồm balcony riêng và phòng tắm xa hoa.",
-    rating: 4.8,
-    reviewCount: 124,
-    amenities: ["WiFi", "Breakfast", "Pool", "Gym", "Spa"],
-    imgUrl:
-      "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&h=500&fit=crop",
-  },
-  2: {
-    roomId: 2,
-    roomNumber: "205",
-    name: "Luxury Garden View",
-    categoryName: "Deluxe Room",
-    capacity: 3,
-    size_m2: 40,
-    price: 3360000,
-    floor: 2,
-    bedConfiguration: "1 King + 1 Single",
-    cancellationPolicy: "Miễn phí hủy trước 48h check-in",
-    description:
-      "Phòng deluxe hướng vườn yên tĩnh với không gian nghỉ ngơi thoải mái. Tích hợp khu vực ngồi riêng và ban công nhìn ra vườn thiên nhiên.",
-    rating: 4.7,
-    reviewCount: 98,
-    amenities: ["WiFi", "Breakfast", "Pool", "Gym", "Restaurant", "Parking"],
-    imgUrl:
-      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=500&fit=crop",
-  },
-  3: {
-    roomId: 3,
-    roomNumber: "501",
-    name: "Executive Suite",
-    categoryName: "Suite",
-    capacity: 4,
-    size_m2: 65,
-    price: 5400000,
-    floor: 5,
-    bedConfiguration: "1 King + 1 Double",
-    cancellationPolicy: "Miễn phí hủy trước 72h check-in",
-    description:
-      "Suite hạng sang với phòng khách riêng, phòng ngủ yên tĩnh và view toàn thành. Dịch vụ butler riêng và các tiện nghi cao-end.",
-    rating: 4.9,
-    reviewCount: 67,
-    amenities: [
-      "WiFi",
-      "Breakfast",
-      "Pool",
-      "Gym",
-      "Spa",
-      "Restaurant",
-      "Bar",
-    ],
-    imgUrl:
-      "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&h=500&fit=crop",
-  },
-};
+// ─── Constants ────────────────
+const DEFAULT_FALLBACK_IMAGES = [
+  "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=1200",
+  "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200",
+  "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1200",
+  "https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200"
+];
 
 const AMENITY_ICONS = {
   WiFi: "📶",
@@ -102,16 +41,26 @@ export default function RoomDetail({ user, role, onLogout }) {
     async function fetchRoom() {
       try {
         setLoading(true);
-        // Thử gọi API thật trước
         const res = await getRoomById(roomId);
-        if (!cancelled) setRoom(res.data);
-      } catch {
-        // Fallback sang mock data nếu API chưa có
-        if (!cancelled) {
-          const mock = MOCK_ROOMS[roomId];
-          if (mock) setRoom(mock);
-          else setError("Phòng không tìm thấy");
+
+        let roomData = res.data;
+
+        // Cập nhật logic xử lý ảnh: Nếu URL không hợp lệ hoặc chứa placeholder, dùng fallback
+        if (!roomData.imgUrl || roomData.imgUrl.startsWith('url_') || roomData.imgUrl === 'https://example.com/std-single.jpg' || roomData.imgUrl.includes('example.com')) {
+          roomData.imgUrl = DEFAULT_FALLBACK_IMAGES[roomData.roomId % DEFAULT_FALLBACK_IMAGES.length];
         }
+
+        // Mock rating nếu thiếu
+        if (!roomData.rating) roomData.rating = (4.5 + Math.random() * 0.5).toFixed(1);
+        if (!roomData.reviewCount) roomData.reviewCount = Math.floor(Math.random() * 200) + 50;
+
+        // Mock amenities nếu thiếu
+        if (!roomData.amenities) roomData.amenities = ["WiFi", "Breakfast", "Pool", "Gym", "Restaurant"];
+
+        if (!cancelled) setRoom(roomData);
+      } catch (err) {
+        console.error("Fetch room error:", err);
+        if (!cancelled) setError("Không thể tải thông tin phòng. Vui lòng thử lại sau.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -143,16 +92,16 @@ export default function RoomDetail({ user, role, onLogout }) {
     return (
       <div className="rd-loading">
         <div className="rd-spinner" />
-        <p>Đang tải thông tin phòng...</p>
+        <p>Đang chuẩn bị không gian của bạn...</p>
       </div>
     );
 
   if (error || !room)
     return (
       <div className="rd-error">
-        <p>{error || "Phòng không tìm thấy"}</p>
+        <p>{error || "Rất tiếc, phòng này hiện không khả dụng"}</p>
         <Link to="/home" className="rd-back-link">
-          ← Quay lại tìm kiếm
+          ← Trở về trang chủ
         </Link>
       </div>
     );
@@ -166,9 +115,11 @@ export default function RoomDetail({ user, role, onLogout }) {
         <div className="rd-container">
           {/* Breadcrumb */}
           <nav className="rd-breadcrumb">
-            <Link to="/home">Tìm kiếm phòng</Link>
+            <Link to="/home">Khách sạn</Link>
             <span>/</span>
-            <span>{room.name}</span>
+            <Link to="/rooms">Phòng nghỉ</Link>
+            <span>/</span>
+            <span>{room.name || room.categoryName}</span>
           </nav>
 
           {/* Hero image */}
@@ -177,49 +128,49 @@ export default function RoomDetail({ user, role, onLogout }) {
             <div className="rd-rating-badge">
               <span className="rd-star">★</span>
               <span>{room.rating}</span>
-              <span className="rd-review-count">({room.reviewCount} đánh giá)</span>
+              <span className="rd-review-count">({room.reviewCount} lượt đánh giá)</span>
             </div>
           </div>
 
           <div className="rd-body">
             {/* Left: room info */}
             <div className="rd-info">
-              <h1>{room.name}</h1>
-              <p className="rd-category">{room.categoryName}</p>
+              <h1>{room.name || `Phòng ${room.categoryName}`}</h1>
+              <p className="rd-category">{room.categoryName} Signature</p>
 
               {/* Specs grid */}
               <div className="rd-specs">
                 <div className="rd-spec">
                   <span className="rd-spec-icon">👥</span>
-                  <span>Sức chứa: {room.capacity} khách</span>
+                  <span>Phù hợp {room.capacity} khách</span>
                 </div>
                 <div className="rd-spec">
                   <span className="rd-spec-icon">📐</span>
-                  <span>Diện tích: {room.sizem2} m²</span>
+                  <span>Diện tích {room.sizem2} m²</span>
                 </div>
                 <div className="rd-spec">
                   <span className="rd-spec-icon">🛏️</span>
-                  <span>{room.bedConfiguration}</span>
+                  <span>{room.bedConfiguration || "Lường đôi cỡ lớn"}</span>
                 </div>
                 <div className="rd-spec">
                   <span className="rd-spec-icon">🏢</span>
-                  <span>Tầng {room.floor}</span>
+                  <span>Vị trí Tầng {room.floor}</span>
                 </div>
               </div>
 
               {/* Description */}
               <div className="rd-section">
-                <h3>Mô tả</h3>
-                <p>{room.description}</p>
+                <h3>Về không gian này</h3>
+                <p>{room.description || "Tận hưởng không gian nghỉ ngơi đẳng cấp với đầy đủ tiện nghi, được thiết kế tinh tế nhằm mang lại sự thoải mái tối đa cho quý khách. Mỗi chi tiết đều được chăm chút kỹ lưỡng để tạo nên một trải nghiệm đáng nhớ."}</p>
               </div>
 
               {/* Amenities */}
               <div className="rd-section">
-                <h3>Tiện nghi</h3>
+                <h3>Tiện ích trang bị</h3>
                 <div className="rd-amenities">
                   {room.amenities?.map((a) => (
                     <div key={a} className="rd-amenity">
-                      <span>{AMENITY_ICONS[a] || "✓"}</span>
+                      <span>{AMENITY_ICONS[a] || "✨"}</span>
                       <span>{a}</span>
                     </div>
                   ))}
@@ -228,8 +179,10 @@ export default function RoomDetail({ user, role, onLogout }) {
 
               {/* Cancellation policy */}
               <div className="rd-section">
-                <h3>Chính sách hủy</h3>
-                <p className="rd-policy">{room.cancellationPolicy}</p>
+                <h3>Chính sách linh hoạt</h3>
+                <p className="rd-policy">
+                  {room.cancellationPolicy || "Hủy phòng miễn phí trước 24 giờ kể từ thời điểm check-in."}
+                </p>
               </div>
             </div>
 
@@ -239,20 +192,17 @@ export default function RoomDetail({ user, role, onLogout }) {
                 <span className="rd-price-amount">
                   {formatPrice(room.price)}
                 </span>
-                <span className="rd-price-unit">đ / đêm</span>
-              </div>
-
-              <div className="rd-price-meta">
-                <span>★ {room.rating}</span>
-                <span>·</span>
-                <span>{room.reviewCount} đánh giá</span>
+                <span className="rd-price-unit">VNĐ / đêm</span>
               </div>
 
               <button onClick={handleBook} className="rd-book-btn">
                 Đặt phòng ngay
               </button>
 
-              <p className="rd-price-note">Bạn sẽ được nhập ngày và chi tiết ở bước tiếp theo</p>
+              <p className="rd-price-note">
+                Thanh toán an toàn, bảo mật.<br />
+                Không phát sinh phụ phí ẩn.
+              </p>
             </aside>
           </div>
         </div>

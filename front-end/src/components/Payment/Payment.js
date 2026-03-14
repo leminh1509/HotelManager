@@ -30,6 +30,13 @@ const Payment = ({ user, role, onLogout }) => {
     setError('');
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
+        setIsProcessing(false);
+        return;
+      }
+
       const orderInfo = `PAYOS BK-${numericBookingId}`;
       const amount = Math.round(displayAmount);
 
@@ -37,7 +44,7 @@ const Payment = ({ user, role, onLogout }) => {
 
       const response = await fetch(url, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
