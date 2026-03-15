@@ -466,6 +466,28 @@ INSERT INTO room (room_number, category_id, status_id, price, capacity, floor, s
 ('P.1004', 5, 1, 10000000, 2, 10, 120, '1 Royal Bed', 'Không hoàn trả', 'President Suite - Sang trọng bậc nhất', 'url_p1004'),
 ('P.1005', 5, 1, 10000000, 2, 10, 120, '1 Royal Bed', 'Không hoàn trả', 'President Suite - Tiện nghi tối tân', 'url_p1005');
 
+-- booking
+INSERT INTO booking (
+    user_id, room_id,
+    guest_name, guest_email, guest_phone,
+    guest_id_number, guest_nationality, guest_address,
+    guest_count,
+    checkin_time, checkout_time,
+    status, total_price,
+    special_request,
+    created_at, updated_at
+) VALUES (
+    2, 2,  -- Giả sử user_id=2 là khách hàng, room_id=2 là phòng trống
+    'Nguyen Van Test', 'test.guest@email.com', '0912345678',
+    'CCCD123456789', 'Vietnam', '123 Duong Test, TP.HCM',
+    2,
+    CURDATE(), DATE_ADD(CURDATE(), INTERVAL 3 DAY), -- Check-in hôm nay, ở 3 ngày
+    'Confirmed', 1500000.0,
+    'Yêu cầu phòng yên tĩnh',
+    NOW(), NOW()
+);
+
+
 -- Service Requests (For Maintenance/Cleaning)
 CREATE TABLE service_requests (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -491,3 +513,27 @@ CREATE TABLE service_requests (
 INSERT INTO service_requests (room_id, type, description, priority, status, reported_at) VALUES 
 (1, 'MAINTENANCE', 'Air conditioner leaking water', 'HIGH', 'PENDING', NOW()),
 (2, 'CLEANING', 'Room needs deep cleaning', 'MEDIUM', 'IN_PROGRESS', NOW());
+CREATE TABLE otp_tokens (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    otp VARCHAR(6) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used BOOLEAN NOT NULL DEFAULT FALSE
+);
+-- Guidelines
+CREATE TABLE guidelines (
+  guideline_id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Rules
+CREATE TABLE rules (
+  rule_id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;

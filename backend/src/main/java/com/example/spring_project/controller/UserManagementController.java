@@ -1,13 +1,12 @@
 package com.example.spring_project.controller;
 
-import com.example.spring_project.dto.ErrorResponse;
+import com.example.spring_project.dto.CreateUserRequest;
 import com.example.spring_project.dto.UpdateUserRequest;
 import com.example.spring_project.dto.UserResponse;
 import com.example.spring_project.entity.Role;
 import com.example.spring_project.service.UserManagementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,311 +16,171 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * UserManagementController - API quản lý user dành cho ADMIN
+ * Base URL: /api/admin/users
+ * Tất cả endpoint trong class này chỉ ADMIN mới được gọi
+ * (@PreAuthorize("hasRole('ADMIN')") áp dụng cho toàn bộ class)
+ */
 @RestController
 @RequestMapping("/api/admin/users")
+@PreAuthorize("hasRole('ADMIN')") // Chặn ngay từ đầu: chỉ ADMIN mới qua được
 @RequiredArgsConstructor
-@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:3001", "http://localhost:5173" })
-@PreAuthorize("hasRole('ADMIN')")
-@Slf4j
 public class UserManagementController {
 
     private final UserManagementService userManagementService;
 
     /**
-     * Lấy danh sách tất cả users với phân trang
-     * GET /api/admin/users?page=0&size=10&sort=userId,desc
+     * POST /api/admin/users
+     * Admin tạo tài khoản user mới (thay vì user tự đăng ký)
+     * Dùng để tạo tài khoản RECEPTIONIST hoặc user đặc biệt
+     */
+    @PostMapping
+    public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserRequest request) {
+        try {
+            UserResponse created = userManagementService.createUser(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created); // HTTP 201 Created
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    /**
+     * GET /api/admin/users
+     * Lấy danh sách user với filter và phân trang
+     * Query params:
+     * - keyword: tìm kiếm theo tên, email, số điện thoại
+     * - role: lọc theo role (all/admin/customer/receptionist)
+     * - page, size: phân trang (mặc định page=0, size=10)
+     * - sortBy, sortDir: sắp xếp (mặc định theo userId tăng dần)
      */
     @GetMapping
     public ResponseEntity<?> getAllUsers(
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "all") String role,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "userId") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String role) {
+            @RequestParam(defaultValue = "asc") String sortDir) {
         try {
-            Sort sort = sortDir.equalsIgnoreCase("asc")
-                    ? Sort.by(sortBy).ascending()
-                    : Sort.by(sortBy).descending();
+            // Tạo đối tượng Sort (sắp xếp tăng/giảm dần)
+            Sort sort = sortDir.equalsIgnoreCase("desc")
+                    ? Sort.by(sortBy).descending()
+                    : Sort.by(sortBy).ascending();
 
+            // Tạo Pageable: chứa thông tin trang + sắp xếp
             Pageable pageable = PageRequest.of(page, size, sort);
-            Page<UserResponse> users = userManagementService.getAllUsers(keyword, role, pageable);
 
-            // Response with search criteria
+            // Gọi service lấy dữ liệu (trả về Page object)
+            Page<UserResponse> pageResult = userManagementService.getAllUsers(keyword, role, pageable);
+
+            // Đóng gói kết quả + metadata phân trang vào Map
             Map<String, Object> response = new HashMap<>();
-            response.put("users", users.getContent());
-            response.put("currentPage", users.getNumber());
-            response.put("totalItems", users.getTotalElements());
-            response.put("totalPages", users.getTotalPages());
-            if (keyword != null)
-                response.put("keyword", keyword);
-            if (role != null)
-                response.put("role", role);
-
+            response.put("users", pageResult.getContent());         // Danh sách user của trang hiện tại
+            response.put("currentPage", pageResult.getNumber());     // Trang hiện tại (0-indexed)
+            response.put("totalPages", pageResult.getTotalPages());   // Tổng số trang
+            response.put("totalItems", pageResult.getTotalElements()); // Tổng số user
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("Error getting all users: ", e);
-            return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
         }
     }
 
     /**
-     * Lấy danh sách tất cả users không phân trang
-     * GET /api/admin/users/all
+     * GET /api/admin/users/statistics
+     * Thống kê tổng quan về user (dùng cho dashboard admin)
      */
-    @GetMapping("/all")
-    public ResponseEntity<?> getAllUsersNoPagination() {
+    @GetMapping("/statistics")
+    public ResponseEntity<?> getStatistics() {
         try {
-            log.info("Fetching all users without pagination");
-            List<UserResponse> users = userManagementService.getAllUsers();
-            log.info("Found {} users", users.size());
-            return ResponseEntity.ok(users);
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("totalUsers", userManagementService.getAllUsers().size()); // Tổng số user
+            stats.put("activeUsers", userManagementService.countActiveUsers()); // Số user đang hoạt động
+            stats.put("blacklistedUsers", userManagementService.countBlacklistedUsers()); // Số user bị blacklist
+            return ResponseEntity.ok(stats);
         } catch (Exception e) {
-            log.error("Error getting all users: ", e);
-            return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
         }
     }
 
     /**
-     * Lấy thông tin user theo ID
-     * GET /api/admin/users/{userId}
+     * GET /api/admin/users/roles/list
+     * Lấy danh sách tất cả các role trong hệ thống
+     * Dùng để populate dropdown khi admin tạo/sửa user
      */
-    @GetMapping("/{userId}")
-    public ResponseEntity<?> getUserById(@PathVariable Integer userId) {
+    @GetMapping("/roles/list")
+    public ResponseEntity<?> getRoles() {
         try {
-            log.info("Getting user by ID: {}", userId);
-            UserResponse user = userManagementService.getUserById(userId);
-            return ResponseEntity.ok(user);
-        } catch (RuntimeException e) {
-            log.error("User not found: {}", userId);
-            return buildErrorResponse(HttpStatus.NOT_FOUND, e.getMessage());
+            List<Role> roles = userManagementService.getAllRoles();
+            return ResponseEntity.ok(roles);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
         }
     }
 
     /**
-     * Lấy danh sách users theo role
-     * GET /api/admin/users/role/{roleName}
-     */
-    @GetMapping("/role/{roleName}")
-    public ResponseEntity<?> getUsersByRole(@PathVariable String roleName) {
-        try {
-            log.info("Getting users by role: {}", roleName);
-            List<UserResponse> users = userManagementService.getUsersByRole(roleName);
-            return ResponseEntity.ok(users);
-        } catch (RuntimeException e) {
-            log.error("Error getting users by role {}: ", roleName, e);
-            return buildErrorResponse(HttpStatus.NOT_FOUND, e.getMessage());
-        }
-    }
-
-    /**
-     * Cập nhật thông tin user
      * PUT /api/admin/users/{userId}
+     * Cập nhật toàn bộ thông tin user (admin có quyền sửa tất cả fields)
      */
     @PutMapping("/{userId}")
-    public ResponseEntity<?> updateUser(
-            @PathVariable Integer userId,
-            @Valid @RequestBody UpdateUserRequest request) {
+    public ResponseEntity<?> updateUser(@PathVariable Integer userId,
+                                        @Valid @RequestBody UpdateUserRequest request) {
         try {
-            log.info("Updating user: {}", userId);
-            UserResponse updatedUser = userManagementService.updateUser(userId, request);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "User updated successfully");
-            response.put("user", updatedUser);
-
-            return ResponseEntity.ok(response);
+            UserResponse updated = userManagementService.updateUser(userId, request);
+            return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
-            log.error("Error updating user {}: ", userId, e);
-            return buildErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 
     /**
-     * Thay đổi role của user
      * PATCH /api/admin/users/{userId}/role
-     * FIX: Better logging and error handling
+     * Chỉ thay đổi role của user
+     * Body: { "roleId": 2 }
+     * PATCH dùng khi chỉ cập nhật một phần (khác PUT phải gửi toàn bộ)
      */
     @PatchMapping("/{userId}/role")
-    public ResponseEntity<?> changeUserRole(
-            @PathVariable Integer userId,
-            @RequestBody Map<String, Integer> payload) {
+    public ResponseEntity<?> changeRole(@PathVariable Integer userId,
+                                        @RequestBody Map<String, Integer> body) {
         try {
-            Integer roleId = payload.get("roleId");
-
-            log.info("====== CHANGE ROLE REQUEST ======");
-            log.info("User ID: {}", userId);
-            log.info("New Role ID: {}", roleId);
-            log.info("Request Payload: {}", payload);
-
-            if (roleId == null) {
-                log.error("Role ID is null in request");
-                return buildErrorResponse(HttpStatus.BAD_REQUEST, "Role ID is required");
-            }
-
-            UserResponse updatedUser = userManagementService.changeUserRole(userId, roleId);
-
-            log.info("Successfully changed role for user {} to role {}", userId, roleId);
-            log.info("User new role: {}", updatedUser.getRoleName());
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "User role changed successfully");
-            response.put("user", updatedUser);
-
-            return ResponseEntity.ok(response);
-
+            UserResponse updated = userManagementService.changeUserRole(userId, body.get("roleId"));
+            return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
-            log.error("Error changing role for user {}: {}", userId, e.getMessage());
-            return buildErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 
     /**
-     * Kích hoạt/vô hiệu hóa tài khoản user
      * PATCH /api/admin/users/{userId}/toggle-active
+     * Bật/tắt trạng thái active của user (vô hiệu hóa hoặc kích hoạt lại tài khoản)
+     * Toggle: nếu đang true -> false, nếu đang false -> true
      */
     @PatchMapping("/{userId}/toggle-active")
-    public ResponseEntity<?> toggleUserActive(@PathVariable Integer userId) {
+    public ResponseEntity<?> toggleActive(@PathVariable Integer userId) {
         try {
-            log.info("Toggling active status for user: {}", userId);
-            UserResponse updatedUser = userManagementService.toggleUserActive(userId);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", updatedUser.getIsActive()
-                    ? "User activated successfully"
-                    : "User deactivated successfully");
-            response.put("user", updatedUser);
-
-            return ResponseEntity.ok(response);
+            UserResponse updated = userManagementService.toggleUserActive(userId);
+            return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
-            log.error("Error toggling active status for user {}: ", userId, e);
-            return buildErrorResponse(HttpStatus.NOT_FOUND, e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 
     /**
-     * Thêm/bỏ user vào blacklist
-     * PATCH /api/admin/users/{userId}/toggle-blacklist
-     */
-    @PatchMapping("/{userId}/toggle-blacklist")
-    public ResponseEntity<?> toggleUserBlacklist(@PathVariable Integer userId) {
-        try {
-            log.info("Toggling blacklist status for user: {}", userId);
-            UserResponse updatedUser = userManagementService.toggleUserBlacklist(userId);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", updatedUser.getIsBlackList()
-                    ? "User added to blacklist"
-                    : "User removed from blacklist");
-            response.put("user", updatedUser);
-
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            log.error("Error toggling blacklist for user {}: ", userId, e);
-            return buildErrorResponse(HttpStatus.NOT_FOUND, e.getMessage());
-        }
-    }
-
-    /**
-     * Xóa user VĨNH VIỄN (Hard Delete)
      * DELETE /api/admin/users/{userId}
+     * Xóa hẳn user khỏi database (hard delete)
+     * Lưu ý: nếu user có dữ liệu liên quan (booking, ...) sẽ fail vì foreign key constraint
      */
     @DeleteMapping("/{userId}")
     public ResponseEntity<?> deleteUser(@PathVariable Integer userId) {
         try {
-            log.info("Deleting user permanently: {}", userId);
             userManagementService.deleteUser(userId);
-
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "User deleted successfully");
-
-            log.info("User {} deleted successfully", userId);
-            return ResponseEntity.ok(response);
-
+            return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
         } catch (RuntimeException e) {
-            log.error("Error deleting user {}: ", userId, e);
-            return buildErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
-    }
-
-    /**
-     * Soft delete - Vô hiệu hóa user
-     * PATCH /api/admin/users/{userId}/deactivate
-     */
-    @PatchMapping("/{userId}/deactivate")
-    public ResponseEntity<?> deactivateUser(@PathVariable Integer userId) {
-        try {
-            log.info("Deactivating user: {}", userId);
-            userManagementService.softDeleteUser(userId);
-
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "User deactivated successfully");
-
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            log.error("Error deactivating user {}: ", userId, e);
-            return buildErrorResponse(HttpStatus.NOT_FOUND, e.getMessage());
-        }
-    }
-
-    /**
-     * Lấy danh sách tất cả roles
-     * GET /api/admin/users/roles/list
-     */
-    @GetMapping("/roles/list")
-    public ResponseEntity<?> getAllRoles() {
-        try {
-            log.info("Fetching all roles");
-            List<Role> roles = userManagementService.getAllRoles();
-            log.info("Found {} roles", roles.size());
-            return ResponseEntity.ok(roles);
-        } catch (Exception e) {
-            log.error("Error fetching roles: ", e);
-            return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-    }
-
-    /**
-     * Thống kê users
-     * GET /api/admin/users/statistics
-     */
-    @GetMapping("/statistics")
-    public ResponseEntity<?> getUserStatistics() {
-        try {
-            log.info("Fetching user statistics");
-            Map<String, Object> statistics = new HashMap<>();
-
-            statistics.put("totalUsers", userManagementService.getAllUsers().size());
-            statistics.put("activeUsers", userManagementService.countActiveUsers());
-            statistics.put("blacklistedUsers", userManagementService.countBlacklistedUsers());
-            statistics.put("adminCount", userManagementService.countUsersByRole("admin"));
-            statistics.put("receptionistCount", userManagementService.countUsersByRole("receptionist"));
-            statistics.put("customerCount", userManagementService.countUsersByRole("customer"));
-            statistics.put("maintenanceCount", userManagementService.countUsersByRole("maintenance"));
-
-            log.info("Statistics: {}", statistics);
-            return ResponseEntity.ok(statistics);
-        } catch (Exception e) {
-            log.error("Error fetching statistics: ", e);
-            return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-    }
-
-    /**
-     * Helper method để build error response
-     */
-    private ResponseEntity<?> buildErrorResponse(HttpStatus status, String message) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(status.value())
-                .error(status.getReasonPhrase())
-                .message(message)
-                .build();
-        return ResponseEntity.status(status).body(error);
     }
 }

@@ -1,14 +1,35 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import SockJS from "sockjs-client";
+import { Stomp } from "@stomp/stompjs";
+
+const PAGE_SIZE = 10;
 
 export default function MaintenanceRequestList() {
     const [requests, setRequests] = useState([]);
-    const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [showModal, setShowModal] = useState(false);
+    const [rooms, setRooms] = useState([]);
 
+    // Real-time notification state
+    const [wsMessage, setWsMessage] = useState(null);
+
+    // Custom Toast State
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
+    // Search and Pagination state
+    const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 8;
+
+    // Form state
     const [newRequest, setNewRequest] = useState({
         roomId: "",
         description: "",
@@ -17,6 +38,10 @@ export default function MaintenanceRequestList() {
     const [submitting, setSubmitting] = useState(false);
 
     const navigate = useNavigate();
+
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+    };
 
     const fetchRooms = async () => {
         try {
@@ -52,6 +77,35 @@ export default function MaintenanceRequestList() {
     useEffect(() => {
         fetchRequests();
         fetchRooms();
+
+        // Setup WebSocket
+        const socket = new SockJS("http://localhost:9999/ws");
+        const stompClient = Stomp.over(socket);
+
+        // Disable debug logs if preferred
+        stompClient.debug = () => { };
+
+        stompClient.connect({}, (frame) => {
+            console.log("Connected to WebSocket: " + frame);
+            stompClient.subscribe("/topic/maintenance", (message) => {
+                if (message && message.body) {
+                    setWsMessage(message.body);
+                    // auto hide after 7 seconds
+                    setTimeout(() => setWsMessage(null), 7000);
+                    // Optionally, refresh list if needed
+                    fetchRequests();
+                }
+            });
+        }, (err) => {
+            console.error("WebSocket error: ", err);
+        });
+
+        // Cleanup on unmount
+        return () => {
+            if (stompClient.connected) {
+                stompClient.disconnect();
+            }
+        };
     }, []);
 
     const handleInputChange = (e) => {
@@ -62,7 +116,7 @@ export default function MaintenanceRequestList() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!newRequest.description) {
-            alert("Description is required");
+            showToast("Description is required", "error");
             return;
         }
 
@@ -72,27 +126,54 @@ export default function MaintenanceRequestList() {
             await axios.post("http://localhost:9999/api/requests/maintenance", newRequest, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            alert("Request created successfully!");
+            showToast("Request created successfully!");
             setShowModal(false);
             setNewRequest({ roomId: "", description: "", priority: "MEDIUM" });
             fetchRequests();
         } catch (err) {
             console.error(err);
-            alert("Failed to create request");
+            showToast("Failed to create request", "error");
         } finally {
             setSubmitting(false);
         }
     };
-
     if (loading) return <div>Loading...</div>;
+
+    const filtered = requests.filter(req => {
+        const term = searchTerm.toLowerCase();
+        return (
+            req.id?.toString().includes(term) ||
+            req.room?.roomNumber?.toString().toLowerCase().includes(term) ||
+            req.description?.toLowerCase().includes(term)
+        );
+    });
+
+    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+    const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
     return (
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2>Maintenance Requests</h2>
-                <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-                    + Create Request
-                </button>
+                <div className="d-flex gap-3 align-items-center">
+                    <div className="search-box">
+                        <div className="input-group">
+                            <span className="input-group-text bg-white border-end-0">
+                                <i className="fa fa-search text-muted"></i>
+                            </span>
+                            <input
+                                type="text"
+                                className="form-control border-start-0"
+                                placeholder="Search requests..."
+                                value={searchTerm}
+                                onChange={handleSearchChange}
+                            />
+                        </div>
+                    </div>
+                    <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                        + Create
+                    </button>
+                </div>
             </div>
 
             {error && <div className="alert alert-danger">{error}</div>}
@@ -110,12 +191,14 @@ export default function MaintenanceRequestList() {
                         </tr>
                     </thead>
                     <tbody>
-                        {requests.length === 0 ? (
+                        {paginated.length === 0 ? (
                             <tr>
-                                <td colSpan="7" className="text-center">No requests found.</td>
+                                <td colSpan="6" className="text-center">
+                                    {searchTerm ? `No results for "${searchTerm}"` : "No cleaning requests found."}
+                                </td>
                             </tr>
                         ) : (
-                            requests.map((req) => (
+                            paginated.map((req) => (
                                 <tr key={req.id}>
                                     <td>#{req.id}</td>
                                     <td>{req.room ? `Room ${req.room.roomNumber}` : "General"}</td>
@@ -143,66 +226,40 @@ export default function MaintenanceRequestList() {
                 </table>
             </div>
 
-            {/* Create Modal */}
-            {showModal && (
-                <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-                    <div className="modal-dialog">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">New Maintenance Request</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
-                            </div>
-                            <form onSubmit={handleSubmit}>
-                                <div className="modal-body">
-                                    <div className="mb-3">
-                                        <label className="form-label">Room (Optional)</label>
-                                        <select
-                                            className="form-select"
-                                            name="roomId"
-                                            value={newRequest.roomId}
-                                            onChange={handleInputChange}
-                                        >
-                                            {rooms.map(room => (
-                                                <option key={room.roomId} value={room.roomId}>
-                                                    Room {room.roomNumber} — {room.category?.name || ""}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Priority</label>
-                                        <select className="form-select" name="priority" value={newRequest.priority} onChange={handleInputChange}>
-                                            <option value="LIGHT">Light</option>
-                                            <option value="MEDIUM">Medium</option>
-                                            <option value="HIGH">High</option>
-                                            <option value="URGENT">Urgent</option>
-                                        </select>
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Description</label>
-                                        <textarea
-                                            className="form-control"
-                                            name="description"
-                                            rows="3"
-                                            value={newRequest.description}
-                                            onChange={handleInputChange}
-                                            required
-                                        ></textarea>
-                                    </div>
-                                </div>
-                                <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
-                                        Cancel
-                                    </button>
-                                    <button type="submit" className="btn btn-primary" disabled={submitting}>
-                                        {submitting ? "Submitting..." : "Submit Request"}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+            {
+                totalPages > 1 && (
+                    <div className="d-flex justify-content-center align-items-center gap-2 mt-3">
+                        <button
+                            className="btn btn-sm btn-outline-secondary"
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(p => p - 1)}
+                        >
+                            &laquo; Prev
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                            <button
+                                key={page}
+                                className={`btn btn-sm ${currentPage === page ? "btn-primary" : "btn-outline-secondary"}`}
+                                onClick={() => setCurrentPage(page)}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                        <button
+                            className="btn btn-sm btn-outline-secondary"
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(p => p + 1)}
+                        >
+                            Next &raquo;
+                        </button>
                     </div>
-                </div>
-            )}
+                )
+            }
+
+            <div className="text-center text-muted mt-2 small">
+                Showing {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} requests
+                {searchTerm && ` (filtered from ${requests.length} total)`}
+            </div>
         </div>
     );
 }

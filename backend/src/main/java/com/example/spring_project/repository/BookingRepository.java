@@ -80,4 +80,19 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                                 WHERE b.bookingId = :id
                         """)
         Booking findByIdWithDetails(@Param("id") Integer id);
+
+        /**
+         * Find bookings that are still CheckedIn but their checkout date has passed.
+         * Used by the auto-checkout scheduler.
+         */
+        @Query("""
+                                SELECT b FROM Booking b
+                                JOIN FETCH b.room r
+                                JOIN FETCH r.status
+                                WHERE b.checkoutTime < :today
+                                  AND b.status = com.example.spring_project.entity.Booking.Status.CheckedIn
+                        """)
+        List<Booking> findOverdueCheckedIn(@Param("today") LocalDate today);
+
+        List<Booking> findByRoomRoomIdAndStatus(Integer roomId, Status status);
 }

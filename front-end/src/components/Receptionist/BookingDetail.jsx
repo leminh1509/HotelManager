@@ -131,15 +131,6 @@ export default function BookingDetail() {
                     <hr />
 
                     <div className="d-flex gap-2 flex-wrap">
-                        {booking.status === "Pending" && (
-                            <button
-                                className="btn btn-primary"
-                                disabled={updating}
-                                onClick={() => handleStatusChange("Confirmed")}
-                            >
-                                Confirm Booking
-                            </button>
-                        )}
 
                         {(booking.status === "Confirmed" || booking.status === "Pending") && (
                             <button

@@ -1,9 +1,11 @@
 package com.example.spring_project.service;
 
 import com.example.spring_project.dto.PaymentRequest;
+import com.example.spring_project.entity.Booking;
 import com.example.spring_project.entity.Invoice;
 import com.example.spring_project.entity.Payment;
 import com.example.spring_project.entity.PaymentStatus;
+import com.example.spring_project.repository.BookingRepository;
 import com.example.spring_project.repository.InvoiceRepository;
 import com.example.spring_project.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -18,12 +22,34 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
+    private final BookingRepository bookingRepository;
 
     @Transactional
     public Payment processPayment(PaymentRequest request) {
-        // 1. Find Invoice
+        // 1. Find or Create Invoice
+        // The frontend might pass bookingId as invoiceId if invoice is not yet created.
         Invoice invoice = invoiceRepository.findById(request.getInvoiceId())
-                .orElseThrow(() -> new RuntimeException("Invoice not found with id: " + request.getInvoiceId()));
+                .orElseGet(() -> {
+                    // Try to find by bookingId
+                    List<Invoice> existingInvoices = invoiceRepository.findByBookingId(request.getInvoiceId());
+                    if (!existingInvoices.isEmpty()) {
+                        return existingInvoices.get(0);
+                    }
+
+                    // If not found, create new invoice from Booking
+                    com.example.spring_project.entity.Booking booking = bookingRepository
+                            .findById(request.getInvoiceId())
+                            .orElseThrow(() -> new RuntimeException(
+                                    "Invoice or Booking not found with id: " + request.getInvoiceId()));
+
+                    Invoice newInvoice = new Invoice();
+                    newInvoice.setBookingId(booking.getBookingId());
+                    newInvoice.setTotalAmount(BigDecimal.valueOf(booking.getTotalPrice()));
+                    newInvoice.setAmountDue(BigDecimal.valueOf(booking.getTotalPrice()));
+                    newInvoice.setStatus("Pending");
+                    newInvoice.setUpdatedAt(java.time.LocalDateTime.now());
+                    return invoiceRepository.save(newInvoice);
+                });
 
         // 2. Create Payment
         Payment payment = new Payment();
@@ -38,17 +64,10 @@ public class PaymentService {
             case Cash:
                 payment.setStatus(PaymentStatus.Completed);
                 break;
-            case BankTransfer:
-                payment.setStatus(PaymentStatus.Pending); // Needs manual verification or webhook
-                break;
             case PaymentGateway:
                 // Logic to call Gateway would go here
                 // For now, assume it's pending until callback
                 payment.setStatus(PaymentStatus.Pending);
-                break;
-            case CreditCard:
-            case EWallet:
-                payment.setStatus(PaymentStatus.Completed); // Simplified for demo
                 break;
             default:
                 payment.setStatus(PaymentStatus.Pending);

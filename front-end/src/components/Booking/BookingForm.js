@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link, useLocation  } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useBooking } from "../../context/BookingContext";
 import { getRoomById, createBooking, getBookingByRoomId } from "../../services/bookingAPI";
+import { previewBookingPrice } from "../../services/roomAPI";
+import { getAllCountries } from "../../services/externalAPI";
+import Header from "../Header/Header";
+import Footer from "../Footer/Footer";
 import "./BookingForm.css";
 
 // ─── Mock room fallback (xóa khi API thật sẵn sàng) ────
@@ -18,10 +22,11 @@ function calcNights(checkin, checkout) {
   return diff > 0 ? diff : 1;
 }
 
-function formatDate(dateStr) {
+function formatDate(dateStr, timeStr = "") {
   if (!dateStr) return "—";
-  const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("vi-VN", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
+  const d = new Date(dateStr + (timeStr ? `T${timeStr}:00` : "T00:00:00"));
+  const datePart = d.toLocaleDateString("vi-VN", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
+  return timeStr ? `${datePart} - ${timeStr}` : datePart;
 }
 
 function formatPrice(n) {
@@ -47,10 +52,10 @@ function StepBar({ step }) {
 }
 
 // ─── Room Summary (sidebar) ──────────────────────────────
-function RoomSummary({ room, bookingData }) {
+function RoomSummary({ room, bookingData, dynamicPrice }) {
   if (!room) return null;
   const nights = calcNights(bookingData.checkinDate, bookingData.checkoutDate);
-  const total = room.price * nights;
+  const total = dynamicPrice !== null ? dynamicPrice : (room.price * nights);
 
   return (
     <aside className="bf-summary">
@@ -61,11 +66,11 @@ function RoomSummary({ room, bookingData }) {
       <div className="bf-summary-rows">
         <div className="bf-summary-row">
           <span>Check-in</span>
-          <span>{formatDate(bookingData.checkinDate)}</span>
+          <span>{formatDate(bookingData.checkinDate, bookingData.checkinTime)}</span>
         </div>
         <div className="bf-summary-row">
           <span>Check-out</span>
-          <span>{formatDate(bookingData.checkoutDate)}</span>
+          <span>{formatDate(bookingData.checkoutDate, bookingData.checkoutTime)}</span>
         </div>
         <div className="bf-summary-row">
           <span>Số đêm</span>
@@ -78,15 +83,20 @@ function RoomSummary({ room, bookingData }) {
       </div>
 
       <div className="bf-summary-price">
-        <span>{formatPrice(room.price)} đ × {nights} đêm</span>
+        <span>{formatPrice(room.price)} đ / đêm</span>
         <strong>{formatPrice(total)} đ</strong>
       </div>
+      {dynamicPrice !== null && dynamicPrice !== (room.price * nights) && (
+        <div style={{ fontSize: '11px', color: '#ff6b6b', textAlign: 'right', marginTop: '4px' }}>
+          *Đã tính phụ phí (Lễ / Cuối Tuần)
+        </div>
+      )}
     </aside>
   );
 }
 
 // ─── Main Component ──────────────────────────────────────
-export default function BookingForm() {
+export default function BookingForm({ user, role, onLogout }) {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { selectedRoom, setSelectedRoom, bookingData, updateBookingData } = useBooking();
@@ -99,6 +109,13 @@ export default function BookingForm() {
   const location = useLocation();
   const [dateConflict, setDateConflict] = useState(false);
   const [checkingDate, setCheckingDate] = useState(false);
+
+  // Dynamic price state
+  const [dynamicPrice, setDynamicPrice] = useState(null);
+
+  // Countries state
+  const [countries, setCountries] = useState([]);
+  const [loadingCountries, setLoadingCountries] = useState(false);
 
   // Fetch room nếu chưa có trong context
   useEffect(() => {
@@ -121,89 +138,127 @@ export default function BookingForm() {
     fetch();
   }, [roomId, room, setSelectedRoom, navigate]);
 
-  // ─── Auto fill date từ query params ───
-useEffect(() => {
-  const params = new URLSearchParams(location.search);
-
-  const checkIn = params.get("checkIn");
-  const checkOut = params.get("checkOut");
-
-  // chỉ set khi bookingData chưa có (tránh overwrite khi user sửa tay)
-  const updateData = {};
-
-  if (checkIn && !bookingData.checkinDate) {
-    updateData.checkinDate = checkIn;
-  }
-
-  if (checkOut && !bookingData.checkoutDate) {
-    updateData.checkoutDate = checkOut;
-  }
-
-  if (Object.keys(updateData).length > 0) {
-    updateBookingData(updateData);
-  }
-}, [location.search]);
-
- 
-// ─── Check booking conflict ───
-useEffect(() => {
-  async function checkConflict() {
-    if (!bookingData.checkinDate || !bookingData.checkoutDate || !room)
-      return;
-
-    setCheckingDate(true);
-
-    try {
-      // giả sử API trả về list booking của room
-      const res = await getBookingByRoomId(room.roomId);
-      console.log('res',res.data);
-      // normalize API response
-let bookings = [];
-
-if (Array.isArray(res.data)) {
-  bookings = res.data;
-} else if (res.data && typeof res.data === "object") {
-  bookings = [res.data];
-}
-
-      let conflict = false;
-
-      for (const b of bookings) {
-        const bookedCheckin = b.checkinTime.split("T")[0];
-        const bookedCheckout = b.checkoutTime.split("T")[0];
-
-        if (
-          isOverlap(
-            bookingData.checkinDate,
-            bookingData.checkoutDate,
-            bookedCheckin,
-            bookedCheckout
-          )
-        ) {
-          conflict = true;
-          break;
+  // Fetch countries
+  useEffect(() => {
+    async function fetchCountries() {
+      setLoadingCountries(true);
+      try {
+        const data = await getAllCountries();
+        setCountries(data);
+        // Set default nationality if not already set
+        if (!bookingData.guestNationality) {
+          updateBookingData({ guestNationality: "Việt Nam" });
         }
+      } catch (error) {
+        console.error("Failed to fetch countries", error);
+      } finally {
+        setLoadingCountries(false);
       }
-
-      setDateConflict(conflict);
-    } catch (err) {
-      console.error("Check booking conflict error:", err);
-      setDateConflict(false);
-    } finally {
-      setCheckingDate(false);
     }
-  }
+    fetchCountries();
+  }, []);
 
-  checkConflict();
-}, [bookingData.checkinDate, bookingData.checkoutDate, room]);
+  // ─── Auto fill date từ query params ───
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+
+    const checkIn = params.get("checkIn");
+    const checkOut = params.get("checkOut");
+
+    // chỉ set khi bookingData chưa có (tránh overwrite khi user sửa tay)
+    const updateData = {};
+
+    if (checkIn && !bookingData.checkinDate) {
+      updateData.checkinDate = checkIn;
+    }
+
+    if (checkOut && !bookingData.checkoutDate) {
+      updateData.checkoutDate = checkOut;
+    }
+
+    if (Object.keys(updateData).length > 0) {
+      updateBookingData(updateData);
+    }
+  }, [location.search]);
+
+
+  // ─── Check booking conflict ───
+  useEffect(() => {
+    async function checkConflict() {
+      if (!bookingData.checkinDate || !bookingData.checkoutDate || !room)
+        return;
+
+      setCheckingDate(true);
+
+      try {
+        // giả sử API trả về list booking của room
+        const res = await getBookingByRoomId(room.roomId);
+        console.log('res', res.data);
+        // normalize API response
+        let bookings = [];
+
+        if (Array.isArray(res.data)) {
+          bookings = res.data;
+        } else if (res.data && typeof res.data === "object") {
+          bookings = [res.data];
+        }
+
+        let conflict = false;
+
+        for (const b of bookings) {
+          const bookedCheckin = b.checkinTime.split("T")[0];
+          const bookedCheckout = b.checkoutTime.split("T")[0];
+
+          if (
+            isOverlap(
+              bookingData.checkinDate,
+              bookingData.checkoutDate,
+              bookedCheckin,
+              bookedCheckout
+            )
+          ) {
+            conflict = true;
+            break;
+          }
+        }
+
+        setDateConflict(conflict);
+      } catch (err) {
+        console.error("Check booking conflict error:", err);
+        setDateConflict(false);
+      } finally {
+        setCheckingDate(false);
+      }
+    }
+
+    checkConflict();
+  }, [bookingData.checkinDate, bookingData.checkoutDate, room]);
+
+  // ─── Fetch Dynamic Price ───
+  useEffect(() => {
+    async function fetchPrice() {
+      if (!bookingData.checkinDate || !bookingData.checkoutDate || !room || dateConflict) {
+        setDynamicPrice(null);
+        return;
+      }
+      try {
+        const res = await previewBookingPrice(room.roomId, bookingData.checkinDate, bookingData.checkoutDate);
+        setDynamicPrice(res.data);
+      } catch (err) {
+        console.error("Error fetching preview price", err);
+        setDynamicPrice(null);
+      }
+    }
+    fetchPrice();
+  }, [bookingData.checkinDate, bookingData.checkoutDate, room, dateConflict]);
 
   // ─── Validation ──
   // kiểm tra overlap date
   const isOverlap = (start1, end1, start2, end2) => {
     console.log(start1, end1, start2, end2);
     return new Date(start1) < new Date(end2) &&
-           new Date(end1) > new Date(start2);
-};
+      new Date(end1) > new Date(start2);
+  };
   const validateStep = (s) => {
     const errs = {};
     if (s === 0) {
@@ -228,46 +283,46 @@ if (Array.isArray(res.data)) {
   };
 
   const validateStep2 = () => {
-  // số điện thoại VN (9–11 số)
-const phoneRegex = /^[0-9]{9,11}$/;
+    // số điện thoại VN (9–11 số)
+    const phoneRegex = /^[0-9]{9,11}$/;
 
-// CMND/CCCD (9 hoặc 12 số)
-const idRegex = /^[0-9]{9}$|^[0-9]{12}$/;
+    // CMND/CCCD (9 hoặc 12 số)
+    const idRegex = /^[0-9]{9}$|^[0-9]{12}$/;
 
-// email cơ bản
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const errs = {};
+    // email cơ bản
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const errs = {};
 
-  // tên
-  if (!bookingData.guestName?.trim()) {
-    errs.guestName = "Vui lòng nhập họ tên";
-  }
+    // tên
+    if (!bookingData.guestName?.trim()) {
+      errs.guestName = "Vui lòng nhập họ tên";
+    }
 
-  // email
-  // if (!bookingData.guestEmail) {
-  //   errs.email = "Vui lòng nhập email";
-  // } else if (!emailRegex.test(bookingData.guestEmail)) {
-  //   errs.email = "Email không hợp lệ";
-  // }
+    // email
+    // if (!bookingData.guestEmail) {
+    //   errs.email = "Vui lòng nhập email";
+    // } else if (!emailRegex.test(bookingData.guestEmail)) {
+    //   errs.email = "Email không hợp lệ";
+    // }
 
-  // số điện thoại
-  if (!bookingData.guestPhone) {
-    errs.guestPhone = "Vui lòng nhập số điện thoại";
-  } else if (!phoneRegex.test(bookingData.guestPhone)) {
-    errs.guestPhone = "Số điện thoại phải là 9–11 chữ số";
-  }
+    // số điện thoại
+    if (!bookingData.guestPhone) {
+      errs.guestPhone = "Vui lòng nhập số điện thoại";
+    } else if (!phoneRegex.test(bookingData.guestPhone)) {
+      errs.guestPhone = "Số điện thoại phải là 9–11 chữ số";
+    }
 
-  // CMND / CCCD
-  if (!bookingData.guestIdNumber) {
-    errs.guestIdNumber = "Vui lòng nhập CMND/CCCD";
-  } else if (!idRegex.test(bookingData.guestIdNumber)) {
-    errs.guestIdNumber = "CMND/CCCD phải gồm 9 hoặc 12 số";
-  }
+    // CMND / CCCD
+    if (!bookingData.guestIdNumber) {
+      errs.guestIdNumber = "Vui lòng nhập CMND/CCCD";
+    } else if (!idRegex.test(bookingData.guestIdNumber)) {
+      errs.guestIdNumber = "CMND/CCCD phải gồm 9 hoặc 12 số";
+    }
 
-  setErrors(errs);
+    setErrors(errs);
 
-  return Object.keys(errs).length === 0;
-};
+    return Object.keys(errs).length === 0;
+  };
 
   const handleNext = () => {
     const errs = validateStep(step);
@@ -276,8 +331,8 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return;
     }
     setErrors({});
-     if (step === 1) {
-     if (!validateStep2()) return;
+    if (step === 1) {
+      if (!validateStep2()) return;
     }
     setStep((s) => s + 1);
   };
@@ -288,8 +343,8 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     try {
       const payload = {
         roomId: room.roomId,
-        checkinTime: bookingData.checkinDate + "T14:00:00",
-        checkoutTime: bookingData.checkoutDate + "T11:00:00",
+        checkinTime: bookingData.checkinDate + "T" + (bookingData.checkinTime || "14:00") + ":00",
+        checkoutTime: bookingData.checkoutDate + "T" + (bookingData.checkoutTime || "12:00") + ":00",
         guestCount: bookingData.guestCount,
         guestName: bookingData.guestName,
         guestEmail: bookingData.guestEmail,
@@ -317,7 +372,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       const diff = end - start;
       const nights = diff > 0 ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : 1;
 
-      navigate(`/booking/confirmation/${bookingId}`, {
+      navigate(`/payment`, {
         state: {
           bookingId,
           totalAmount: totalPrice,
@@ -336,258 +391,290 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!room) return <div className="bf-loading"><div className="bf-spinner" /><p>Đang tải...</p></div>;
 
   const nights = calcNights(bookingData.checkinDate, bookingData.checkoutDate);
-  const totalPrice = room.price * nights;
+  const totalPrice = dynamicPrice !== null ? dynamicPrice : (room.price * nights);
 
   return (
-    <div className="bf-page">
-      <div className="bf-container">
-        {/* Back */}
-        <Link to={`/rooms/${roomId}`} className="bf-back">← Quay lại phòng</Link>
+    <>
+      <Header user={user} role={role} onLogout={onLogout} />
+      <div className="bf-page">
+        <div className="bf-container">
+          {/* Back */}
+          <Link to={`/rooms/${roomId}`} className="bf-back">← Quay lại phòng</Link>
 
-        <StepBar step={step} />
+          <StepBar step={step} />
 
-        <div className="bf-layout">
-          {/* ─── Main form area ─── */}
-          <div className="bf-main">
+          <div className="bf-layout">
+            {/* ─── Main form area ─── */}
+            <div className="bf-main">
 
-            {/* ========== STEP 0: Dates & Guests ========== */}
-            {step === 0 && (
-              <div className="bf-card">
-                <h2>Chọn ngày và số khách</h2>
+              {/* ========== STEP 0: Dates & Guests ========== */}
+              {step === 0 && (
+                <div className="bf-card">
+                  <h2>Chọn ngày và số khách</h2>
 
-                <div className="bf-form-row">
-                  <div className="bf-field">
-                    <label>Ngày Check-in <span className="bf-req">*</span></label>
-                    <input
-                      type="date"
-                      value={bookingData.checkinDate || ""}
-                      onChange={(e) => updateBookingData({ checkinDate: e.target.value })}
-                      className={errors.checkinDate ? "bf-input error" : "bf-input"}
-                    />
-                    {errors.checkinDate && <span className="bf-error">{errors.checkinDate}</span>}
-                  </div>
-                  <div className="bf-field">
-                    <label>Ngày Check-out <span className="bf-req">*</span></label>
-                    <input
-                      type="date"
-                      value={bookingData.checkoutDate || ""}
-                      min={bookingData.checkinDate || undefined}
-                      onChange={(e) => updateBookingData({ checkoutDate: e.target.value })}
-                      className={errors.checkoutDate ? "bf-input error" : "bf-input"}
-                    />
-                    {errors.checkoutDate && <span className="bf-error">{errors.checkoutDate}</span>}
-                  </div>
-                </div>
-                {dateConflict && (
-                    <div className="bf-error" style={{marginTop: "10px"}}>
-                        ❌ Khoảng thời gian này phòng đã được đặt. Vui lòng chọn ngày khác.
+                  <div className="bf-form-row">
+                    <div className="bf-field">
+                      <label>Ngày Check-in <span className="bf-req">*</span></label>
+                      <div className="bf-datetime-group">
+                        <input
+                          type="date"
+                          value={bookingData.checkinDate || ""}
+                          onChange={(e) => updateBookingData({ checkinDate: e.target.value })}
+                          className={errors.checkinDate ? "bf-input error" : "bf-input"}
+                        />
+                        <input
+                          type="time"
+                          value={bookingData.checkinTime || "14:00"}
+                          onChange={(e) => updateBookingData({ checkinTime: e.target.value })}
+                          className="bf-input bf-time-input"
+                        />
+                      </div>
+                      {errors.checkinDate && <span className="bf-error">{errors.checkinDate}</span>}
                     </div>
-)}
-
-                <div className="bf-field">
-                  <label>Số khách <span className="bf-req">*</span></label>
-                  <input
-                    type="number"
-                    min="1"
-                    max={room.capacity}
-                    value={bookingData.guestCount}
-                    onChange={(e) => updateBookingData({ guestCount: parseInt(e.target.value) || 1 })}
-                    className={errors.guestCount ? "bf-input error" : "bf-input"}
-                  />
-                  <span className="bf-hint">Tối đa {room.capacity} khách cho phòng này</span>
-                  {errors.guestCount && <span className="bf-error">{errors.guestCount}</span>}
-                </div>
-
-                <div className="bf-actions">
-                 <button
-                    onClick={handleNext}
-                    disabled={dateConflict || checkingDate}
-                    className="bf-btn-next"
-                >
-                  {checkingDate ? "Đang kiểm tra..." : "Tiếp tục →"}
-                </button>
-                </div>
-              </div>
-            )}
-
-            {/* ========== STEP 1: Guest Info ========== */}
-            {step === 1 && (
-              <div className="bf-card">
-                <h2>Thông tin khách</h2>
-
-                <div className="bf-form-row">
-                  <div className="bf-field">
-                    <label>Tên khách <span className="bf-req">*</span></label>
-                    <input
-                      type="text"
-                      placeholder="Nguyễn Văn A"
-                      value={bookingData.guestName}
-                      onChange={(e) => updateBookingData({ guestName: e.target.value })}
-                      className={errors.guestName ? "bf-input error" : "bf-input"}
-                    />
-                    {errors.guestName && <span className="bf-error">{errors.guestName}</span>}
+                    <div className="bf-field">
+                      <label>Ngày Check-out <span className="bf-req">*</span></label>
+                      <div className="bf-datetime-group">
+                        <input
+                          type="date"
+                          value={bookingData.checkoutDate || ""}
+                          min={bookingData.checkinDate || undefined}
+                          onChange={(e) => updateBookingData({ checkoutDate: e.target.value })}
+                          className={errors.checkoutDate ? "bf-input error" : "bf-input"}
+                        />
+                        <input
+                          type="time"
+                          value={bookingData.checkoutTime || "12:00"}
+                          onChange={(e) => updateBookingData({ checkoutTime: e.target.value })}
+                          className="bf-input bf-time-input"
+                        />
+                      </div>
+                      {errors.checkoutDate && <span className="bf-error">{errors.checkoutDate}</span>}
+                    </div>
                   </div>
-                  <div className="bf-field">
-                    <label>Email</label>
-                    <input
-                      type="email"
-                      placeholder="email@example.com"
-                      value={bookingData.guestEmail}
-                      onChange={(e) => updateBookingData({ guestEmail: e.target.value })}
-                      className="bf-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="bf-form-row">
-                  <div className="bf-field">
-                    <label>Số điện thoại <span className="bf-req">*</span></label>
-                    <input
-                      type="tel"
-                      pattern="[0-9]{10}" 
-                      title="Vui lòng nhập đúng 10 chữ số"
-                      placeholder="0xx xxx xxxx"
-                      value={bookingData.guestPhone}
-                      onChange={(e) => updateBookingData({ guestPhone: e.target.value })}
-                      className={errors.guestPhone ? "bf-input error" : "bf-input"}
-                    />
-                    {errors.guestPhone && <span className="bf-error">{errors.guestPhone}</span>}
-                  </div>
-                  <div className="bf-field">
-                    <label>CMND / Hộ chiếu <span className="bf-req">*</span></label>
-                    <input
-                      type="text"
-                      pattern="[0-9]{12}"
-                      placeholder="12 chữ số CMND hoặc số hộ chiếu"
-                      value={bookingData.guestIdNumber}
-                      onChange={(e) => updateBookingData({ guestIdNumber: e.target.value })}
-                      className={errors.guestIdNumber ? "bf-input error" : "bf-input"}
-                    />
-                    {errors.guestIdNumber && <span className="bf-error">{errors.guestIdNumber}</span>}
-                  </div>
-                </div>
-
-                <div className="bf-form-row">
-                  <div className="bf-field">
-                    <label>Quốc tịch</label>
-                    <input
-                      type="text"
-                      placeholder="Việt Nam"
-                      value={bookingData.guestNationality}
-                      onChange={(e) => updateBookingData({ guestNationality: e.target.value })}
-                      className="bf-input"
-                    />
-                  </div>
-                  <div className="bf-field">
-                    <label>Địa chỉ</label>
-                    <input
-                      type="text"
-                      placeholder="Đđịa chỉ của bạn"
-                      value={bookingData.guestAddress}
-                      onChange={(e) => updateBookingData({ guestAddress: e.target.value })}
-                      className="bf-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="bf-field">
-                  <label>Yêu cầu đặc biệt</label>
-                  <textarea
-                    placeholder="Ví dụ: cần thêm gối, baby cot, ..."
-                    value={bookingData.specialRequest}
-                    onChange={(e) => updateBookingData({ specialRequest: e.target.value })}
-                    className="bf-input bf-textarea"
-                    rows={3}
-                  />
-                </div>
-
-                <div className="bf-checkboxes">
-                  <label className="bf-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={bookingData.earlyCheckin}
-                      onChange={(e) => updateBookingData({ earlyCheckin: e.target.checked })}
-                    />
-                    <span>Yêu cầu check-in sớm</span>
-                  </label>
-                  <label className="bf-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={bookingData.lateCheckout}
-                      onChange={(e) => updateBookingData({ lateCheckout: e.target.checked })}
-                    />
-                    <span>Yêu cầu check-out muộn</span>
-                  </label>
-                </div>
-
-                <div className="bf-actions">
-                  <button onClick={() => { setErrors({}); setStep(0); }} className="bf-btn-back">← Quay lại</button>
-                  <button onClick={handleNext} className="bf-btn-next">Xem lại đặt phòng →</button>
-                </div>
-              </div>
-            )}
-
-            {/* ========== STEP 2: Review & Confirm ========== */}
-            {step === 2 && (
-              <div className="bf-card">
-                <h2>Xem lại đặt phòng</h2>
-                {/* Room info */}
-                <div className="bf-review-section">
-                  <h4>Phòng</h4>
-                  <div className="bf-review-row"><span>Tên phòng</span><span>{room.name}</span></div>
-                  <div className="bf-review-row"><span>Loại</span><span>{room.categoryName}</span></div>
-                  <div className="bf-review-row"><span>Check-in</span><span>{formatDate(bookingData.checkinDate)}</span></div>
-                  <div className="bf-review-row"><span>Check-out</span><span>{formatDate(bookingData.checkoutDate)}</span></div>
-                  <div className="bf-review-row"><span>Số đêm</span><span>{nights}</span></div>
-                  <div className="bf-review-row"><span>Số khách</span><span>{bookingData.guestCount}</span></div>
-                </div>
-
-                {/* Guest info */}
-                <div className="bf-review-section">
-                  <h4>Thông tin khách</h4>
-                  <div className="bf-review-row"><span>Tên</span><span>{bookingData.guestName}</span></div>
-                  {bookingData.guestEmail && <div className="bf-review-row"><span>Email</span><span>{bookingData.guestEmail}</span></div>}
-                  <div className="bf-review-row"><span>Điện thoại</span><span>{bookingData.guestPhone}</span></div>
-                  <div className="bf-review-row"><span>CMND/Hộ chiếu</span><span>{bookingData.guestIdNumber}</span></div>
-                  {bookingData.guestNationality && <div className="bf-review-row"><span>Quốc tịch</span><span>{bookingData.guestNationality}</span></div>}
-                  {bookingData.specialRequest && <div className="bf-review-row"><span>Yêu cầu đặc biệt</span><span>{bookingData.specialRequest}</span></div>}
-                  {(bookingData.earlyCheckin || bookingData.lateCheckout) && (
-                    <div className="bf-review-row">
-                      <span>Tùy chọng</span>
-                      <span>
-                        {bookingData.earlyCheckin && "Check-in sớm"}
-                        {bookingData.earlyCheckin && bookingData.lateCheckout && " · "}
-                        {bookingData.lateCheckout && "Check-out muộn"}
-                      </span>
+                  {dateConflict && (
+                    <div className="bf-error" style={{ marginTop: "10px" }}>
+                      ❌ Khoảng thời gian này phòng đã được đặt. Vui lòng chọn ngày khác.
                     </div>
                   )}
-                </div>
 
-                {/* Price breakdown */}
-                <div className="bf-review-section bf-price-breakdown">
-                  <h4>Tổng giá</h4>
-                  <div className="bf-review-row"><span>{formatPrice(room.price)} đ × {nights} đêm</span><span>{formatPrice(totalPrice)} đ</span></div>
-                  <div className="bf-review-row bf-total"><span>Tổng</span><span>{formatPrice(totalPrice)} </span></div>
-                </div>
+                  <div className="bf-field">
+                    <label>Số khách <span className="bf-req">*</span></label>
+                    <input
+                      type="number"
+                      min="1"
+                      max={room.capacity}
+                      value={bookingData.guestCount}
+                      onChange={(e) => updateBookingData({ guestCount: parseInt(e.target.value) || 1 })}
+                      className={errors.guestCount ? "bf-input error" : "bf-input"}
+                    />
+                    <span className="bf-hint">Tối đa {room.capacity} khách cho phòng này</span>
+                    {errors.guestCount && <span className="bf-error">{errors.guestCount}</span>}
+                  </div>
 
-                <div className="bf-actions">
-                  <button onClick={() => { setErrors({}); setStep(1); }} className="bf-btn-back">← Quay lại</button>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className="bf-btn-confirm"
-                  >
-                    {submitting ? "Đang xử lý..." : "✓ Xác nhận đặt phòng"}
-                  </button>
+                  <div className="bf-actions">
+                    <button
+                      onClick={handleNext}
+                      disabled={dateConflict || checkingDate}
+                      className="bf-btn-next"
+                    >
+                      {checkingDate ? "Đang kiểm tra..." : "Tiếp tục →"}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* ========== STEP 1: Guest Info ========== */}
+              {step === 1 && (
+                <div className="bf-card">
+                  <h2>Thông tin khách</h2>
+
+                  <div className="bf-form-row">
+                    <div className="bf-field">
+                      <label>Tên khách <span className="bf-req">*</span></label>
+                      <input
+                        type="text"
+                        placeholder="Nguyễn Văn A"
+                        value={bookingData.guestName}
+                        onChange={(e) => updateBookingData({ guestName: e.target.value })}
+                        className={errors.guestName ? "bf-input error" : "bf-input"}
+                      />
+                      {errors.guestName && <span className="bf-error">{errors.guestName}</span>}
+                    </div>
+                    <div className="bf-field">
+                      <label>Email</label>
+                      <input
+                        type="email"
+                        placeholder="email@example.com"
+                        value={bookingData.guestEmail}
+                        onChange={(e) => updateBookingData({ guestEmail: e.target.value })}
+                        className="bf-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bf-form-row">
+                    <div className="bf-field">
+                      <label>Số điện thoại <span className="bf-req">*</span></label>
+                      <input
+                        type="tel"
+                        pattern="[0-9]{10}"
+                        title="Vui lòng nhập đúng 10 chữ số"
+                        placeholder="0xx xxx xxxx"
+                        value={bookingData.guestPhone}
+                        onChange={(e) => updateBookingData({ guestPhone: e.target.value })}
+                        className={errors.guestPhone ? "bf-input error" : "bf-input"}
+                      />
+                      {errors.guestPhone && <span className="bf-error">{errors.guestPhone}</span>}
+                    </div>
+                    <div className="bf-field">
+                      <label>CMND / Hộ chiếu <span className="bf-req">*</span></label>
+                      <input
+                        type="text"
+                        pattern="[0-9]{12}"
+                        placeholder="12 chữ số CMND hoặc số hộ chiếu"
+                        value={bookingData.guestIdNumber}
+                        onChange={(e) => updateBookingData({ guestIdNumber: e.target.value })}
+                        className={errors.guestIdNumber ? "bf-input error" : "bf-input"}
+                      />
+                      {errors.guestIdNumber && <span className="bf-error">{errors.guestIdNumber}</span>}
+                    </div>
+                  </div>
+
+                  <div className="bf-form-row">
+                    <div className="bf-field">
+                      <label>Quốc tịch</label>
+                      <select
+                        value={bookingData.guestNationality || "Việt Nam"}
+                        onChange={(e) => updateBookingData({ guestNationality: e.target.value })}
+                        className="bf-input"
+                        disabled={loadingCountries}
+                      >
+                        {loadingCountries && <option>Đang tải...</option>}
+                        {countries.map((c) => (
+                          <option key={c.cca2 || c.name.common} value={c.name.common}>
+                            {c.name.common}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="bf-field">
+                      <label>Địa chỉ</label>
+                      <input
+                        type="text"
+                        placeholder="Đđịa chỉ của bạn"
+                        value={bookingData.guestAddress}
+                        onChange={(e) => updateBookingData({ guestAddress: e.target.value })}
+                        className="bf-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bf-field">
+                    <label>Yêu cầu đặc biệt</label>
+                    <textarea
+                      placeholder="Ví dụ: cần thêm gối, baby cot, ..."
+                      value={bookingData.specialRequest}
+                      onChange={(e) => updateBookingData({ specialRequest: e.target.value })}
+                      className="bf-input bf-textarea"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="bf-checkboxes">
+                    <label className="bf-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={bookingData.earlyCheckin}
+                        onChange={(e) => updateBookingData({ earlyCheckin: e.target.checked })}
+                      />
+                      <span>Yêu cầu check-in sớm</span>
+                    </label>
+                    <label className="bf-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={bookingData.lateCheckout}
+                        onChange={(e) => updateBookingData({ lateCheckout: e.target.checked })}
+                      />
+                      <span>Yêu cầu check-out muộn</span>
+                    </label>
+                  </div>
+
+                  <div className="bf-actions">
+                    <button onClick={() => { setErrors({}); setStep(0); }} className="bf-btn-back">← Quay lại</button>
+                    <button onClick={handleNext} className="bf-btn-next">Xem lại đặt phòng →</button>
+                  </div>
+                </div>
+              )}
+
+              {/* ========== STEP 2: Review & Confirm ========== */}
+              {step === 2 && (
+                <div className="bf-card">
+                  <h2>Xem lại đặt phòng</h2>
+                  {/* Room info */}
+                  <div className="bf-review-section">
+                    <h4>Phòng</h4>
+                    <div className="bf-review-row"><span>Tên phòng</span><span>{room.name}</span></div>
+                    <div className="bf-review-row"><span>Loại</span><span>{room.categoryName}</span></div>
+                    <div className="bf-review-row"><span>Check-in</span><span>{formatDate(bookingData.checkinDate, bookingData.checkinTime)}</span></div>
+                    <div className="bf-review-row"><span>Check-out</span><span>{formatDate(bookingData.checkoutDate, bookingData.checkoutTime)}</span></div>
+                    <div className="bf-review-row"><span>Số đêm</span><span>{nights}</span></div>
+                    <div className="bf-review-row"><span>Số khách</span><span>{bookingData.guestCount}</span></div>
+                  </div>
+
+                  {/* Guest info */}
+                  <div className="bf-review-section">
+                    <h4>Thông tin khách</h4>
+                    <div className="bf-review-row"><span>Tên</span><span>{bookingData.guestName}</span></div>
+                    {bookingData.guestEmail && <div className="bf-review-row"><span>Email</span><span>{bookingData.guestEmail}</span></div>}
+                    <div className="bf-review-row"><span>Điện thoại</span><span>{bookingData.guestPhone}</span></div>
+                    <div className="bf-review-row"><span>CMND/Hộ chiếu</span><span>{bookingData.guestIdNumber}</span></div>
+                    {bookingData.guestNationality && <div className="bf-review-row"><span>Quốc tịch</span><span>{bookingData.guestNationality}</span></div>}
+                    {bookingData.specialRequest && <div className="bf-review-row"><span>Yêu cầu đặc biệt</span><span>{bookingData.specialRequest}</span></div>}
+                    {(bookingData.earlyCheckin || bookingData.lateCheckout) && (
+                      <div className="bf-review-row">
+                        <span>Tùy chọng</span>
+                        <span>
+                          {bookingData.earlyCheckin && "Check-in sớm"}
+                          {bookingData.earlyCheckin && bookingData.lateCheckout && " · "}
+                          {bookingData.lateCheckout && "Check-out muộn"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Price breakdown */}
+                  <div className="bf-review-section bf-price-breakdown">
+                    <h4>Tổng giá</h4>
+                    <div className="bf-review-row"><span>Tạm tính ({nights} đêm)</span><span>{formatPrice(room.price * nights)} đ</span></div>
+                    {dynamicPrice !== null && dynamicPrice !== (room.price * nights) && (
+                      <div className="bf-review-row" style={{ color: '#ff6b6b' }}>
+                        <span>Phụ phí (Cuối tuần / Lễ)</span>
+                        <span>+ {formatPrice(dynamicPrice - (room.price * nights))} đ</span>
+                      </div>
+                    )}
+                    <div className="bf-review-row bf-total"><span>Tổng cần thanh toán</span><span>{formatPrice(totalPrice)} đ</span></div>
+                  </div>
+
+                  <div className="bf-actions">
+                    <button onClick={() => { setErrors({}); setStep(1); }} className="bf-btn-back">← Quay lại</button>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={submitting}
+                      className="bf-btn-confirm"
+                    >
+                      {submitting ? "Đang xử lý..." : "✓ Xác nhận đặt phòng"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ─── Sidebar summary ─── */}
+            <RoomSummary room={room} bookingData={bookingData} dynamicPrice={dynamicPrice} />
           </div>
-
-          {/* ─── Sidebar summary ─── */}
-          <RoomSummary room={room} bookingData={bookingData} />
         </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 }

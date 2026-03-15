@@ -183,179 +183,151 @@ const roomsWithAvailability = rooms.map((r) => ({
       </div>
     );
 
-  return (
-    <div className="mb-page">
-      <div className="mb-container">
-        {/* Header */}
-        <div className="mb-header">
-          <h1>Danh sách phòng</h1>
-          
-        </div>
-      {/* ===== DATE FILTER ===== */}
-<div className="mb-date-filter">
-  <div className="mb-date-group">
-    <label>Ngày đến</label>
-    <div className="mb-date-input">
-      <i className="fa fa-calendar" />
-      <input
-        type="date"
-        value={checkIn}
-        onChange={(e) => setCheckIn(e.target.value)}
-      />
-    </div>
-  </div>
+ return (
+  <div className="room-page">
 
-  <div className="mb-date-group">
-    <label>Ngày đi</label>
-    <div className="mb-date-input">
-      <i className="fa fa-calendar" />
-      <input
-        type="date"
-        value={checkOut}
-        onChange={(e) => setCheckOut(e.target.value)}
-      />
+    {/* HERO SEARCH */}
+    <div className="room-hero">
+      <div className="room-hero-inner">
+        <h1>Tìm phòng khách sạn</h1>
+
+        <div className="room-search-bar">
+          <div className="search-group">
+            <label>Check-in</label>
+            <input
+              type="date"
+              value={checkIn}
+              onChange={(e) => setCheckIn(e.target.value)}
+            />
+          </div>
+
+          <div className="search-group">
+            <label>Check-out</label>
+            <input
+              type="date"
+              value={checkOut}
+              onChange={(e) => setCheckOut(e.target.value)}
+            />
+          </div>
+
+          <button className="search-btn">
+            Tìm phòng
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-        {/* Filter tabs */}
-        <div className="mb-filters">
-          {["all", "available", "booked", "unavailable"].map((f) => (
-            <button
-              key={f}
-              className={`mb-filter-btn ${filter === f ? "active" : ""}`}
-              onClick={() => setFilter(f)}
-            >
-              {f === "all" && "Tất cả"}
-              {f === "available" && "Còn Trống"}
-              {f === "booked" && "Đã Đặt"}
-              {f === "unavailable" && "Không Hoạt động"}
-              <span className="mb-filter-count">
-                {rooms.filter((r) => {
-                    // console.log('status: room: ',r.roomNumber,': ',r.statusName);
-                if (f === "all") return true;   
-                const sId = r.statusName;
-                if (f === "available") return sId === "Available";
-                if (f === "booked") return  sId === "Occupied";
-                if (f === "unavailable") return sId !== "Available" && sId !== "Occupied";
-                  return true;
-                }).length}
-              </span>
-            </button>
+
+    <div className="room-container">
+
+      {/* FILTERS */}
+      <div className="room-filters">
+
+        <div className="filter-group">
+          <label>Loại phòng</label>
+          <select
+            value={roomTypeFilter}
+            onChange={(e) => setRoomTypeFilter(e.target.value)}
+          >
+            <option value="all">Tất cả</option>
+            <option value="single">Phòng đơn</option>
+            <option value="double">Phòng đôi</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Hạng phòng</label>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          >
+            <option value="all">Tất cả</option>
+            <option value="standard">Standard</option>
+            <option value="deluxe">Deluxe</option>
+            <option value="president">President</option>
+          </select>
+        </div>
+
+      </div>
+
+      {/* ROOM LIST */}
+      {filtered.length === 0 ? (
+        <div className="room-empty">
+          <h3>Không tìm thấy phòng</h3>
+          <p>Hãy thử thay đổi ngày hoặc bộ lọc</p>
+        </div>
+      ) : (
+        <div className="room-grid">
+          {filtered.map((r) => (
+            <div key={r.roomId} className="room-card">
+
+              {/* ROOM IMAGE */}
+              <div className="room-image">
+                <img
+                  // src={`https://picsum.photos/600/400?random=${r.roomId}`}
+                  alt="room"
+                />
+
+                <span className={`room-badge ${r.available ? "available" : "booked"}`}>
+                  {r.available ? "Còn trống" : "Đã đặt"}
+                </span>
+              </div>
+
+              {/* ROOM INFO */}
+              <div className="room-info">
+
+                <div className="room-header">
+                  <h3>Phòng {r.roomNumber}</h3>
+                  <span className="room-category">
+                    {r.categoryName}
+                  </span>
+                </div>
+
+                <div className="room-specs">
+
+                  <span>🏢 Tầng {r.floor}</span>
+                  <span>📏 {r.sizem2} m²</span>
+                  <span>👤 {r.capacity} khách</span>
+                  <span>🛏 {r.bedConfiguration}</span>
+
+                </div>
+
+                <div className="room-footer">
+
+                  <div className="room-price">
+                    {formatPrice(r.price)}đ
+                    <span>/đêm</span>
+                  </div>
+
+                  <div className="room-actions">
+
+                    <Link
+                      to={`/rooms/${r.roomId}`}
+                      className="btn-outline"
+                    >
+                      Chi tiết
+                    </Link>
+
+                    {r.available && checkIn && checkOut && (
+                      <Link
+                        to={`/booking/new/${r.roomId}?checkIn=${checkIn}&checkOut=${checkOut}`}
+                        className="btn-primary"
+                      >
+                        Đặt phòng
+                      </Link>
+                    )}
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
           ))}
         </div>
+      )}
 
-        {/* ===== Room Type Filter ===== */}
-<div className="mb-filters">
-  <span className="mb-filter-label">Loại phòng</span>
-
-  {[
-    { key: "all", label: "Tất cả" },
-    { key: "single", label: "Phòng đơn" },
-    { key: "double", label: "Phòng đôi" },
-  ].map((t) => (
-    <button
-      key={t.key}
-      className={`mb-filter-btn ${
-        roomTypeFilter === t.key ? "active" : ""
-      }`}
-      onClick={() => setRoomTypeFilter(t.key)}
-    >
-      {t.label}
-    </button>
-  ))}
-</div>
-
-{/* ===== Category Filter ===== */}
-<div className="mb-filters">
-  <span className="mb-filter-label">Hạng phòng</span>
-
-  {[
-    { key: "all", label: "Tất cả" },
-    { key: "standard", label: "Standard" },
-    { key: "deluxe", label: "Deluxe" },
-    { key: "president", label: "President" },
-  ].map((c) => (
-    <button
-      key={c.key}
-      className={`mb-filter-btn ${
-        categoryFilter === c.key ? "active" : ""
-      }`}
-      onClick={() => setCategoryFilter(c.key)}
-    >
-      {c.label}
-    </button>
-  ))}
-</div>
-       
-
-        {/* Rooms list */}
-        {filtered.length === 0 ? (
-          <div className="mb-empty">
-            <p>Không có đặt phòng nào trong mục này.</p>
-            <Link to="/home" className="mb-empty-link">Tìm phòng ngay →</Link>
-          </div>
-        ) : (
-          <div className="mb-list">
-            {filtered.map((r) => {
-             
-              return (
-  <div key={r.roomId} className="mb-card">
-    {/* Left: info */}
-    <div className="mb-card-body">
-      <div className="mb-card-top">
-        <div>
-          <h3>Phòng {r.roomNumber}</h3>
-          <span className="mb-category">{r.categoryName}</span>
-        </div>
-        <span className={`mb-status ${r.available ? "available" : "booked"}`}>
-  {r.available ? "Còn trống" : "Đã được đặt"}
-</span>
-      </div>
-
-      <div className="mb-card-details">
-        <div className="mb-detail">
-          <span className="mb-detail-label">Tầng</span>
-          <span className="mb-detail-value">Tầng {r.floor}</span>
-        </div>
-        <div className="mb-detail">
-          <span className="mb-detail-label">Diện tích</span>
-          <span className="mb-detail-value">{r.sizem2} m²</span>
-        </div>
-        <div className="mb-detail">
-          <span className="mb-detail-label">Sức chứa</span>
-          <span className="mb-detail-value">{r.capacity} khách</span>
-        </div>
-        <div className="mb-detail">
-          <span className="mb-detail-label">Giường</span>
-          <span className="mb-detail-value">{r.bedConfiguration}</span>
-        </div>
-      </div>
-    </div>
-
-    {/* Right: price + actions */}
-    <div className="mb-card-aside">
-      <div className="mb-price">{formatPrice(r.price)} đ/đêm</div>
-
-      <div className="mb-card-actions">
-        <Link to={`/rooms/${r.roomId}`} className="mb-btn mb-btn-view">
-          Xem chi tiết
-        </Link>
-       {r.available && checkIn && checkOut && (
-  <Link
-    to={`/booking/new/${r.roomId}?checkIn=${checkIn}&checkOut=${checkOut}`}
-    className="mb-btn mb-btn-book"
-  >
-    Đặt phòng
-  </Link>
-)}
-      </div>
     </div>
   </div>
 );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
 }

@@ -19,13 +19,17 @@ import ReceptionistLayout from "./components/Receptionist/ReceptionistLayout";
 import BookingDetail from "./components/Receptionist/BookingDetail";
 import PaymentList from "./components/Receptionist/PaymentList";
 import MaintenanceRequestList from "./components/Receptionist/MaintenanceRequestList";
-import CleaningRequestList from "./components/Receptionist/CleaningRequestList";
+import ForgotPassword from "./components/ForgotPassword/ForgotPassword";
 import RoomList from "./components/Receptionist/RoomList";
 import ReceptionistRoomDetail from "./components/Receptionist/RoomDetail";
 import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
 import RoomList1 from "./components/Room/RoomList";
-import BookingList1 from"./components/Booking/BookingList";
+import BookingList1 from "./components/Booking/BookingList";
 import Profile from "./components/Profile/Profile";
+import Guidelines from "./components/Guidelines/Guidelines";
+import GuidelinesManagement from "./components/Receptionist/GuidelinesManagement";
+import Rules from "./components/Rules/Rules";
+import RulesManagement from "./components/Receptionist/RulesManagement";
 
 const Forbidden = () => (
   <div style={{ padding: 40, textAlign: "center" }}>
@@ -95,26 +99,31 @@ export default function App() {
       <Route path="/home" element={<Home user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
 
       {/*List room */}
-      <Route path="/rooms" element={<RoomList1 />} />
+      <Route path="/rooms" element={<RoomList1 user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
 
-      
+      {/* Guidelines & Rules (publicly available with Header/Footer) */}
+      <Route path="/guidelines" element={<Guidelines user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+      <Route path="/rules" element={<Rules user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+
       {/* login/register phải truyền callback */}
       <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
       <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/forbidden" element={<Forbidden />} />
 
       {/* ===== BOOKING ===== */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/payment" element={<Payment user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
-        <Route path="/payment/vnpay-return" element={<PaymentResult user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
+        <Route path="/payment" element={<Payment user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        <Route path="/payment/payos-return" element={<PaymentResult user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        <Route path="/payment/payos-cancel" element={<PaymentResult user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
 
         {/* ===== BOOKING ===== */}
 
-        <Route path="/rooms/:roomId" element={<RoomDetail />} />
-        <Route path="/booking/list" element={<BookingList1 />} />
-        <Route path="/booking/new/:roomId" element={<BookingForm />} />
-        <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmation />} />
-        <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/rooms/:roomId" element={<RoomDetail user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        <Route path="/booking/list" element={<BookingList1 user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        <Route path="/booking/new/:roomId" element={<BookingForm user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmation user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        <Route path="/my-bookings" element={<MyBookings user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
         <Route path="/profile" element={<Profile onLogout={handleLogout} />} />
       </Route>
       {/* ===== ADMIN ===== */}
@@ -134,10 +143,12 @@ export default function App() {
             <Route index element={<BookingList />} />
             <Route path="payments" element={<PaymentList />} />
             <Route path="maintenance" element={<MaintenanceRequestList />} />
-            <Route path="cleaning" element={<CleaningRequestList />} />
+
             <Route path="bookings/:id" element={<BookingDetail />} />
             <Route path="rooms" element={<RoomList />} />
             <Route path="rooms/:id" element={<ReceptionistRoomDetail />} />
+            <Route path="guidelines" element={<GuidelinesManagement />} />
+            <Route path="rules" element={<RulesManagement />} />
           </Route>
         </Route>
       </Route>

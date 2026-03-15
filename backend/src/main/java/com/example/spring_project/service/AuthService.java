@@ -16,33 +16,90 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-
-    private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
+    private final UserRepository        userRepository;
+    private final RoleRepository        roleRepository;
+    private final PasswordEncoder       passwordEncoder;
+    private final JwtUtil               jwtUtil;
     private final AuthenticationManager authenticationManager;
+    private final EmailService          emailService;
+    private final OtpStore              otpStore;       // ← inject OtpStore
 
-    @Transactional
-    public AuthResponse register(RegisterRequest request) {
-        // Check if user already exists
+    // ════════════════════════════════════════════════════════════════════════════
+    // BƯỚC 1: Validate → sinh OTP → lưu tạm → gửi email
+    // POST /api/auth/register  →  trả { message: "OTP đã gửi..." }
+    // ════════════════════════════════════════════════════════════════════════════
+    public void sendRegisterOtp(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
+            throw new RuntimeException("Email đã được đăng ký");
+        }
+        if (request.getMobilePhone() != null
+                && !request.getMobilePhone().isBlank()
+                && userRepository.existsByMobilePhone(request.getMobilePhone())) {
+            throw new RuntimeException("Số điện thoại đã được đăng ký");
         }
 
-        if (request.getMobilePhone() != null && userRepository.existsByMobilePhone(request.getMobilePhone())) {
-            throw new RuntimeException("Mobile phone already registered");
+        String otp = generateOtp();
+
+        otpStore.savePending(request.getEmail(), request);
+        otpStore.saveOtp(request.getEmail(), otp);
+
+        // Gửi email OTP (async)
+        emailService.sendRegisterOtpEmail(request.getEmail(), request.getFirstName(), otp);
+
+        // Debug log — xóa sau khi test xong
+        System.out.println("[OTP] sendRegisterOtp"
+                + " | email=" + request.getEmail().toLowerCase().trim()
+                + " | otp=" + otp
+                + " | otpStore.instance=" + otpStore.hashCode());
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
+    // BƯỚC 2: Xác thực OTP → tạo User trong DB → trả JWT
+    // POST /api/auth/verify-register-otp  →  trả AuthResponse + token
+    // ════════════════════════════════════════════════════════════════════════════
+    @Transactional
+    public AuthResponse verifyRegisterOtp(String email, String otp) {
+        // Debug log
+        OtpStore.OtpEntry stored = otpStore.getOtpEntry(email);
+        System.out.println("[OTP] verifyRegisterOtp"
+                + " | email=" + email.toLowerCase().trim()
+                + " | input=" + otp.trim()
+                + " | stored=" + (stored != null ? stored.getCode() : "NULL")
+                + " | expired=" + (stored != null ? stored.isExpired() : "N/A")
+                + " | hasPending=" + otpStore.hasPending(email)
+                + " | otpStore.instance=" + otpStore.hashCode());
+
+        if (!otpStore.isOtpValid(email, otp)) {
+            if (stored == null) {
+                throw new RuntimeException("OTP không tồn tại. Vui lòng yêu cầu lại.");
+            } else if (stored.isExpired()) {
+                otpStore.clear(email);
+                throw new RuntimeException("OTP đã hết hạn. Vui lòng yêu cầu mã mới.");
+            } else {
+                throw new RuntimeException("Mã OTP không đúng. Vui lòng kiểm tra lại.");
+            }
         }
 
-        // Get customer role (default for registration)
+        RegisterRequest request = otpStore.getPending(email);
+        if (request == null) {
+            throw new RuntimeException("Không tìm thấy phiên đăng ký. Vui lòng điền lại thông tin.");
+        }
+
+        // Kiểm tra lại email chưa bị đăng ký bởi người khác trong lúc chờ
+        if (userRepository.existsByEmail(request.getEmail())) {
+            otpStore.clear(email);
+            throw new RuntimeException("Email đã được đăng ký. Vui lòng đăng nhập.");
+        }
+
         Role customerRole = roleRepository.findByName("customer")
-                .orElseThrow(() -> new RuntimeException("Customer role not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy role customer"));
 
-        // Create new user
         User user = new User();
         user.setFirstName(request.getFirstName());
         user.setMiddleName(request.getMiddleName());
@@ -57,9 +114,10 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        // Generate JWT token
-        String token = jwtUtil.generateToken(savedUser);
+        // Dọn dẹp OTP + pending
+        otpStore.clear(email);
 
+        String token = jwtUtil.generateToken(savedUser);
         return AuthResponse.builder()
                 .token(token)
                 .type("Bearer")
@@ -68,40 +126,46 @@ public class AuthService {
                 .firstName(savedUser.getFirstName())
                 .lastName(savedUser.getLastName())
                 .role(savedUser.getRole().getName())
-                .message("Registration successful")
+                .message("Đăng ký thành công")
                 .build();
     }
 
+    // ════════════════════════════════════════════════════════════════════════════
+    // GỬI LẠI OTP
+    // POST /api/auth/resend-otp
+    // ════════════════════════════════════════════════════════════════════════════
+    public void resendRegisterOtp(String email) {
+        if (!otpStore.hasPending(email)) {
+            throw new RuntimeException("Không tìm thấy phiên đăng ký. Vui lòng điền lại thông tin.");
+        }
+
+        RegisterRequest request = otpStore.getPending(email);
+        String otp = generateOtp();
+        otpStore.saveOtp(email, otp);
+        emailService.sendRegisterOtpEmail(email, request.getFirstName(), otp);
+
+        System.out.println("[OTP] resendRegisterOtp | email=" + email.toLowerCase().trim() + " | otp=" + otp);
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
+    // LOGIN
+    // ════════════════════════════════════════════════════════════════════════════
     public AuthResponse login(LoginRequest request) {
         try {
-            // Authenticate user
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
-                            request.getPassword()
-                    )
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
         } catch (BadCredentialsException e) {
-            throw new RuntimeException("Invalid email or password");
+            throw new RuntimeException("Email hoặc mật khẩu không đúng");
         }
 
-        // Load user details
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
 
-        // Check if account is active
-        if (!user.getIsActive()) {
-            throw new RuntimeException("Account is inactive");
-        }
+        if (!user.getIsActive())   throw new RuntimeException("Tài khoản chưa được kích hoạt");
+        if (user.getIsBlackList()) throw new RuntimeException("Tài khoản đã bị khóa");
 
-        // Check if account is blacklisted
-        if (user.getIsBlackList()) {
-            throw new RuntimeException("Account is blacklisted");
-        }
-
-        // Generate JWT token
         String token = jwtUtil.generateToken(user);
-
         return AuthResponse.builder()
                 .token(token)
                 .type("Bearer")
@@ -110,7 +174,12 @@ public class AuthService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .role(user.getRole().getName())
-                .message("Login successful")
+                .message("Đăng nhập thành công")
                 .build();
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
+    private String generateOtp() {
+        return String.valueOf(100_000 + new SecureRandom().nextInt(900_000));
     }
 }
