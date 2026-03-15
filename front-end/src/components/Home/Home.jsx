@@ -148,7 +148,7 @@ export default function Home({ user, role, onLogout }) {
 
           <button
             className="hero-book-btn"
-            onClick={() => navigate("/rooms")}
+            onClick={() => navigate("/booking/list")}
           >
             Đặt phòng ngay
           </button>
