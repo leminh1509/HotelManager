@@ -24,7 +24,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/requests")
 @CrossOrigin(origins = "http://localhost:3000")
-@PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_MAINTENANCE')")
+@PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_MAINTENANCE', 'ROLE_MAINTENANCE_MANAGER')")
 public class ServiceRequestController {
 
     @Autowired
@@ -70,7 +70,7 @@ public class ServiceRequestController {
     }
 
     @PostMapping("/cleaning")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_MAINTENANCE_MANAGER')")
     public ServiceRequest createCleaningRequest(@RequestBody Map<String, Object> payload) {
         payload.put("type", "CLEANING");
         return createRequest(payload);
@@ -91,14 +91,14 @@ public class ServiceRequestController {
     }
 
     @PostMapping("/maintenance")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_MAINTENANCE_MANAGER')")
     public ServiceRequest createMaintenanceRequest(@RequestBody Map<String, Object> payload) {
         payload.put("type", "MAINTENANCE");
         return createRequest(payload);
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_MAINTENANCE_MANAGER')")
     public ServiceRequest createRequest(@RequestBody Map<String, Object> payload) {
         Object roomIdObj = payload.get("roomId");
         Integer roomId = null;
@@ -154,7 +154,7 @@ public class ServiceRequestController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_RECEPTIONIST')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_RECEPTIONIST', 'ROLE_MAINTENANCE_MANAGER')")
     public void deleteRequest(@PathVariable Long id) {
         service.deleteRequest(id);
     }

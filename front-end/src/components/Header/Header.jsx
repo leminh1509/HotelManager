@@ -59,6 +59,13 @@ export default function Header({
     { key: "inventory", label: "Inventory", to: "/maintenance/inventory" },
   ];
 
+  const maintenanceManagerItems = [
+    { key: "requests", label: "All Requests", to: "/receptionist/booking-list" }, // Reusing existing management views
+    { key: "staff", label: "Staff Manage", to: "/receptionist/rooms" },      // Or similar admin views
+    { key: "bills", label: "Bills & Fees", to: "/receptionist/room-fees" },
+    { key: "guidelines", label: "Guidelines", to: "/guidelines" },
+  ];
+
   const guestItems = [
     { label: "Home", to: "/home", end: true },
     { label: "Rooms", to: "/rooms" },
@@ -158,6 +165,21 @@ export default function Header({
                   ) : role === "maintenance" ? (
                     <ul>
                       {maintenanceItems.map((it) => (
+                        <li key={it.key}>
+                          <NavLink
+                            to={it.to}
+                            end={Boolean(it.end)}
+                            className={({ isActive }) => (isActive ? "active-link" : "")}
+                            onClick={closeMobile}
+                          >
+                            {it.label}
+                          </NavLink>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : role === "maintenance_manager" ? (
+                    <ul>
+                      {maintenanceManagerItems.map((it) => (
                         <li key={it.key}>
                           <NavLink
                             to={it.to}
