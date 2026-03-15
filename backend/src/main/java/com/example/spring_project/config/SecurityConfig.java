@@ -80,9 +80,9 @@ public class SecurityConfig {
                         // Chỉ ADMIN mới vào được /api/admin/**
                         .requestMatchers(new AntPathRequestMatcher("/api/admin/**")).hasRole("ADMIN")
 
-                        // RECEPTIONIST hoặc ADMIN mới vào được /api/receptionist/**
+                        // RECEPTIONIST, MAINTENANCE_MANAGER or ADMIN mới vào được /api/receptionist/**
                         .requestMatchers(new AntPathRequestMatcher("/api/receptionist/**"))
-                        .hasAnyRole("RECEPTIONIST", "ADMIN")
+                        .hasAnyRole("RECEPTIONIST", "MAINTENANCE_MANAGER", "ADMIN")
 
                         // CUSTOMER hoặc ADMIN mới vào được /api/customer/**
                         .requestMatchers(new AntPathRequestMatcher("/api/customer/**"))
