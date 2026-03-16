@@ -24,17 +24,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
-import java.util.List;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-/**
- * SecurityConfig - Cấu hình bảo mật trung tâm của ứng dụng
- * File này quyết định:
- * - Ai được phép truy cập endpoint nào
- * - Cách xác thực người dùng
- * - Cấu hình CORS (cho phép frontend gọi API)
- * - Cấu hình mã hóa mật khẩu
- */
+
 @Configuration // Đánh dấu đây là lớp cấu hình Spring
 @EnableWebSecurity // Bật Spring Security
 @EnableMethodSecurity // Cho phép dùng @PreAuthorize trên từng method/controller
@@ -44,11 +36,6 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter; // Filter JWT đã tạo ở trên
     private final UserDetailsService userDetailsService; // Service load user từ DB
 
-    /**
-     * ══════════════════════════════════════════
-     * CẤU HÌNH CHÍNH: Quy tắc bảo mật cho HTTP
-     * ══════════════════════════════════════════
-     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
