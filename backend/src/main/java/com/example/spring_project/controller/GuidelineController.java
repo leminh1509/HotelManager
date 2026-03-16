@@ -3,10 +3,12 @@ package com.example.spring_project.controller;
 import com.example.spring_project.entity.Guideline;
 import com.example.spring_project.service.GuidelineService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -18,8 +20,11 @@ public class GuidelineController {
     private GuidelineService guidelineService;
 
     @GetMapping
-    public List<Guideline> getAllGuidelines() {
-        return guidelineService.getAllGuidelines();
+    public Page<Guideline> getAllGuidelines(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return guidelineService.getPaginatedGuidelines(pageable);
     }
 
     @GetMapping("/{id}")

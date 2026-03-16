@@ -1,32 +1,41 @@
 import React, { useState, useEffect } from "react";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
+import Pagination from "../Common/Pagination";
 import "./Rules.css";
 
 export default function Rules({ user, role, onLogout }) {
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
-    fetchRules();
-  }, []);
+    fetchRules(currentPage);
+  }, [currentPage]);
 
-  const fetchRules = async () => {
+  const fetchRules = async (page) => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:9999/api/rules");
+      const res = await fetch(`http://localhost:9999/api/rules?page=${page}&size=10`);
       if (!res.ok) {
         throw new Error("Failed to fetch hotel rules");
       }
       const data = await res.json();
-      setRules(data);
+      setRules(data.content);
+      setTotalPages(data.totalPages);
     } catch (err) {
       console.error(err);
       setError("Unable to load hotel rules. Please try again later.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo(0, 0);
   };
 
   const formatDate = (dateString) => {
@@ -69,6 +78,12 @@ export default function Rules({ user, role, onLogout }) {
                   </div>
                 </div>
               ))}
+
+              <Pagination 
+                currentPage={currentPage} 
+                totalPages={totalPages} 
+                onPageChange={handlePageChange} 
+              />
             </div>
           )}
         </div>

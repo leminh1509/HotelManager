@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Pagination from "../Common/Pagination";
 import "../Admin/AdminLayout.css";
 import "./RulesManagement.css";
 
@@ -6,6 +7,8 @@ export default function RulesManagement() {
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
@@ -14,24 +17,29 @@ export default function RulesManagement() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    fetchRules();
-  }, []);
+    fetchRules(currentPage);
+  }, [currentPage]);
 
-  const fetchRules = async () => {
+  const fetchRules = async (page) => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:9999/api/rules");
+      const res = await fetch(`http://localhost:9999/api/rules?page=${page}&size=10`);
       if (!res.ok) {
         throw new Error("Failed to fetch rules");
       }
       const data = await res.json();
-      setRules(data);
+      setRules(data.content || []);
+      setTotalPages(data.totalPages || 0);
     } catch (err) {
       console.error(err);
       setError("Unable to load rules. Please try again later.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
   };
 
   const formatDate = (dateString) => {
@@ -87,7 +95,7 @@ export default function RulesManagement() {
         throw new Error(`Failed to ${isEditing ? "update" : "create"} rule`);
       }
 
-      await fetchRules(); 
+      await fetchRules(currentPage); 
       handleCloseModal();
     } catch (err) {
       console.error(err);
@@ -114,7 +122,7 @@ export default function RulesManagement() {
         throw new Error("Failed to delete rule");
       }
 
-      await fetchRules();
+      await fetchRules(currentPage);
     } catch (err) {
       console.error(err);
       alert(err.message);
@@ -182,6 +190,14 @@ export default function RulesManagement() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {!loading && !error && (
+        <Pagination 
+          currentPage={currentPage} 
+          totalPages={totalPages} 
+          onPageChange={handlePageChange} 
+        />
       )}
 
       {showModal && (

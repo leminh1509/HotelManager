@@ -537,3 +537,29 @@ CREATE TABLE rules (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
+
+-- Sample Guidelines
+INSERT INTO guidelines (title, content) VALUES
+('Check-in and Check-out', 'Check-in time is from 2:00 PM. Check-out time is before 12:00 PM. Please contact the front desk for early check-in or late check-out requests.'),
+('Breakfast Information', 'Complimentary breakfast is served daily at the 36 RESTAURANT on the 1st floor from 6:30 AM to 10:00 AM.'),
+('Pool and Spa Usage', 'The swimming pool and spa are located on the rooftop (11th floor) and are open from 6:00 AM to 9:00 PM.'),
+('Fitness Center Access', 'The gym is located on the 2nd floor and is available 24/7 for all hotel guests. Please use your room key card for access.'),
+('WiFi Connection Guide', 'Free high-speed WiFi is available throughout the hotel. Network: 36Hotel_Guest. No password required, just accept the terms on the login page.'),
+('Housekeeping Schedule', 'Rooms are cleaned daily between 9:00 AM and 4:00 PM. If you do not wish to be disturbed, please hang the "Do Not Disturb" sign on your door.'),
+('Parking Facilities', 'Underground parking is free for hotel guests. Please validate your parking ticket at the reception before leaving.'),
+('Room Service Hours', 'Room service is available 24 hours a day. You can find the menu in the tablet provided in your room or by calling extension 88.'),
+('Laundry and Pressing', 'Laundry bags and forms are in your closet. Items collected before 10:00 AM will be returned by 6:00 PM on the same day.'),
+('Emergency and Medical', 'In case of emergency, please dial 0 for the operator. Medical assistance is available 24/7 through our on-call doctor service.');
+
+-- Sample Rules
+INSERT INTO rules (title, content) VALUES
+('No Smoking Policy', 'Our hotel is a 100% smoke-free environment. Smoking is strictly prohibited in all guest rooms and public areas. A cleaning fee of 2,000,000 VND will apply for violations.'),
+('Quiet Hours', 'To ensure all guests have a restful stay, please observe quiet hours from 10:00 PM to 7:00 AM in hallways and guest rooms.'),
+('Pet Policy', 'We love animals, but for the comfort of all guests, pets are not allowed on the hotel premises, except for registered service animals.'),
+('Guest Registration', 'Only registered guests are allowed in the rooms after 10:00 PM. All visitors must check-in at the front desk with a valid ID.'),
+('Damage and Loss', 'Guests are responsible for any damage to hotel property or loss of items provided in the room. Charges will be added to the final bill.'),
+('Key Card Security', 'Please keep your room key card with you at all times. Lost key cards should be reported immediately. A replacement fee of 100,000 VND per card applies.'),
+('No Outside Food in Dining Areas', 'Consumption of outside food and beverages is not permitted in the hotel restaurant, bar, or pool area.'),
+('Pool Safety Rules', 'No diving is allowed. Children under 12 must be accompanied by an adult. Glass containers are prohibited in the pool area.'),
+('Energy Conservation', 'Please help us protect the environment by turning off lights, TV, and air conditioning when leaving your room.'),
+('Prohibited Activities', 'Illegal activities, gambling, and weapons are strictly prohibited. The hotel reserves the right to report violations to local authorities and terminate the stay without refund.');

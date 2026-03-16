@@ -1,32 +1,41 @@
 import React, { useState, useEffect } from "react";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
+import Pagination from "../Common/Pagination";
 import "./Guidelines.css";
 
 export default function Guidelines({ user, role, onLogout }) {
   const [guidelines, setGuidelines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
-    fetchGuidelines();
-  }, []);
+    fetchGuidelines(currentPage);
+  }, [currentPage]);
 
-  const fetchGuidelines = async () => {
+  const fetchGuidelines = async (page) => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:9999/api/guidelines");
+      const res = await fetch(`http://localhost:9999/api/guidelines?page=${page}&size=10`);
       if (!res.ok) {
         throw new Error("Failed to fetch guidelines");
       }
       const data = await res.json();
-      setGuidelines(data);
+      setGuidelines(data.content);
+      setTotalPages(data.totalPages);
     } catch (err) {
       console.error(err);
       setError("Unable to load guidelines. Please try again later.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo(0, 0);
   };
 
   const formatDate = (dateString) => {
@@ -69,6 +78,12 @@ export default function Guidelines({ user, role, onLogout }) {
                   </div>
                 </div>
               ))}
+              
+              <Pagination 
+                currentPage={currentPage} 
+                totalPages={totalPages} 
+                onPageChange={handlePageChange} 
+              />
             </div>
           )}
         </div>
