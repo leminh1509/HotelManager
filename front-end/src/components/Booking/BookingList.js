@@ -263,7 +263,7 @@ const roomsWithAvailability = rooms.map((r) => ({
               {/* ROOM IMAGE */}
               <div className="room-image">
                 <img
-                  // src={`https://picsum.photos/600/400?random=${r.roomId}`}
+                   src={`/hms/img/room/room-${(r.roomId % 6) + 1}.jpg`}
                   alt="room"
                 />
 

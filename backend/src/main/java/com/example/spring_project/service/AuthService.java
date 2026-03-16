@@ -30,10 +30,9 @@ public class AuthService {
     private final EmailService          emailService;
     private final OtpStore              otpStore;       // ← inject OtpStore
 
-    // ════════════════════════════════════════════════════════════════════════════
-    // BƯỚC 1: Validate → sinh OTP → lưu tạm → gửi email
+    // Validate → sinh OTP → lưu tạm → gửi email
     // POST /api/auth/register  →  trả { message: "OTP đã gửi..." }
-    // ════════════════════════════════════════════════════════════════════════════
+
     public void sendRegisterOtp(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email đã được đăng ký");
@@ -59,10 +58,8 @@ public class AuthService {
                 + " | otpStore.instance=" + otpStore.hashCode());
     }
 
-    // ════════════════════════════════════════════════════════════════════════════
-    // BƯỚC 2: Xác thực OTP → tạo User trong DB → trả JWT
+    // Xác thực OTP → tạo User trong DB → trả JWT
     // POST /api/auth/verify-register-otp  →  trả AuthResponse + token
-    // ════════════════════════════════════════════════════════════════════════════
     @Transactional
     public AuthResponse verifyRegisterOtp(String email, String otp) {
         // Debug log
@@ -130,10 +127,8 @@ public class AuthService {
                 .build();
     }
 
-    // ════════════════════════════════════════════════════════════════════════════
     // GỬI LẠI OTP
     // POST /api/auth/resend-otp
-    // ════════════════════════════════════════════════════════════════════════════
     public void resendRegisterOtp(String email) {
         if (!otpStore.hasPending(email)) {
             throw new RuntimeException("Không tìm thấy phiên đăng ký. Vui lòng điền lại thông tin.");
@@ -147,9 +142,7 @@ public class AuthService {
         System.out.println("[OTP] resendRegisterOtp | email=" + email.toLowerCase().trim() + " | otp=" + otp);
     }
 
-    // ════════════════════════════════════════════════════════════════════════════
     // LOGIN
-    // ════════════════════════════════════════════════════════════════════════════
     public AuthResponse login(LoginRequest request) {
         try {
             authenticationManager.authenticate(
@@ -177,8 +170,6 @@ public class AuthService {
                 .message("Đăng nhập thành công")
                 .build();
     }
-
-    // ════════════════════════════════════════════════════════════════════════════
     private String generateOtp() {
         return String.valueOf(100_000 + new SecureRandom().nextInt(900_000));
     }

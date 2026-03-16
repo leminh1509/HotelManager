@@ -16,26 +16,19 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-/**
- * JwtAuthenticationFilter - Bộ lọc xác thực JWT
- * Đây là "người gác cổng" cho mọi request HTTP đến server.
- * Mỗi request chỉ đi qua filter này MỘT LẦN (nhờ extends OncePerRequestFilter).
- * Luồng hoạt động:
- * Request đến -> Filter đọc token -> Xác thực -> Cho phép hoặc từ chối truy cập
- */
 @Component
 @RequiredArgsConstructor // Lombok tự tạo constructor với các field final
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtUtil jwtUtil;                     // Tiện ích xử lý JWT
-    private final UserDetailsService userDetailsService; // Load thông tin user từ DB
+    private final JwtUtil jwtUtil;
+    private final UserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        // ── BƯỚC 1: Bỏ qua request kiểu OPTIONS (preflight CORS) ──
+        // Bỏ qua request kiểu OPTIONS (preflight CORS) ──
         // Trình duyệt gửi OPTIONS trước khi gửi request thật để hỏi server có cho phép không
         // Không cần xác thực JWT cho loại request này
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
@@ -43,7 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // ── BƯỚC 2: Đọc header Authorization từ request ──
+        // Đọc header Authorization từ request ──
         // Format chuẩn: "Authorization: Bearer <token>"
         final String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -52,10 +45,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // ── BƯỚC 3: Tách lấy phần token (bỏ chữ "Bearer " ở đầu) ──
+        //  Tách lấy phần token (bỏ chữ "Bearer " ở đầu) ──
         final String jwt = authHeader.substring(7); // "Bearer " có 7 ký tự
 
-        // ── BƯỚC 4: Giải mã token để lấy email của user ──
+        // Giải mã token để lấy email của user ──
         String userEmail;
         try {
             userEmail = jwtUtil.extractUsername(jwt);
@@ -65,7 +58,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // ── BƯỚC 5: Xác thực và đặt Authentication vào SecurityContext ──
+        //  Xác thực và đặt Authentication vào SecurityContext ──
         // Chỉ xử lý khi: email hợp lệ VÀ chưa có authentication nào trong context
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
@@ -95,7 +88,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
-        // ── BƯỚC 6: Tiếp tục chuyển request đến filter tiếp theo hoặc controller ──
+        //  Tiếp tục chuyển request đến filter tiếp theo hoặc controller ──
         filterChain.doFilter(request, response);
     }
 }
