@@ -76,8 +76,9 @@ border:1px solid #ddd;
 
 .room-grid{
 display:grid;
-grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
 gap:24px;
+align-items:stretch;
 }
 
 /* CARD */
@@ -170,6 +171,8 @@ display:flex;
 justify-content:space-between;
 align-items:center;
 margin-top:15px;
+gap:12px;
+flex-wrap:wrap;
 }
 
 .room-price{
@@ -201,6 +204,7 @@ padding:8px 16px;
 border-radius:8px;
 text-decoration:none;
 margin-right:8px;
+white-space:nowrap;
 }
 
 .btn-primary:hover{
