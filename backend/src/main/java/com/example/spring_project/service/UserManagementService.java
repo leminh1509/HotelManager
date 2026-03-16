@@ -27,7 +27,7 @@ public class UserManagementService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder; // ✅ THÊM MỚI
 
-    // ✅ MỚI: Admin tạo tài khoản người dùng
+    // Admin tạo tài khoản người dùng
     @Transactional
     public UserResponse createUser(CreateUserRequest request) {
         log.info("Admin creating new user with email: {}", request.getEmail());
@@ -67,7 +67,7 @@ public class UserManagementService {
         return convertToUserResponse(saved);
     }
 
-    // ✅ Optimized Search with Pagination
+    //  Optimized Search with Pagination
     public Page<UserResponse> getAllUsers(String keyword, String roleName, Pageable pageable) {
         if (keyword != null && keyword.trim().isEmpty())
             keyword = null;

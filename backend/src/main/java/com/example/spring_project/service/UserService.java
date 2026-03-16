@@ -20,11 +20,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
-/**
- * UserService - Nghiệp vụ cho người dùng thông thường (xem/sửa profile cá nhân)
- * Khác với UserManagementService (dành cho admin quản lý tất cả user),
- * service này chỉ xử lý các hành động của chính user đó với tài khoản của mình.
- */
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -34,7 +30,6 @@ public class UserService {
 
     /**
      * Lấy thông tin profile của user theo ID
-     * 
      * @Transactional(readOnly = true): chỉ đọc, không ghi -> tối ưu hiệu năng DB
      */
     @Transactional(readOnly = true)
@@ -53,7 +48,6 @@ public class UserService {
     /**
      * Cập nhật thông tin profile (họ tên, số điện thoại, ngày sinh)
      * User chỉ được sửa thông tin của chính mình (kiểm tra ở Controller)
-     * 
      * @param updatedBy: ID của người thực hiện sửa (để ghi audit log)
      */
     @Transactional

@@ -24,9 +24,7 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    // ════════════════════════════════════════════════════════════════════════════
-    // ✅ MỚI: Gửi OTP xác thực đăng ký
-    // ════════════════════════════════════════════════════════════════════════════
+    //  Gửi OTP xác thực đăng ký
     @Async
     public void sendRegisterOtpEmail(String toEmail, String firstName, String otp) {
         try {
@@ -97,10 +95,7 @@ public class EmailService {
                 "</table></td></tr></table>" +
                 "</body></html>";
     }
-
-    // ════════════════════════════════════════════════════════════════════════════
     // GỬI EMAIL THANH TOÁN THÀNH CÔNG (giữ nguyên từ trước)
-    // ════════════════════════════════════════════════════════════════════════════
     @Async
     public void sendPaymentSuccessEmail(Booking booking, double amountPaid) {
         if (booking.getGuestEmail() == null || booking.getGuestEmail().isEmpty()) return;

@@ -217,6 +217,109 @@
   }
 }
 
+/* ── Auth Header (Login / Register / ForgotPassword) ──────────────────────── */
+.auth-header {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.auth-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.auth-header-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.auth-header-logo-img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* Fallback: nếu ảnh không load, ẩn broken icon */
+.auth-header-logo-img[src=""],
+.auth-header-logo-img:not([src]) {
+  display: none;
+}
+
+.auth-header-divider {
+  width: 1px;
+  height: 24px;
+  background: #cbd5e1;
+  flex-shrink: 0;
+}
+
+.auth-header-tagline {
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.auth-header-back-btn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--header-text, #334155);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1.5px solid #e2e8f0;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.auth-header-back-btn:hover {
+  background: var(--header-primary, #1e293b);
+  color: white;
+  border-color: var(--header-primary, #1e293b);
+}
+
+.auth-header-back-btn i {
+  font-size: 12px;
+}
+
+/* Ẩn tagline & divider trên mobile nhỏ */
+@media (max-width: 480px) {
+  .auth-header-divider,
+  .auth-header-tagline {
+    display: none;
+  }
+}
+
+/* ── Auth Header: logo text fallback (nếu ảnh không tồn tại) ─────────────── */
+.auth-header-logo::after {
+  content: attr(data-brand);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--header-primary, #1e293b);
+  letter-spacing: -1px;
+}
+
+.auth-header-logo-img + * {
+  /* khi ảnh load thành công, ẩn text fallback */
+}
+
 /* Maintenance Mode Refinement */
 .maintenance-header-mode {
   background: #0f172a;

@@ -9,10 +9,13 @@ export function AuthHeader({ backTo = "/home", backLabel = "Back to Home" }) {
       <div className="auth-header-inner">
 
         {/* Logo + Brand */}
-        <Link to="/home" className="auth-header-logo">
+        <Link to="/home" className="auth-header-logo" data-brand="">
           <img
             src="/hms/img/36x.png"
+            alt="36 Hotel"
             className="auth-header-logo-img"
+            onLoad={(e) => { e.currentTarget.closest('.auth-header-logo').setAttribute('data-brand', ''); }}
+            onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.closest('.auth-header-logo').setAttribute('data-brand', '36'); }}
           />
         </Link>
 
@@ -84,7 +87,7 @@ export default function Header({
             <div className="col-left">
               <ul className="tn-left">
                 <li><i className="fa fa-phone" /> (84) 359 797 703</li>
-                <li><i className="fa fa-envelope" /> 37hotel@gmail.com</li>
+                <li><i className="fa fa-envelope" /> 36hotel@gmail.com</li>
               </ul>
             </div>
             <div className="col-right">

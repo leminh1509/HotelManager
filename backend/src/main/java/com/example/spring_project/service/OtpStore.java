@@ -8,14 +8,6 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Lưu OTP + thông tin đăng ký chờ xác thực.
- *
- * Tách thành @Component riêng (KHÔNG có @Transactional) để Spring
- * không bọc CGLIB proxy → đảm bảo chỉ có 1 instance duy nhất giữ Map.
- *
- * Map khai báo static để sống sót qua devtools hot-reload.
- */
 @Component
 public class OtpStore {
 
