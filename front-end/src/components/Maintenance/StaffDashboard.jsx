@@ -32,7 +32,7 @@ const StaffDashboard = () => {
 
             // Calculate stats
             const s = {
-                pending: allTasks.filter(t => t.status === 'New' || t.status === 'New').length, // Assuming Backend uses 'New'
+                pending: allTasks.filter(t => t.status === 'New' || t.status === 'PENDING').length, // Assuming Backend uses 'New' or 'PENDING'
                 inProgress: allTasks.filter(t => t.status === 'In Progress').length,
                 completed: allTasks.filter(t => t.status === 'Completed').length
             };

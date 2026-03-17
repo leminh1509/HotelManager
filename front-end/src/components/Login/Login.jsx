@@ -13,34 +13,44 @@ const normalizeRole = (role) => {
 };
 
 const redirectByRole = (role, navigate) => {
-  switch (role) {
-    case 'ADMIN':       navigate('/admin',                  { replace: true }); break;
-    case 'RECEPTIONIST':navigate('/receptionist',          { replace: true }); break;
-    case 'MAINTENANCE': navigate('/maintenance/dashboard', { replace: true }); break;
+  const normalizedRole = normalizeRole(role);
+  switch (normalizedRole) {
+    case 'ADMIN':
+      navigate('/admin', { replace: true });
+      break;
+    case 'RECEPTIONIST':
+      navigate('/receptionist', { replace: true });
+      break;
+    case 'MAINTENANCE':
+    case 'MAINTENANCE_MANAGER':
+      navigate('/maintenance/dashboard', { replace: true });
+      break;
     case 'CUSTOMER':
-    default:            navigate('/home',                  { replace: true }); break;
+    default:
+      navigate('/home', { replace: true });
+      break;
   }
 };
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 const Login = ({ onLoginSuccess }) => {
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Nhận prefill từ Register sau khi xác thực OTP thành công
-  const prefillEmail    = location.state?.prefillEmail    || '';
+  const prefillEmail = location.state?.prefillEmail || '';
   const prefillPassword = location.state?.prefillPassword || '';
-  const justRegistered  = location.state?.registered      || false;
+  const justRegistered = location.state?.registered || false;
 
   const [formData, setFormData] = useState({
-    email:    prefillEmail,
+    email: prefillEmail,
     password: prefillPassword,
   });
-  const [errors,         setErrors]         = useState({});
-  const [loading,        setLoading]        = useState(false);
-  const [googleLoading,  setGoogleLoading]  = useState(false);
-  const [showPw,         setShowPw]         = useState(false);
-  const [successToast,   setSuccessToast]   = useState(justRegistered);
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+  const [successToast, setSuccessToast] = useState(justRegistered);
 
   // Tự ẩn toast sau 4 giây
   useEffect(() => {
@@ -54,27 +64,29 @@ const Login = ({ onLoginSuccess }) => {
   useEffect(() => {
     const scriptId = 'google-gsi-script';
     if (document.getElementById(scriptId)) { initGoogleBtn(); return; }
-    const script    = document.createElement('script');
-    script.id       = scriptId;
-    script.src      = 'https://accounts.google.com/gsi/client';
-    script.async    = true;
-    script.defer    = true;
-    script.onload   = initGoogleBtn;
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = initGoogleBtn;
     document.head.appendChild(script);
   }, []);
 
   const initGoogleBtn = () => {
     if (!window.google) return;
     window.google.accounts.id.initialize({
-      client_id:            GOOGLE_CLIENT_ID,
-      callback:             handleGoogleResponse,
-      auto_select:          false,
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleResponse,
+      auto_select: false,
       cancel_on_tap_outside: true,
     });
     window.google.accounts.id.renderButton(
       document.getElementById('google-signin-btn'),
-      { theme: 'outline', size: 'large', width: '100%',
-        text: 'continue_with', shape: 'rectangular', logo_alignment: 'left' }
+      {
+        theme: 'outline', size: 'large', width: '100%',
+        text: 'continue_with', shape: 'rectangular', logo_alignment: 'left'
+      }
     );
   };
 
@@ -85,7 +97,7 @@ const Login = ({ onLoginSuccess }) => {
     setGoogleLoading(true);
     setErrors({});
     try {
-      const res  = await fetch('http://localhost:9999/api/auth/google', {
+      const res = await fetch('http://localhost:9999/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
@@ -94,14 +106,16 @@ const Login = ({ onLoginSuccess }) => {
       if (!res.ok) { setErrors({ general: data?.message || 'Đăng nhập Google thất bại.' }); return; }
 
       const token = data?.token;
-      if (!token)  { setErrors({ general: 'Phản hồi không có token.' }); return; }
+      if (!token) { setErrors({ general: 'Phản hồi không có token.' }); return; }
 
-      const role     = normalizeRole(data?.role);
-      const userData = { userId: data?.userId, email: data?.email,
-                         firstName: data?.firstName, lastName: data?.lastName, role };
+      const role = normalizeRole(data?.role);
+      const userData = {
+        userId: data?.userId, email: data?.email,
+        firstName: data?.firstName, lastName: data?.lastName, role
+      };
       localStorage.setItem('token', token);
-      localStorage.setItem('role',  role);
-      localStorage.setItem('user',  JSON.stringify(userData));
+      localStorage.setItem('role', role);
+      localStorage.setItem('user', JSON.stringify(userData));
       if (onLoginSuccess) onLoginSuccess(userData);
       redirectByRole(role, navigate);
     } catch {
@@ -140,7 +154,7 @@ const Login = ({ onLoginSuccess }) => {
     if (!validate()) return;
     setLoading(true);
     try {
-      const res  = await fetch('http://localhost:9999/api/auth/login', {
+      const res = await fetch('http://localhost:9999/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -153,12 +167,14 @@ const Login = ({ onLoginSuccess }) => {
       const token = data?.token || data?.accessToken || data?.jwt;
       if (!token) { setErrors({ general: 'Phản hồi không có token.' }); return; }
 
-      const role     = normalizeRole(data?.role || data?.authority || (data?.roles?.[0] ?? ''));
-      const userData = { userId: data?.userId, email: data?.email || formData.email,
-                         firstName: data?.firstName, lastName: data?.lastName, role };
+      const role = normalizeRole(data?.role || data?.authority || (data?.roles?.[0] ?? ''));
+      const userData = {
+        userId: data?.userId, email: data?.email || formData.email,
+        firstName: data?.firstName, lastName: data?.lastName, role
+      };
       localStorage.setItem('token', token);
-      localStorage.setItem('role',  role);
-      localStorage.setItem('user',  JSON.stringify(userData));
+      localStorage.setItem('role', role);
+      localStorage.setItem('user', JSON.stringify(userData));
       if (onLoginSuccess) onLoginSuccess(userData);
       redirectByRole(role, navigate);
     } catch {
