@@ -50,6 +50,10 @@ public class FeedbackServiceImpl implements FeedbackService {
         feedback.setRating(request.getRating());
         feedback.setComment(request.getComment());
 
+        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
+            feedback.setImageUrls(String.join(",", request.getImageUrls()));
+        }
+
         feedback = feedbackRepository.save(feedback);
         return mapToDTO(feedback);
     }
@@ -72,6 +76,13 @@ public class FeedbackServiceImpl implements FeedbackService {
         dto.setBookingId(feedback.getBooking().getBookingId());
         dto.setRating(feedback.getRating());
         dto.setComment(feedback.getComment());
+
+        if (feedback.getImageUrls() != null && !feedback.getImageUrls().isEmpty()) {
+            dto.setImageUrls(java.util.Arrays.asList(feedback.getImageUrls().split(",")));
+        } else {
+            dto.setImageUrls(java.util.Collections.emptyList());
+        }
+
         dto.setCreatedAt(feedback.getCreatedAt());
         return dto;
     }

@@ -13,5 +13,6 @@ public class FeedbackResponseDTO {
     private Integer bookingId;
     private Integer rating;
     private String comment;
+    private java.util.List<String> imageUrls;
     private LocalDateTime createdAt;
 }

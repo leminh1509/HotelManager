@@ -34,6 +34,6 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, 
          * Count non-completed tasks assigned to a specific staff member.
          * Used for load-balanced assignment during auto-checkout.
          */
-        @Query("SELECT COUNT(r) FROM ServiceRequest r WHERE r.assignedTo.userId = :userId AND r.status NOT IN (com.example.spring_project.entity.ServiceRequestStatus.Completed, com.example.spring_project.entity.ServiceRequestStatus.Rejected)")
+        @Query("SELECT COUNT(r) FROM ServiceRequest r WHERE r.assignedTo.userId = :userId AND r.status NOT IN (com.example.spring_project.entity.ServiceRequestStatus.Completed, com.example.spring_project.entity.ServiceRequestStatus.Rejected, com.example.spring_project.entity.ServiceRequestStatus.Cancelled)")
         long countActiveTasksByUser(@Param("userId") Integer userId);
 }

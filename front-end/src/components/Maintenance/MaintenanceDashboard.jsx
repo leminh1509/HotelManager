@@ -452,6 +452,7 @@ const MaintenanceDashboard = () => {
                                     <th>Mô Tả</th>
                                     <th>Ưu Tiên</th>
                                     <th>Trạng Thái</th>
+                                    <th>Nhân viên</th>
                                     <th>Ngày Tạo</th>
                                     <th>Hành Động</th>
                                 </tr>
@@ -476,6 +477,16 @@ const MaintenanceDashboard = () => {
                                             </span>
                                         </td>
                                         <td>{getStatusBadge(req.status)}</td>
+                                        <td>
+                                            {req.assignedTo ? (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                    <i className="fa fa-user-circle" style={{ color: '#007bff' }}></i>
+                                                    <span>{req.assignedTo.firstName} {req.assignedTo.lastName}</span>
+                                                </div>
+                                            ) : (
+                                                <span style={{ color: '#888', fontStyle: 'italic' }}>Chưa giao</span>
+                                            )}
+                                        </td>
                                         <td>{new Date(req.reportedAt).toLocaleDateString()}</td>
                                         <td style={{ display: 'flex', gap: '8px', minWidth: '200px' }}>
                                             {req.status === 'PENDING' && (

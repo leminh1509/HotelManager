@@ -18,7 +18,8 @@ INSERT INTO role(name, description) VALUES
 ('admin', 'System Administrator'),
 ('receptionist', 'Hotel Receptionist'),
 ('customer', 'Hotel Customer'),
-('maintenance', 'Maintenance Staff');
+('maintenance', 'Maintenance Staff'),
+('maintenance_manager', 'Maintenance and Housekeeping Manager');
 
 -- Users 
 CREATE TABLE users (
@@ -164,7 +165,7 @@ CREATE TABLE maintenance_request (
   photo_url VARCHAR(500) NULL,
 
   priority ENUM('Low','Medium','High','Urgent') NOT NULL DEFAULT 'Low',
-  status ENUM('New','In Progress','On Hold','Completed','Rejected') NOT NULL DEFAULT 'New',
+  status ENUM('New','In Progress','On Hold','Completed','Rejected','Cancelled') NOT NULL DEFAULT 'New',
 
   assigned_to INT NULL, 
   notes VARCHAR(1000) NULL,

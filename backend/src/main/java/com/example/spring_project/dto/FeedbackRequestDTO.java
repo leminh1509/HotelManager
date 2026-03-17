@@ -7,4 +7,5 @@ public class FeedbackRequestDTO {
     private Integer bookingId;
     private Integer rating;
     private String comment;
+    private java.util.List<String> imageUrls;
 }

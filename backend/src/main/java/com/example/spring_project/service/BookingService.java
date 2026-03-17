@@ -358,10 +358,6 @@ public class BookingService {
                     description,
                     ServiceRequestType.CLEANING,
                     "High");
-
-            // Real-time WebSocket notification
-            messagingTemplate.convertAndSend("/topic/maintenance",
-                    "New cleaning request for room " + room.getRoomNumber());
         }
 
         return BookingMapper.toBookingResponse(saved);
