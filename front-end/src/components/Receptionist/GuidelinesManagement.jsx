@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Pagination from "../Common/Pagination";
 import "../Admin/AdminLayout.css"; // Reuse generic admin styles or create specific ones if needed
 import "./GuidelinesManagement.css";
 
@@ -6,6 +7,8 @@ export default function GuidelinesManagement() {
   const [guidelines, setGuidelines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
@@ -14,24 +17,29 @@ export default function GuidelinesManagement() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    fetchGuidelines();
-  }, []);
+    fetchGuidelines(currentPage);
+  }, [currentPage]);
 
-  const fetchGuidelines = async () => {
+  const fetchGuidelines = async (page) => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:9999/api/guidelines");
+      const res = await fetch(`http://localhost:9999/api/guidelines?page=${page}&size=10`);
       if (!res.ok) {
         throw new Error("Failed to fetch guidelines");
       }
       const data = await res.json();
-      setGuidelines(data);
+      setGuidelines(data.content || []);
+      setTotalPages(data.totalPages || 0);
     } catch (err) {
       console.error(err);
       setError("Unable to load guidelines. Please try again later.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
   };
 
   const formatDate = (dateString) => {
@@ -89,7 +97,7 @@ export default function GuidelinesManagement() {
         throw new Error(`Failed to ${isEditing ? "update" : "create"} guideline`);
       }
 
-      await fetchGuidelines(); 
+      await fetchGuidelines(currentPage); 
       handleCloseModal();
     } catch (err) {
       console.error(err);
@@ -116,7 +124,7 @@ export default function GuidelinesManagement() {
         throw new Error("Failed to delete guideline");
       }
 
-      await fetchGuidelines();
+      await fetchGuidelines(currentPage);
     } catch (err) {
       console.error(err);
       alert(err.message);
@@ -184,6 +192,14 @@ export default function GuidelinesManagement() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {!loading && !error && (
+        <Pagination 
+          currentPage={currentPage} 
+          totalPages={totalPages} 
+          onPageChange={handlePageChange} 
+        />
       )}
 
       {/* --- Add / Edit Modal --- */}

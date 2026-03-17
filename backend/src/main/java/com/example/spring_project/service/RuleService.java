@@ -3,6 +3,8 @@ package com.example.spring_project.service;
 import com.example.spring_project.entity.Rule;
 import com.example.spring_project.repository.RuleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,6 +18,10 @@ public class RuleService {
 
     public List<Rule> getAllRules() {
         return ruleRepository.findAll();
+    }
+
+    public Page<Rule> getPaginatedRules(Pageable pageable) {
+        return ruleRepository.findAll(pageable);
     }
 
     public Optional<Rule> getRuleById(Integer id) {
