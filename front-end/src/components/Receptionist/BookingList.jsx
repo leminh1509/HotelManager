@@ -21,7 +21,7 @@ export default function BookingList() {
   const [isRoomPickerOpen, setIsRoomPickerOpen] = useState(false);
   const [newBooking, setNewBooking] = useState({
     roomId: "",
-    checkinTime: "",
+    checkinTime: today,
     checkoutTime: "",
     guestCount: 1,
     guestName: "",
@@ -76,7 +76,7 @@ export default function BookingList() {
       });
       setIsModalOpen(false);
       setNewBooking({
-        roomId: "", checkinTime: "", checkoutTime: "", guestCount: 1,
+        roomId: "", checkinTime: today, checkoutTime: "", guestCount: 1,
         guestName: "", guestEmail: "", guestPhone: "", guestIdNumber: "",
         guestNationality: "Vietnam", guestAddress: "", specialRequest: "",
         earlyCheckin: false, lateCheckout: false
@@ -337,11 +337,28 @@ export default function BookingList() {
                     <hr className="my-4" />
 
                     <div className="col-md-6">
+                      <label className="form-label">Check-out Date *</label>
+                      <input type="date" className="form-control" required
+                        min={newBooking.checkinTime || today}
+                        value={newBooking.checkoutTime} onChange={e => setNewBooking({ ...newBooking, checkoutTime: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="col-md-6">
+                      <label className="form-label">Guest Count *</label>
+                      <input type="number" className="form-control" min="1" required
+                        value={newBooking.guestCount} onChange={e => setNewBooking({ ...newBooking, guestCount: parseInt(e.target.value) })}
+                      />
+                    </div>
+
+                    <div className="col-md-6">
                       <label className="form-label">Room *</label>
                       <div className="d-flex align-items-center gap-2">
                         <button
                           type="button"
                           className="btn btn-outline-primary"
+                          disabled={!newBooking.checkoutTime}
+                          title={!newBooking.checkoutTime ? "Please select check-out date first" : ""}
                           onClick={() => setIsRoomPickerOpen(true)}
                         >
                           {newBooking.roomId
@@ -354,26 +371,6 @@ export default function BookingList() {
                         {/* Hidden input to keep HTML5 'required' validation working */}
                         <input type="hidden" required value={newBooking.roomId} />
                       </div>
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label">Guest Count *</label>
-                      <input type="number" className="form-control" min="1" required
-                        value={newBooking.guestCount} onChange={e => setNewBooking({ ...newBooking, guestCount: parseInt(e.target.value) })}
-                      />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label">Check-in Date *</label>
-                      <input type="date" className="form-control" required
-                        min={today}
-                        value={newBooking.checkinTime} onChange={e => setNewBooking({ ...newBooking, checkinTime: e.target.value })}
-                      />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label">Check-out Date *</label>
-                      <input type="date" className="form-control" required
-                        min={newBooking.checkinTime || today}
-                        value={newBooking.checkoutTime} onChange={e => setNewBooking({ ...newBooking, checkoutTime: e.target.value })}
-                      />
                     </div>
                   </div>
                 </form>
