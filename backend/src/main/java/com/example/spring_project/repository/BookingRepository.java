@@ -105,7 +105,8 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                                 guest_phone,
                                 MAX(guest_id_number) as guest_id_number,
                                 MAX(guest_nationality) as guest_nationality,
-                                MAX(guest_address) as guest_address
+                                MAX(guest_address) as guest_address,
+                                MAX(CASE WHEN status IN ('Confirmed', 'Checked-in') THEN 1 ELSE 0 END) as has_active_booking
                             FROM booking
                             WHERE (:keyword IS NULL OR
                                    LOWER(guest_name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR

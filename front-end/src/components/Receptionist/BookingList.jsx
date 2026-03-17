@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import axios from "axios";
 
 export default function BookingList() {
+  const location = useLocation();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,7 +41,24 @@ export default function BookingList() {
   useEffect(() => {
     fetchBookings();
     fetchRooms();
-  }, []);
+
+    // Check for rebooking data from CustomerList -> BookingsModal
+    if (location.state && location.state.rebookData) {
+      const { rebookData } = location.state;
+      setNewBooking(prev => ({
+        ...prev,
+        guestName: rebookData.guestName || "",
+        guestEmail: rebookData.guestEmail || "",
+        guestPhone: rebookData.guestPhone || "",
+        guestIdNumber: rebookData.guestIdNumber || "",
+        guestNationality: rebookData.guestNationality || "Vietnam",
+        guestAddress: rebookData.guestAddress || "",
+      }));
+      setIsModalOpen(true);
+      // Clear state so it doesn't reopen on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const fetchRooms = async () => {
     try {

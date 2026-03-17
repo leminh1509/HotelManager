@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import CustomerBookingsModal from './CustomerBookingsModal';
 import Pagination from '../Common/Pagination';
 import './CustomerList.css';
 
 const CustomerList = () => {
+    const navigate = useNavigate();
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -47,6 +49,18 @@ const CustomerList = () => {
     const handleViewBookings = (customer) => {
         setSelectedCustomer(customer);
         setIsModalOpen(true);
+    };
+
+    const handleRebook = (customer) => {
+        const rebookData = {
+            guestName: customer.name,
+            guestEmail: customer.email,
+            guestPhone: customer.phone,
+            guestIdNumber: customer.idNumber,
+            guestNationality: customer.nationality,
+            guestAddress: customer.address
+        };
+        navigate('/receptionist', { state: { rebookData } });
     };
 
     return (
@@ -96,12 +110,23 @@ const CustomerList = () => {
                                         <td>{customer.idNumber || 'N/A'}</td>
                                         <td>{customer.nationality || 'N/A'}</td>
                                         <td className="actions-col">
-                                            <button 
-                                                className="btn btn-sm btn-outline-primary"
-                                                onClick={() => handleViewBookings(customer)}
-                                            >
-                                                <i className="fa fa-history me-1"></i> Bookings
-                                            </button>
+                                            <div className="d-flex gap-2">
+                                                <button 
+                                                    className="btn btn-sm btn-outline-primary"
+                                                    onClick={() => handleViewBookings(customer)}
+                                                    title="View booking history"
+                                                >
+                                                    <i className="fa fa-history"></i> Bookings
+                                                </button>
+                                                <button 
+                                                    className={`btn btn-sm ${customer.hasActiveBooking ? 'btn-outline-secondary' : 'btn-success'}`}
+                                                    onClick={() => handleRebook(customer)}
+                                                    disabled={customer.hasActiveBooking}
+                                                    title={customer.hasActiveBooking ? "Customer has an active booking" : "Create new booking for this customer"}
+                                                >
+                                                    <i className={`fa ${customer.hasActiveBooking ? 'fa-ban' : 'fa-refresh'}`}></i> Re-book
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

@@ -16,4 +16,5 @@ public class CustomerDTO {
     private String idNumber;
     private String nationality;
     private String address;
+    private boolean hasActiveBooking;
 }

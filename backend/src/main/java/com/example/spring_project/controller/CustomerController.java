@@ -42,6 +42,7 @@ public class CustomerController {
                         .idNumber((String) obj[3])
                         .nationality((String) obj[4])
                         .address((String) obj[5])
+                        .hasActiveBooking(obj[6] != null && ((Number) obj[6]).intValue() == 1)
                         .build())
                 .toList();
 

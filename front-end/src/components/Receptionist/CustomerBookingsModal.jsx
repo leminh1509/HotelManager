@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './CustomerList.css'; // Reusing some base styles
 
@@ -53,39 +54,44 @@ const CustomerBookingsModal = ({ isOpen, onClose, customer }) => {
                         <div className="text-center p-4">No bookings found for this customer.</div>
                     ) : (
                         <div className="table-responsive">
-                            <table className="table table-hover mgmt-table">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Room</th>
-                                        <th>Check-in</th>
-                                        <th>Check-out</th>
-                                        <th>Status</th>
-                                        <th>Total Price</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {bookings.map((booking) => (
-                                        <tr key={booking.bookingId}>
-                                            <td>#{booking.bookingId}</td>
-                                            <td> {booking.roomNumber}</td>
-                                            <td>{new Date(booking.checkinTime).toLocaleDateString()}</td>
-                                            <td>{new Date(booking.checkoutTime).toLocaleDateString()}</td>
-                                            <td>
-                                                <span className={`badge bg-${
-                                                    booking.status === 'Checked-out' ? 'secondary' :
-                                                    booking.status === 'Checked-in' ? 'success' :
-                                                    booking.status === 'Confirmed' ? 'primary' :
-                                                    booking.status === 'Cancelled' ? 'danger' : 'warning'
-                                                }`}>
-                                                    {booking.status}
-                                                </span>
-                                            </td>
-                                            <td>{booking.totalPrice.toLocaleString()} VND</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                            {(() => {
+                                const hasActiveBooking = bookings.some(b => b.status === 'Confirmed' || b.status === 'Checked-in');
+                                return (
+                                    <table className="table table-hover mgmt-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Room</th>
+                                                <th>Check-in</th>
+                                                <th>Check-out</th>
+                                                <th>Status</th>
+                                                <th>Total Price</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {bookings.map((booking) => (
+                                                <tr key={booking.bookingId}>
+                                                    <td>#{booking.bookingId}</td>
+                                                    <td> {booking.roomNumber}</td>
+                                                    <td>{new Date(booking.checkinTime).toLocaleDateString()}</td>
+                                                    <td>{new Date(booking.checkoutTime).toLocaleDateString()}</td>
+                                                    <td>
+                                                        <span className={`badge bg-${
+                                                            booking.status === 'Checked-out' ? 'secondary' :
+                                                            booking.status === 'Checked-in' ? 'success' :
+                                                            booking.status === 'Confirmed' ? 'primary' :
+                                                            booking.status === 'Cancelled' ? 'danger' : 'warning'
+                                                        }`}>
+                                                            {booking.status}
+                                                        </span>
+                                                    </td>
+                                                    <td>{booking.totalPrice.toLocaleString()} VND</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                );
+                            })()}
                         </div>
                     )}
                 </div>
