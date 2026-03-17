@@ -16,7 +16,11 @@ export default function CleaningTaskList() {
             const token = localStorage.getItem("token");
             const res = await axios.get("http://localhost:9999/api/requests/search", {
                 headers: { Authorization: `Bearer ${token}` },
-                params: { type: "CLEANING", status: "PENDING" }
+                params: {
+                    type: "CLEANING",
+                    status: "PENDING",
+                    assignedTo: user.userId // Filter by current staff ID
+                }
             });
             setTasks(res.data.content || []);
         } catch (err) {

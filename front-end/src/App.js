@@ -153,9 +153,8 @@ export default function App() {
           </Route>
         </Route>
       </Route>
-      {/* ===== MAINTENANCE ===== */}
       <Route element={<ProtectedRoute />}>
-        <Route element={<RequireRole allowed={["MAINTENANCE"]} />}>
+        <Route element={<RequireRole allowed={["MAINTENANCE", "MAINTENANCE_MANAGER"]} />}>
           <Route path="/maintenance/dashboard" element={<MaintenanceDashboard />} />
           <Route path="/maintenance/cleaning-tasks" element={<CleaningTaskList />} />
         </Route>
