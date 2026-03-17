@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
+import { getAllRooms, getMaintenanceRequests, createMaintenanceRequest } from "../../services/receptionistAPI";
+import { showToast } from "../Common/Toast";
 
 const PAGE_SIZE = 10;
 
@@ -13,14 +15,6 @@ export default function MaintenanceRequestList() {
     // Real-time notification state
     const [wsMessage, setWsMessage] = useState(null);
 
-    // Custom Toast State
-    const [toast, setToast] = useState(null);
-
-    const showToast = (message, type = 'success') => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 3000);
-    };
-
     // Search and Pagination state
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
@@ -31,14 +25,23 @@ export default function MaintenanceRequestList() {
         setSearchTerm(e.target.value);
     };
 
+    const fetchRooms = async () => {
+        try {
+            const res = await getAllRooms();
+            const roomList = res.data;
+            setRooms(roomList);
+            if (roomList.length > 0) {
+                setNewRequest(prev => ({ ...prev, roomId: roomList[0].roomId }));
+            }
+        } catch (err) {
+            console.error("Failed to load rooms", err);
+        }
+    };
 
     const fetchRequests = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const res = await axios.get("http://localhost:9999/api/requests/maintenance", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setRequests(res.data.content || []);
+            const data = await getMaintenanceRequests();
+            setRequests(data.content || []);
             setLoading(false);
         } catch (err) {
             console.error(err);
@@ -58,7 +61,6 @@ export default function MaintenanceRequestList() {
         stompClient.debug = () => { };
 
         stompClient.connect({}, (frame) => {
-            console.log("Connected to WebSocket: " + frame);
             stompClient.subscribe("/topic/maintenance", (message) => {
                 if (message && message.body) {
                     setWsMessage(message.body);
@@ -80,6 +82,32 @@ export default function MaintenanceRequestList() {
         };
     }, []);
 
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setNewRequest(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!newRequest.description) {
+            showToast("Description is required", "error");
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            await createMaintenanceRequest(newRequest);
+            showToast("Request created successfully!");
+            setShowModal(false);
+            setNewRequest({ roomId: "", description: "", priority: "MEDIUM" });
+            fetchRequests();
+        } catch (err) {
+            console.error(err);
+            showToast("Failed to create request", "error");
+        } finally {
+            setSubmitting(false);
+        }
+    };
     if (loading) return <div>Loading...</div>;
 
     const filtered = requests.filter(req => {

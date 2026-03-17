@@ -41,9 +41,11 @@ export default function Header({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const normalizedRole = role ? String(role).toLowerCase() : "";
+
   const isReceptionistMenu = useMemo(() => {
-    return role === "receptionist" || Boolean(pageActive);
-  }, [role, pageActive]);
+    return normalizedRole === "receptionist" || Boolean(pageActive);
+  }, [normalizedRole, pageActive]);
 
   const receptionistItems = [
     { key: "booking-list", label: "Booking List", to: "/receptionist/booking-list" },
@@ -157,7 +159,7 @@ export default function Header({
                   <i className={mobileOpen ? "fa fa-times" : "fa fa-bars"} />
                 </button>
                 <nav className={`mainmenu ${mobileOpen ? "open" : ""}`}>
-                  {role === "receptionist" || pageActive === "receptionist" ? (
+                  {normalizedRole === "receptionist" || pageActive === "receptionist" ? (
                     <ul>
                       {receptionistItems.map((it) => (
                         <li key={it.key} className={pageActive === it.key ? "active" : ""}>
@@ -165,7 +167,7 @@ export default function Header({
                         </li>
                       ))}
                     </ul>
-                  ) : role === "maintenance" ? (
+                  ) : normalizedRole === "maintenance" ? (
                     <ul>
                       {maintenanceItems.map((it) => (
                         <li key={it.key}>
@@ -180,7 +182,7 @@ export default function Header({
                         </li>
                       ))}
                     </ul>
-                  ) : role === "maintenance_manager" ? (
+                  ) : normalizedRole === "maintenance_manager" ? (
                     <ul>
                       {maintenanceManagerItems.map((it) => (
                         <li key={it.key}>
@@ -209,7 +211,7 @@ export default function Header({
                           </NavLink>
                         </li>
                       ))}
-                      {user && role !== "maintenance" && (
+                      {user && normalizedRole !== "maintenance" && (
                         <li className="mobile-only-link">
                           <NavLink
                             to="/my-bookings"

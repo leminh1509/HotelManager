@@ -124,6 +124,13 @@ export default function RoomDetail({ user, role, onLogout }) {
       </div>
     );
 
+  // Calculate real rating and review count
+  const avgRating = feedbacks.length > 0
+    ? (feedbacks.reduce((acc, f) => acc + f.rating, 0) / feedbacks.length).toFixed(1)
+    : room.rating; // Fallback to mock/initial if no real feedbacks
+
+  const totalReviews = feedbacks.length > 0 ? feedbacks.length : room.reviewCount;
+
   const formatPrice = (n) => new Intl.NumberFormat("vi-VN").format(n);
 
   return (
@@ -145,121 +152,135 @@ export default function RoomDetail({ user, role, onLogout }) {
             <img src={room.imgUrl} alt={room.name} />
             <div className="rd-rating-badge">
               <span className="rd-star">★</span>
-              <span>{room.rating}</span>
-              <span className="rd-review-count">({room.reviewCount} lượt đánh giá)</span>
+              <span>{avgRating}</span>
+              <span className="rd-review-count">({totalReviews} lượt đánh giá)</span>
             </div>
           </div>
 
-          <div className="rd-body">
-            {/* Left: room info */}
-            <div className="rd-info">
-              <h1>{room.name || `Phòng ${room.categoryName}`}</h1>
-              <p className="rd-category">{room.categoryName} Signature</p>
+          <div className="rd-grid">
+            {/* Left Column: Info & Feedbacks */}
+            <div className="rd-main-col">
+              <div className="rd-info">
+                <h1>{room.name || `Phòng ${room.categoryName}`}</h1>
+                <p className="rd-category">{room.categoryName} Signature</p>
 
-              {/* Specs grid */}
-              <div className="rd-specs">
-                <div className="rd-spec">
-                  <span className="rd-spec-icon">👥</span>
-                  <span>Phù hợp {room.capacity} khách</span>
+                {/* Specs grid */}
+                <div className="rd-specs">
+                  <div className="rd-spec">
+                    <span className="rd-spec-icon">👥</span>
+                    <span>Phù hợp {room.capacity} khách</span>
+                  </div>
+                  <div className="rd-spec">
+                    <span className="rd-spec-icon">📐</span>
+                    <span>Diện tích {room.sizem2} m²</span>
+                  </div>
+                  <div className="rd-spec">
+                    <span className="rd-spec-icon">🛏️</span>
+                    <span>{room.bedConfiguration || "Giường đôi cỡ lớn"}</span>
+                  </div>
+                  <div className="rd-spec">
+                    <span className="rd-spec-icon">🏢</span>
+                    <span>Vị trí Tầng {room.floor}</span>
+                  </div>
                 </div>
-                <div className="rd-spec">
-                  <span className="rd-spec-icon">📐</span>
-                  <span>Diện tích {room.sizem2} m²</span>
-                </div>
-                <div className="rd-spec">
-                  <span className="rd-spec-icon">🛏️</span>
-                  <span>{room.bedConfiguration || "Lường đôi cỡ lớn"}</span>
-                </div>
-                <div className="rd-spec">
-                  <span className="rd-spec-icon">🏢</span>
-                  <span>Vị trí Tầng {room.floor}</span>
-                </div>
-              </div>
 
-              {/* Description */}
-              <div className="rd-section">
-                <h3>Về không gian này</h3>
-                <p>{room.description || "Tận hưởng không gian nghỉ ngơi đẳng cấp với đầy đủ tiện nghi, được thiết kế tinh tế nhằm mang lại sự thoải mái tối đa cho quý khách. Mỗi chi tiết đều được chăm chút kỹ lưỡng để tạo nên một trải nghiệm đáng nhớ."}</p>
-              </div>
-
-              {/* Amenities */}
-              <div className="rd-section">
-                <h3>Tiện ích trang bị</h3>
-                <div className="rd-amenities">
-                  {room.amenities?.map((a) => (
-                    <div key={a} className="rd-amenity">
-                      <span>{AMENITY_ICONS[a] || "✨"}</span>
-                      <span>{a}</span>
-                    </div>
-                  ))}
+                {/* Description */}
+                <div className="rd-section">
+                  <h3>Về không gian này</h3>
+                  <p>{room.description || "Tận hưởng không gian nghỉ ngơi đẳng cấp với đầy đủ tiện nghi, được thiết kế tinh tế nhằm mang lại sự thoải mái tối đa cho quý khách. Mỗi chi tiết đều được chăm chút kỹ lưỡng để tạo nên một trải nghiệm đáng nhớ."}</p>
                 </div>
-              </div>
 
-              {/* Cancellation policy */}
-              <p className="rd-policy">
-                {room.cancellationPolicy || "Hủy phòng miễn phí trước 24 giờ kể từ thời điểm check-in."}
-              </p>
-            </div>
-
-            {/* Feedbacks Section */}
-            <div className="rd-section feedbacks-section">
-              <h3>Đánh giá từ khách hàng</h3>
-              {loadingFeedbacks ? (
-                <p>Đang tải đánh giá...</p>
-              ) : feedbacks.length === 0 ? (
-                <div className="rd-no-feedbacks">
-                  <p>Chưa có đánh giá nào cho phòng này. Hãy là người đầu tiên chia sẻ trải nghiệm!</p>
-                </div>
-              ) : (
-                <div className="rd-feedbacks-list">
-                  {feedbacks.map((fb) => (
-                    <div key={fb.feedbackId} className="rd-feedback-card">
-                      <div className="rd-fb-header">
-                        <div className="rd-fb-user">
-                          <div className="rd-fb-avatar">
-                            {fb.userAvatarUrl ? (
-                              <img src={fb.userAvatarUrl} alt={fb.userFullName} />
-                            ) : (
-                              <span className="rd-fb-initial">{fb.userFullName?.[0] || "?"}</span>
-                            )}
-                          </div>
-                          <div className="rd-fb-meta">
-                            <span className="rd-fb-name">{fb.userFullName || "Khách ẩn danh"}</span>
-                            <span className="rd-fb-date">{new Date(fb.createdAt).toLocaleDateString("vi-VN")}</span>
-                          </div>
-                        </div>
-                        <div className="rd-fb-rating">
-                          {[...Array(5)].map((_, i) => (
-                            <span key={i} className={`rd-fb-star ${i < fb.rating ? "active" : ""}`}>★</span>
-                          ))}
-                        </div>
+                {/* Amenities */}
+                <div className="rd-section">
+                  <h3>Tiện ích trang bị</h3>
+                  <div className="rd-amenities">
+                    {room.amenities?.map((a) => (
+                      <div key={a} className="rd-amenity">
+                        <span>{AMENITY_ICONS[a] || "✨"}</span>
+                        <span>{a}</span>
                       </div>
-                      <p className="rd-fb-comment">{fb.comment || "Không có nhận xét."}</p>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              )}
+
+                {/* Cancellation policy */}
+                <p className="rd-policy">
+                  {room.cancellationPolicy || "Hủy phòng miễn phí trước 24 giờ kể từ thời điểm check-in."}
+                </p>
+              </div>
+
+              {/* Feedbacks Section */}
+              <div className="rd-section feedbacks-section">
+                <h3>Đánh giá từ khách hàng</h3>
+                {loadingFeedbacks ? (
+                  <p>Đang tải đánh giá...</p>
+                ) : feedbacks.length === 0 ? (
+                  <div className="rd-no-feedbacks">
+                    <p>Chưa có đánh giá nào cho phòng này. Hãy là người đầu tiên chia sẻ trải nghiệm!</p>
+                  </div>
+                ) : (
+                  <div className="rd-feedbacks-list">
+                    {feedbacks.map((fb) => (
+                      <div key={fb.feedbackId} className="rd-feedback-card">
+                        <div className="rd-fb-header">
+                          <div className="rd-fb-user">
+                            <div className="rd-fb-avatar">
+                              {fb.userAvatarUrl ? (
+                                <img src={fb.userAvatarUrl} alt={fb.userFullName} />
+                              ) : (
+                                <span className="rd-fb-initial">{fb.userFullName?.[0] || "?"}</span>
+                              )}
+                            </div>
+                            <div className="rd-fb-meta">
+                              <span className="rd-fb-name">{fb.userFullName || "Khách ẩn danh"}</span>
+                              <span className="rd-fb-date">{new Date(fb.createdAt).toLocaleDateString("vi-VN")}</span>
+                            </div>
+                          </div>
+                          <div className="rd-fb-rating">
+                            {[...Array(5)].map((_, i) => (
+                              <span key={i} className={`rd-fb-star ${i < fb.rating ? "active" : ""}`}>★</span>
+                            ))}
+                          </div>
+                        </div>
+                        <p className="rd-fb-comment">{fb.comment || "Không có nhận xét."}</p>
+
+                        {fb.imageUrls && fb.imageUrls.length > 0 && (
+                          <div className="rd-fb-images">
+                            {fb.imageUrls.map((url, idx) => (
+                              <div key={idx} className="rd-fb-img-box">
+                                <img src={url} alt={`feedback-${idx}`} onClick={() => window.open(url, '_blank')} />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* Right Column: Pricing Card */}
+            <aside className="rd-sidebar">
+              <div className="rd-price-card">
+                <div className="rd-price-main">
+                  <span className="rd-price-amount">
+                    {formatPrice(room.price)}
+                  </span>
+                  <span className="rd-price-unit">VNĐ / đêm</span>
+                </div>
+
+                <button onClick={handleBook} className="rd-book-btn">
+                  Đặt phòng ngay
+                </button>
+
+                <p className="rd-price-note">
+                  Thanh toán an toàn, bảo mật.<br />
+                  Không phát sinh phụ phí ẩn.
+                </p>
+              </div>
+            </aside>
           </div>
-
-          {/* Right: pricing card */}
-          <aside className="rd-price-card">
-            <div className="rd-price-main">
-              <span className="rd-price-amount">
-                {formatPrice(room.price)}
-              </span>
-              <span className="rd-price-unit">VNĐ / đêm</span>
-            </div>
-
-            <button onClick={handleBook} className="rd-book-btn">
-              Đặt phòng ngay
-            </button>
-
-            <p className="rd-price-note">
-              Thanh toán an toàn, bảo mật.<br />
-              Không phát sinh phụ phí ẩn.
-            </p>
-          </aside>
         </div>
       </div>
       <Footer />

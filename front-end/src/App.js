@@ -33,6 +33,7 @@ import GuidelinesManagement from "./components/Receptionist/GuidelinesManagement
 import Rules from "./components/Rules/Rules";
 import RulesManagement from "./components/Receptionist/RulesManagement";
 import CustomerList from "./components/Receptionist/CustomerList";
+import Toast from "./components/Common/Toast";
 
 const Forbidden = () => (
   <div style={{ padding: 40, textAlign: "center" }}>
@@ -94,86 +95,84 @@ export default function App() {
 
 
   return (
-    <Routes>
-      {/* vào web -> home trước */}
-      <Route path="/" element={<Navigate to="/home" replace />} />
+    <>
+      <Routes>
+        {/* vào web -> home trước */}
+        <Route path="/" element={<Navigate to="/home" replace />} />
 
-      {/* Home có thể public */}
-      <Route path="/home" element={<Home user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
+        {/* Home có thể public */}
+        <Route path="/home" element={<Home user={currentUser} role={currentUser?.role} onLogout={handleLogout} />} />
 
-      {/*List room */}
-      <Route path="/rooms" element={<RoomList1 user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        {/*List room */}
+        <Route path="/rooms" element={<RoomList1 user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
 
-      {/* Guidelines & Rules (publicly available with Header/Footer) */}
-      <Route path="/guidelines" element={<Guidelines user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
-      <Route path="/rules" element={<Rules user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        {/* Guidelines & Rules (publicly available with Header/Footer) */}
+        <Route path="/guidelines" element={<Guidelines user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        <Route path="/rules" element={<Rules user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
 
-      {/* login/register phải truyền callback */}
-      <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
-      <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/forbidden" element={<Forbidden />} />
-
-      {/* ===== BOOKING ===== */}
-      <Route element={<ProtectedRoute />}>
-        <Route path="/payment" element={<Payment user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
-        <Route path="/payment/payos-return" element={<PaymentResult user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
-        <Route path="/payment/payos-cancel" element={<PaymentResult user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+        {/* login/register phải truyền callback */}
+        <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
+        <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/forbidden" element={<Forbidden />} />
 
         {/* ===== BOOKING ===== */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/payment" element={<Payment user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+          <Route path="/payment/payos-return" element={<PaymentResult user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+          <Route path="/payment/payos-cancel" element={<PaymentResult user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
 
-        <Route path="/rooms/:roomId" element={<RoomDetail user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
-        <Route path="/booking/list" element={<BookingList1 user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
-        <Route path="/booking/new/:roomId" element={<BookingForm user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
-        <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmation user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
-        <Route path="/my-bookings" element={<MyBookings user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
-        <Route path="/profile" element={<Profile onLogout={handleLogout} />} />
-      </Route>
-      {/* ===== ADMIN ===== */}
-      <Route element={<ProtectedRoute />}>
-        <Route element={<RequireRole allowed={["ADMIN"]} />}>
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="users" element={<UserManagement />} />
+          {/* ===== BOOKING ===== */}
+
+          <Route path="/rooms/:roomId" element={<RoomDetail user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+          <Route path="/booking/list" element={<BookingList1 user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+          <Route path="/booking/new/:roomId" element={<BookingForm user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+          <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmation user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+          <Route path="/my-bookings" element={<MyBookings user={currentUser} role={currentUser?.role?.toLowerCase()} onLogout={handleLogout} />} />
+          <Route path="/profile" element={<Profile onLogout={handleLogout} />} />
+        </Route>
+        {/* ===== ADMIN ===== */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<RequireRole allowed={["ADMIN"]} />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="users" element={<UserManagement />} />
+            </Route>
           </Route>
         </Route>
-      </Route>
 
-      {/* ===== RECEPTIONIST ===== */}
-      <Route element={<ProtectedRoute />}>
-        <Route element={<RequireRole allowed={["RECEPTIONIST"]} />}>
-          <Route path="/receptionist" element={<ReceptionistLayout />}>
-            <Route index element={<BookingList />} />
-            <Route path="payments" element={<PaymentList />} />
-            <Route path="maintenance" element={<MaintenanceRequestList />} />
+        {/* ===== RECEPTIONIST ===== */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<RequireRole allowed={["RECEPTIONIST"]} />}>
+            <Route path="/receptionist" element={<ReceptionistLayout />}>
+              <Route index element={<BookingList />} />
+              <Route path="payments" element={<PaymentList />} />
+              <Route path="maintenance" element={<MaintenanceRequestList />} />
 
-            <Route path="bookings/:id" element={<BookingDetail />} />
-            <Route path="rooms" element={<RoomList />} />
-            <Route path="rooms/:id" element={<ReceptionistRoomDetail />} />
-            <Route path="guidelines" element={<GuidelinesManagement />} />
-            <Route path="rules" element={<RulesManagement />} />
-            <Route path="customers" element={<CustomerList />} />
+              <Route path="bookings/:id" element={<BookingDetail />} />
+              <Route path="rooms" element={<RoomList />} />
+              <Route path="rooms/:id" element={<ReceptionistRoomDetail />} />
+              <Route path="guidelines" element={<GuidelinesManagement />} />
+              <Route path="rules" element={<RulesManagement />} />
+              <Route path="customers" element={<CustomerList />} />
+            </Route>
           </Route>
         </Route>
-      </Route>
-      <Route element={<ProtectedRoute />}>
-        <Route element={<RequireRole allowed={["MAINTENANCE", "MAINTENANCE_MANAGER"]} />}>
-          <Route
-            path="/maintenance/dashboard"
-            element={
-              currentUser?.role === 'MAINTENANCE_MANAGER' || currentUser?.role === 'ADMIN'
-                ? <MaintenanceDashboard />
-                : <StaffDashboard />
-            }
-          />
-          <Route path="/maintenance/cleaning-tasks" element={<CleaningTaskList />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<RequireRole allowed={["MAINTENANCE", "MAINTENANCE_MANAGER"]} />}>
+            <Route
+              path="/maintenance/dashboard"
+              element={
+                currentUser?.role === 'MAINTENANCE_MANAGER' || currentUser?.role === 'ADMIN'
+                  ? <MaintenanceDashboard />
+                  : <StaffDashboard />
+              }
+            />
+            <Route path="/maintenance/cleaning-tasks" element={<CleaningTaskList />} />
+          </Route>
         </Route>
-      </Route>
-
-
-
-
-
-    </Routes>
+      </Routes >
+      <Toast />
+    </>
   );
 }
