@@ -53,4 +53,8 @@ export const cancelBooking = (bookingId) =>
 // ─── Category APIs ───────────────────────────────────────
 export const getCategories = () => api.get("/categories");
 
+// ─── Feedback APIs ───────────────────────────────────────
+export const submitFeedback = (payload) => api.post("/feedbacks", payload);
+export const getRoomFeedbacks = (roomId) => api.get(`/feedbacks/room/${roomId}`);
+
 export default api;
