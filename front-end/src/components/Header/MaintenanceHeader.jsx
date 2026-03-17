@@ -27,8 +27,13 @@ const MaintenanceHeader = ({ user, onLogout }) => {
             <div className="mh-nav-bar">
                 <div className="mh-container">
                     <nav className="mh-nav">
-                        <NavLink to="/maintenance/dashboard" className={({ isActive }) => isActive ? 'active' : ''}>
-                            Dashboard
+                        {(user?.role === 'MAINTENANCE_MANAGER' || user?.role === 'ADMIN') && (
+                            <NavLink to="/maintenance/dashboard" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                                <i className="fa fa-dashboard me-2"></i> Dashboard
+                            </NavLink>
+                        )}
+                        <NavLink to="/maintenance/cleaning-tasks" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                            <i className="fa fa-broom me-2"></i> Dọn dẹp
                         </NavLink>
                         {/* Add more maintenance specific links here later if needed */}
                         {/* Example: 

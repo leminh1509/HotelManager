@@ -91,8 +91,8 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                                 SELECT b FROM Booking b
                                 JOIN FETCH b.room r
                                 JOIN FETCH r.status
-                                WHERE b.checkoutTime < :today
-                                  AND b.status = com.example.spring_project.entity.Booking.Status.CheckedIn
+                                WHERE b.checkoutTime <= :today
+                                  AND b.status IN (com.example.spring_project.entity.Booking.Status.CheckedIn, com.example.spring_project.entity.Booking.Status.Confirmed)
                         """)
         List<Booking> findOverdueCheckedIn(@Param("today") LocalDate today);
 

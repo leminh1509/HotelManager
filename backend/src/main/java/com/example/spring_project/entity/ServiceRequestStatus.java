@@ -8,7 +8,8 @@ public enum ServiceRequestStatus {
     In_Progress("In Progress"),
     On_Hold("On Hold"),
     Completed("Completed"),
-    Rejected("Rejected");
+    Rejected("Rejected"),
+    Cancelled("Cancelled");
 
     private final String value;
 

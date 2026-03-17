@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getMyBookings, cancelBooking } from "../../services/bookingAPI";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
+import FeedbackForm from "./FeedbackForm";
 import "./MyBookings.css";
 
 // ─── Mock data fallback ───────────────────────────────────
@@ -114,6 +115,7 @@ export default function MyBookings({ user, role, onLogout }) {
   const [filter, setFilter] = useState("all");
   const [cancellingId, setCancellingId] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [feedbackBooking, setFeedbackBooking] = useState(null);
 
   useEffect(() => {
     async function fetchBookings() {
@@ -237,7 +239,18 @@ export default function MyBookings({ user, role, onLogout }) {
           ) : (
             <div className="mb-list">
               {filtered.map((b) => {
-                const meta = STATUS_META[b.status] || { label: b.status, cls: "", icon: "•" };
+                const checkOutDate = new Date(b.checkoutTime);
+                // Set checkout time to 12:00 PM for comparison
+                checkOutDate.setHours(12, 0, 0, 0);
+
+                let currentStatus = b.status;
+                const datePassed = now > checkOutDate;
+
+                if (datePassed && (b.status === "Confirmed" || b.status === "Checked-in")) {
+                  currentStatus = "Checked-out";
+                }
+
+                const meta = STATUS_META[currentStatus] || { label: currentStatus, cls: "", icon: "•" };
                 const canCancel = b.status === "Pending" || b.status === "Confirmed";
                 const nights = nightCount(b.checkinTime, b.checkoutTime);
 
@@ -324,13 +337,35 @@ export default function MyBookings({ user, role, onLogout }) {
                           </button>
                         )}
                         {b.status === "Checked-out" && (
-                          <Link
-                            to={`/rooms/${b.roomId}`}
-                            className="mb-btn-rebook"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            Đặt lại
-                          </Link>
+                          <>
+                            <Link
+                              to={`/rooms/${b.roomId}`}
+                              className="mb-btn-rebook"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Đặt lại
+                            </Link>
+                            <button
+                              className="mb-btn-feedback"
+                              style={{
+                                marginTop: "8px",
+                                background: "#fbbf24",
+                                color: "white",
+                                border: "none",
+                                padding: "8px 16px",
+                                borderRadius: "8px",
+                                fontWeight: "600",
+                                cursor: "pointer",
+                                width: "100%"
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setFeedbackBooking(b);
+                              }}
+                            >
+                              Gửi đánh giá
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -354,12 +389,24 @@ export default function MyBookings({ user, role, onLogout }) {
               <button className="mb-modal-close" onClick={() => setSelectedBooking(null)}>✕</button>
               <div className="mb-modal-hero-content">
                 <span className="mb-modal-hero-icon">🏨</span>
-                <div>
-                  <h2>{selectedBooking.roomName}</h2>
-                  <span className={`mb-modal-status-badge ${STATUS_META[selectedBooking.status]?.cls}`}>
-                    {STATUS_META[selectedBooking.status]?.icon} {STATUS_META[selectedBooking.status]?.label}
-                  </span>
-                </div>
+                {(() => {
+                  const checkOutDateModal = new Date(selectedBooking.checkoutTime);
+                  checkOutDateModal.setHours(12, 0, 0, 0);
+                  const isOverdue = now > checkOutDateModal;
+                  let modalStatus = selectedBooking.status;
+                  if (isOverdue && (modalStatus === "Confirmed" || modalStatus === "Checked-in")) {
+                    modalStatus = "Checked-out";
+                  }
+                  const modalMeta = STATUS_META[modalStatus] || { label: modalStatus, cls: "", icon: "•" };
+                  return (
+                    <div>
+                      <h2>{selectedBooking.roomName}</h2>
+                      <span className={`mb-modal-status-badge ${modalMeta.cls}`}>
+                        {modalMeta.icon} {modalMeta.label}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 

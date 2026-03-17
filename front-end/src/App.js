@@ -23,6 +23,8 @@ import ForgotPassword from "./components/ForgotPassword/ForgotPassword";
 import RoomList from "./components/Receptionist/RoomList";
 import ReceptionistRoomDetail from "./components/Receptionist/RoomDetail";
 import MaintenanceDashboard from "./components/Maintenance/MaintenanceDashboard";
+import StaffDashboard from "./components/Maintenance/StaffDashboard";
+import CleaningTaskList from "./components/Maintenance/CleaningTaskList";
 import RoomList1 from "./components/Room/RoomList";
 import BookingList1 from "./components/Booking/BookingList";
 import Profile from "./components/Profile/Profile";
@@ -154,10 +156,17 @@ export default function App() {
           </Route>
         </Route>
       </Route>
-      {/* ===== MAINTENANCE ===== */}
       <Route element={<ProtectedRoute />}>
-        <Route element={<RequireRole allowed={["MAINTENANCE"]} />}>
-          <Route path="/maintenance/dashboard" element={<MaintenanceDashboard />} />
+        <Route element={<RequireRole allowed={["MAINTENANCE", "MAINTENANCE_MANAGER"]} />}>
+          <Route
+            path="/maintenance/dashboard"
+            element={
+              currentUser?.role === 'MAINTENANCE_MANAGER' || currentUser?.role === 'ADMIN'
+                ? <MaintenanceDashboard />
+                : <StaffDashboard />
+            }
+          />
+          <Route path="/maintenance/cleaning-tasks" element={<CleaningTaskList />} />
         </Route>
       </Route>
 

@@ -53,4 +53,17 @@ export const cancelBooking = (bookingId) =>
 // ─── Category APIs ───────────────────────────────────────
 export const getCategories = () => api.get("/categories");
 
+// ─── Feedback APIs ───────────────────────────────────────
+export const submitFeedback = (payload) => api.post("/feedbacks", payload);
+
+export const uploadFeedbackImages = (formData) => {
+  return api.post("/feedbacks/upload", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
+export const getRoomFeedbacks = (roomId) => api.get(`/feedbacks/room/${roomId}`);
+
 export default api;

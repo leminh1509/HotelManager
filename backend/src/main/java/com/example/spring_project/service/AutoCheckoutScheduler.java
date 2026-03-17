@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -30,55 +29,57 @@ public class AutoCheckoutScheduler {
 
     private final BookingRepository bookingRepository;
     private final RoomStatusRepository roomStatusRepository;
-    private final ServiceRequestRepository serviceRequestRepository;
+    private final ServiceRequestService serviceRequestService;
     private final UserRepository userRepository;
 
-    /** Runs at the top of every hour: 0 seconds, 0 minutes, every hour */
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void performAutoCheckout() {
         LocalDate today = LocalDate.now();
-        log.info("[AutoCheckout] Scheduler triggered. Checking for overdue bookings on {}...", today);
+        int currentHour = java.time.LocalTime.now().getHour();
+        log.info("[AutoCheckout] Scheduler triggered at {}h. Checking for overdue bookings on {}...", currentHour,
+                today);
 
-        // 1. Find overdue CheckedIn bookings
-        List<Booking> overdue = bookingRepository.findOverdueCheckedIn(today);
-        if (overdue.isEmpty()) {
+        // 1. Find overdue CheckedIn bookings (includes today)
+        List<Booking> candidates = bookingRepository.findOverdueCheckedIn(today);
+        if (candidates.isEmpty()) {
             log.info("[AutoCheckout] No overdue bookings found.");
             return;
         }
-        log.info("[AutoCheckout] Found {} overdue booking(s) to process.", overdue.size());
 
-        // 2. Resolve the "Cleaning" room status (fallback to first available status)
+        // Filter: If checkout is today, only process if it's 12:00 or later
+        List<Booking> toProcess = candidates.stream()
+                .filter(b -> b.getCheckoutTime().isBefore(today) || currentHour >= 12)
+                .toList();
+
+        if (toProcess.isEmpty()) {
+            log.info("[AutoCheckout] Found candidates for today, but skipping until 12:00 PM.");
+            return;
+        }
+
+        log.info("[AutoCheckout] Found {} booking(s) to process.", toProcess.size());
+
+        // 2. Resolve the "Cleaning" room status
         RoomStatus cleaningStatus = roomStatusRepository.findByName("Cleaning")
                 .or(() -> roomStatusRepository.findByName("cleaning"))
                 .orElseGet(() -> {
-                    log.warn("[AutoCheckout] 'Cleaning' RoomStatus not found in DB – room status will not be updated.");
+                    log.warn("[AutoCheckout] 'Cleaning' RoomStatus not found in DB.");
                     return null;
                 });
 
-        // 3. Load all active Staff users for assignment
-        List<User> staffList = userRepository.findByRole_Name("Staff")
-                .stream()
-                .filter(u -> Boolean.TRUE.equals(u.getIsActive()) && u.getDeletedAt() == null)
-                .toList();
-
-        if (staffList.isEmpty()) {
-            log.warn("[AutoCheckout] No active Staff found – cleaning tasks will be created but unassigned.");
-        }
-
-        for (Booking booking : overdue) {
+        for (Booking booking : toProcess) {
             try {
-                processBookingCheckout(booking, cleaningStatus, staffList);
+                processBookingCheckout(booking, cleaningStatus);
             } catch (Exception e) {
                 log.error("[AutoCheckout] Failed to process booking #{}: {}",
                         booking.getBookingId(), e.getMessage(), e);
             }
         }
 
-        log.info("[AutoCheckout] Done. Processed {} booking(s).", overdue.size());
+        log.info("[AutoCheckout] Done. Processed {} booking(s).", toProcess.size());
     }
 
-    private void processBookingCheckout(Booking booking, RoomStatus cleaningStatus, List<User> staffList) {
+    private void processBookingCheckout(Booking booking, RoomStatus cleaningStatus) {
         Room room = booking.getRoom();
         int bookingId = booking.getBookingId();
 
@@ -92,57 +93,29 @@ public class AutoCheckoutScheduler {
         // ── Step B: Update room status to Cleaning ───────────────────────
         if (cleaningStatus != null) {
             room.setStatus(cleaningStatus);
-            // Room will be updated via cascade since it's already managed
             log.info("[AutoCheckout] Room {} → Cleaning", room.getRoomNumber());
         }
 
-        // ── Step C: Create CLEANING service request ──────────────────────
-        User assignedStaff = pickLeastBusyStaff(staffList);
-
-        // Requester is the assigned staff (or first staff found, or fallback to admin)
-        User requester = assignedStaff;
-        if (requester == null && !staffList.isEmpty()) {
-            requester = staffList.get(0);
-        }
+        // ── Step C: Create CLEANING service request (Auto-assignment handled by
+        // service) ──
+        User requester = booking.getReceptionist();
         if (requester == null) {
-            // Fallback to admin (ID=1) if no staff available
+            // Fallback to admin (ID=1)
             requester = userRepository.findById(1).orElse(null);
         }
 
-        ServiceRequest cleaningRequest = ServiceRequest.builder()
-                .booking(booking)
-                .requester(requester)
-                .type(ServiceRequestType.CLEANING.name())
-                .priority("High")
-                .status(ServiceRequestStatus.New)
-                .description(String.format(
-                        "Auto-checkout: Phòng %s cần dọn dẹp sau khi khách trả phòng (Booking #%d)",
-                        room.getRoomNumber(), bookingId))
-                .assignedTo(assignedStaff)
-                .build();
+        String description = String.format(
+                "Auto-checkout: Phòng %s cần dọn dẹp sau khi khách trả phòng (Booking #%d)",
+                room.getRoomNumber(), bookingId);
 
-        serviceRequestRepository.save(cleaningRequest);
+        serviceRequestService.createRequest(
+                booking,
+                requester,
+                room.getRoomId(),
+                description,
+                ServiceRequestType.CLEANING,
+                "High");
 
-        if (assignedStaff != null) {
-            log.info("[AutoCheckout] Cleaning request created for Room {} → Assigned to {} (userId={})",
-                    room.getRoomNumber(), assignedStaff.getFullName(), assignedStaff.getUserId());
-        } else {
-            log.info("[AutoCheckout] Cleaning request created for Room {} → Unassigned (no Staff available)",
-                    room.getRoomNumber());
-        }
-    }
-
-    /**
-     * Pick the staff member with the fewest non-completed service requests.
-     * Returns null if staffList is empty.
-     */
-    private User pickLeastBusyStaff(List<User> staffList) {
-        if (staffList.isEmpty())
-            return null;
-
-        return staffList.stream()
-                .min(Comparator.comparingLong(
-                        staff -> serviceRequestRepository.countActiveTasksByUser(staff.getUserId())))
-                .orElse(null);
+        log.info("[AutoCheckout] Cleaning request created for Room {}", room.getRoomNumber());
     }
 }

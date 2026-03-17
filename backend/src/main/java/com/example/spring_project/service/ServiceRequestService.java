@@ -20,6 +20,7 @@ public class ServiceRequestService {
 
     private final ServiceRequestRepository repository;
     private final com.example.spring_project.repository.UserRepository userRepo;
+    private final org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
 
     public List<ServiceRequest> getAllRequests() {
         return repository.findAll();
@@ -36,7 +37,7 @@ public class ServiceRequestService {
 
         // Auto-assign to least busy staff if it's a cleaning request or if assignedTo
         // is null
-        User assignee = findLeastBusyStaff("MAINTENANCE");
+        User assignee = findLeastBusyStaff("maintenance");
 
         ServiceRequest request = ServiceRequest.builder()
                 .booking(booking)
@@ -48,7 +49,17 @@ public class ServiceRequestService {
                 .priority(priority != null ? priority : "Low")
                 .build();
 
-        return repository.save(request);
+        ServiceRequest saved = repository.save(request);
+
+        // Send real-time notification
+        String roomNumber = (booking != null && booking.getRoom() != null) ? booking.getRoom().getRoomNumber()
+                : "Unknown";
+        String message = String.format("New %s request for room %s",
+                type == ServiceRequestType.CLEANING ? "cleaning" : "maintenance",
+                roomNumber);
+        messagingTemplate.convertAndSend("/topic/maintenance", message);
+
+        return saved;
     }
 
     /**
