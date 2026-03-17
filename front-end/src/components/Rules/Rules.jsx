@@ -1,26 +1,35 @@
 import React, { useState, useEffect } from "react";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
+import Pagination from "../Common/Pagination";
+import DetailModal from "../Common/DetailModal";
 import "./Rules.css";
 
 export default function Rules({ user, role, onLogout }) {
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // Detail Modal State
+  const [selectedRule, setSelectedRule] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    fetchRules();
-  }, []);
+    fetchRules(currentPage);
+  }, [currentPage]);
 
-  const fetchRules = async () => {
+  const fetchRules = async (page) => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:9999/api/rules");
+      const res = await fetch(`http://localhost:9999/api/rules?page=${page}&size=10`);
       if (!res.ok) {
         throw new Error("Failed to fetch hotel rules");
       }
       const data = await res.json();
-      setRules(data);
+      setRules(data.content);
+      setTotalPages(data.totalPages);
     } catch (err) {
       console.error(err);
       setError("Unable to load hotel rules. Please try again later.");
@@ -29,10 +38,25 @@ export default function Rules({ user, role, onLogout }) {
     }
   };
 
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo(0, 0);
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  const handleViewDetail = (rule) => {
+    setSelectedRule(rule);
+    setIsModalOpen(true);
+  };
+
+  const truncateContent = (text, maxLength = 200) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "...";
   };
 
   return (
@@ -55,7 +79,12 @@ export default function Rules({ user, role, onLogout }) {
           ) : (
             <div className="rules-list">
               {rules.map((r) => (
-                <div key={r.ruleId} className="rule-card">
+                <div 
+                  key={r.ruleId} 
+                  className="rule-card"
+                  onClick={() => handleViewDetail(r)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="rule-card-header">
                     <h2>{r.title}</h2>
                     <span className="rule-date">
@@ -63,18 +92,41 @@ export default function Rules({ user, role, onLogout }) {
                     </span>
                   </div>
                   <div className="rule-card-body">
-                    {r.content.split('\n').map((line, index) => (
-                      <p key={index}>{line}</p>
-                    ))}
+                    <p>{truncateContent(r.content)}</p>
+                    {r.content.length > 200 && (
+                      <button 
+                        className="btn-view-detail" 
+                        onClick={() => handleViewDetail(r)}
+                      >
+                        View Detail
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
+
+              <Pagination 
+                currentPage={currentPage} 
+                totalPages={totalPages} 
+                onPageChange={handlePageChange} 
+              />
             </div>
           )}
         </div>
       </main>
 
       <Footer />
+
+      {selectedRule && (
+        <DetailModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title={selectedRule.title}
+          content={selectedRule.content}
+          updatedAt={selectedRule.updatedAt}
+          formatDate={formatDate}
+        />
+      )}
     </div>
   );
 }

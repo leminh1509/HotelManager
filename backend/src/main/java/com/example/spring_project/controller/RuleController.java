@@ -3,10 +3,12 @@ package com.example.spring_project.controller;
 import com.example.spring_project.entity.Rule;
 import com.example.spring_project.service.RuleService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -18,8 +20,11 @@ public class RuleController {
     private RuleService ruleService;
 
     @GetMapping
-    public List<Rule> getAllRules() {
-        return ruleService.getAllRules();
+    public Page<Rule> getAllRules(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ruleService.getPaginatedRules(pageable);
     }
 
     @GetMapping("/{id}")

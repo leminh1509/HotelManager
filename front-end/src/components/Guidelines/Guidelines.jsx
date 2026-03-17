@@ -1,26 +1,35 @@
 import React, { useState, useEffect } from "react";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
+import Pagination from "../Common/Pagination";
+import DetailModal from "../Common/DetailModal";
 import "./Guidelines.css";
 
 export default function Guidelines({ user, role, onLogout }) {
   const [guidelines, setGuidelines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // Detail Modal State
+  const [selectedGuideline, setSelectedGuideline] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    fetchGuidelines();
-  }, []);
+    fetchGuidelines(currentPage);
+  }, [currentPage]);
 
-  const fetchGuidelines = async () => {
+  const fetchGuidelines = async (page) => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:9999/api/guidelines");
+      const res = await fetch(`http://localhost:9999/api/guidelines?page=${page}&size=10`);
       if (!res.ok) {
         throw new Error("Failed to fetch guidelines");
       }
       const data = await res.json();
-      setGuidelines(data);
+      setGuidelines(data.content);
+      setTotalPages(data.totalPages);
     } catch (err) {
       console.error(err);
       setError("Unable to load guidelines. Please try again later.");
@@ -29,10 +38,25 @@ export default function Guidelines({ user, role, onLogout }) {
     }
   };
 
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo(0, 0);
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  const handleViewDetail = (guideline) => {
+    setSelectedGuideline(guideline);
+    setIsModalOpen(true);
+  };
+
+  const truncateContent = (text, maxLength = 200) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "...";
   };
 
   return (
@@ -55,7 +79,12 @@ export default function Guidelines({ user, role, onLogout }) {
           ) : (
             <div className="guidelines-list">
               {guidelines.map((g) => (
-                <div key={g.guidelineId} className="guideline-card">
+                <div 
+                  key={g.guidelineId} 
+                  className="guideline-card"
+                  onClick={() => handleViewDetail(g)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="guideline-card-header">
                     <h2>{g.title}</h2>
                     <span className="guideline-date">
@@ -63,18 +92,41 @@ export default function Guidelines({ user, role, onLogout }) {
                     </span>
                   </div>
                   <div className="guideline-card-body">
-                    {g.content.split('\n').map((line, index) => (
-                      <p key={index}>{line}</p>
-                    ))}
+                    <p>{truncateContent(g.content)}</p>
+                    {g.content.length > 200 && (
+                      <button 
+                        className="btn-view-detail" 
+                        onClick={() => handleViewDetail(g)}
+                      >
+                        View Detail
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
+              
+              <Pagination 
+                currentPage={currentPage} 
+                totalPages={totalPages} 
+                onPageChange={handlePageChange} 
+              />
             </div>
           )}
         </div>
       </main>
 
       <Footer />
+
+      {selectedGuideline && (
+        <DetailModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title={selectedGuideline.title}
+          content={selectedGuideline.content}
+          updatedAt={selectedGuideline.updatedAt}
+          formatDate={formatDate}
+        />
+      )}
     </div>
   );
 }

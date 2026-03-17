@@ -70,8 +70,13 @@
 }
 
 .rule-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+  border-left: 4px solid #2a5298;
+}
+
+.rule-card:active {
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.12);
 }
 
 .rule-card-header {
@@ -109,4 +114,21 @@
 
 .rule-card-body p:last-child {
   margin-bottom: 0;
+}
+
+.btn-view-detail {
+  margin-top: 15px;
+  background-color: transparent;
+  color: #2a5298;
+  border: 1px solid #2a5298;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-view-detail:hover {
+  background-color: #2a5298;
+  color: white;
 }
