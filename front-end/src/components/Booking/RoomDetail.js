@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useBooking } from "../../context/BookingContext";
-import { getRoomById } from "../../services/bookingAPI";
+import { getRoomById, getRoomFeedbacks } from "../../services/bookingAPI";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
 import "./RoomDetail.css";
@@ -33,6 +33,8 @@ export default function RoomDetail({ user, role, onLogout }) {
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [loadingFeedbacks, setLoadingFeedbacks] = useState(false);
 
   // Fetch room data
   useEffect(() => {
@@ -68,6 +70,22 @@ export default function RoomDetail({ user, role, onLogout }) {
 
     fetchRoom();
     return () => (cancelled = true);
+  }, [roomId]);
+
+  // Fetch feedbacks separately
+  useEffect(() => {
+    async function fetchFeedbacks() {
+      try {
+        setLoadingFeedbacks(true);
+        const res = await getRoomFeedbacks(roomId);
+        setFeedbacks(res.data);
+      } catch (err) {
+        console.error("Fetch feedbacks error:", err);
+      } finally {
+        setLoadingFeedbacks(false);
+      }
+    }
+    fetchFeedbacks();
   }, [roomId]);
 
   // Khi click "Book Now"
@@ -178,33 +196,70 @@ export default function RoomDetail({ user, role, onLogout }) {
               </div>
 
               {/* Cancellation policy */}
-              <div className="rd-section">
-                <h3>Chính sách linh hoạt</h3>
-                <p className="rd-policy">
-                  {room.cancellationPolicy || "Hủy phòng miễn phí trước 24 giờ kể từ thời điểm check-in."}
-                </p>
-              </div>
+              <p className="rd-policy">
+                {room.cancellationPolicy || "Hủy phòng miễn phí trước 24 giờ kể từ thời điểm check-in."}
+              </p>
             </div>
 
-            {/* Right: pricing card */}
-            <aside className="rd-price-card">
-              <div className="rd-price-main">
-                <span className="rd-price-amount">
-                  {formatPrice(room.price)}
-                </span>
-                <span className="rd-price-unit">VNĐ / đêm</span>
-              </div>
-
-              <button onClick={handleBook} className="rd-book-btn">
-                Đặt phòng ngay
-              </button>
-
-              <p className="rd-price-note">
-                Thanh toán an toàn, bảo mật.<br />
-                Không phát sinh phụ phí ẩn.
-              </p>
-            </aside>
+            {/* Feedbacks Section */}
+            <div className="rd-section feedbacks-section">
+              <h3>Đánh giá từ khách hàng</h3>
+              {loadingFeedbacks ? (
+                <p>Đang tải đánh giá...</p>
+              ) : feedbacks.length === 0 ? (
+                <div className="rd-no-feedbacks">
+                  <p>Chưa có đánh giá nào cho phòng này. Hãy là người đầu tiên chia sẻ trải nghiệm!</p>
+                </div>
+              ) : (
+                <div className="rd-feedbacks-list">
+                  {feedbacks.map((fb) => (
+                    <div key={fb.feedbackId} className="rd-feedback-card">
+                      <div className="rd-fb-header">
+                        <div className="rd-fb-user">
+                          <div className="rd-fb-avatar">
+                            {fb.userAvatarUrl ? (
+                              <img src={fb.userAvatarUrl} alt={fb.userFullName} />
+                            ) : (
+                              <span className="rd-fb-initial">{fb.userFullName?.[0] || "?"}</span>
+                            )}
+                          </div>
+                          <div className="rd-fb-meta">
+                            <span className="rd-fb-name">{fb.userFullName || "Khách ẩn danh"}</span>
+                            <span className="rd-fb-date">{new Date(fb.createdAt).toLocaleDateString("vi-VN")}</span>
+                          </div>
+                        </div>
+                        <div className="rd-fb-rating">
+                          {[...Array(5)].map((_, i) => (
+                            <span key={i} className={`rd-fb-star ${i < fb.rating ? "active" : ""}`}>★</span>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="rd-fb-comment">{fb.comment || "Không có nhận xét."}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* Right: pricing card */}
+          <aside className="rd-price-card">
+            <div className="rd-price-main">
+              <span className="rd-price-amount">
+                {formatPrice(room.price)}
+              </span>
+              <span className="rd-price-unit">VNĐ / đêm</span>
+            </div>
+
+            <button onClick={handleBook} className="rd-book-btn">
+              Đặt phòng ngay
+            </button>
+
+            <p className="rd-price-note">
+              Thanh toán an toàn, bảo mật.<br />
+              Không phát sinh phụ phí ẩn.
+            </p>
+          </aside>
         </div>
       </div>
       <Footer />

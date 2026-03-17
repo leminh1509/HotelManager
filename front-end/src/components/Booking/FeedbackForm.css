@@ -1,0 +1,193 @@
+.ff-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.ff-modal {
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    animation: slideUp 0.3s ease-out;
+}
+
+.ff-header {
+    padding: 20px 24px;
+    background: #f8fafc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.ff-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #1e293b;
+}
+
+.ff-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.2s;
+}
+
+.ff-close:hover {
+    color: #ef4444;
+}
+
+.ff-body {
+    padding: 24px;
+}
+
+.ff-room-info {
+    margin-bottom: 24px;
+    padding: 12px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    color: #475569;
+}
+
+.ff-room-info p {
+    margin: 0;
+}
+
+.ff-rating-section {
+    margin-bottom: 24px;
+}
+
+.ff-rating-section label,
+.ff-comment-section label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.ff-stars {
+    display: flex;
+    gap: 8px;
+}
+
+.ff-star {
+    background: none;
+    border: none;
+    font-size: 2.5rem;
+    cursor: pointer;
+    color: #e2e8f0;
+    transition: transform 0.1s, color 0.2s;
+}
+
+.ff-star:hover {
+    transform: scale(1.1);
+}
+
+.ff-star.active {
+    color: #fbbf24;
+}
+
+.ff-comment-section textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    resize: none;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.ff-comment-section textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.ff-error {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 12px;
+}
+
+.ff-footer {
+    margin-top: 32px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.ff-btn-cancel,
+.ff-btn-submit {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ff-btn-cancel {
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+}
+
+.ff-btn-cancel:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.ff-btn-submit {
+    background: #3b82f6;
+    border: none;
+    color: white;
+}
+
+.ff-btn-submit:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+.ff-btn-submit:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+    transform: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

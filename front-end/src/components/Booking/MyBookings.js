@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getMyBookings, cancelBooking } from "../../services/bookingAPI";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
+import FeedbackForm from "./FeedbackForm";
 import "./MyBookings.css";
 
 // ─── Mock data fallback ───────────────────────────────────
@@ -114,6 +115,7 @@ export default function MyBookings({ user, role, onLogout }) {
   const [filter, setFilter] = useState("all");
   const [cancellingId, setCancellingId] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [feedbackBooking, setFeedbackBooking] = useState(null);
 
   useEffect(() => {
     async function fetchBookings() {
@@ -324,13 +326,35 @@ export default function MyBookings({ user, role, onLogout }) {
                           </button>
                         )}
                         {b.status === "Checked-out" && (
-                          <Link
-                            to={`/rooms/${b.roomId}`}
-                            className="mb-btn-rebook"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            Đặt lại
-                          </Link>
+                          <>
+                            <Link
+                              to={`/rooms/${b.roomId}`}
+                              className="mb-btn-rebook"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Đặt lại
+                            </Link>
+                            <button
+                              className="mb-btn-feedback"
+                              style={{
+                                marginTop: "8px",
+                                background: "#fbbf24",
+                                color: "white",
+                                border: "none",
+                                padding: "8px 16px",
+                                borderRadius: "8px",
+                                fontWeight: "600",
+                                cursor: "pointer",
+                                width: "100%"
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setFeedbackBooking(b);
+                              }}
+                            >
+                              Gửi đánh giá
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>
