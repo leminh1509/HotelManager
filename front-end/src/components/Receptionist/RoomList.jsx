@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import { getAllRooms } from "../../services/receptionistAPI";
 
 export default function RoomList() {
     const [rooms, setRooms] = useState([]);
@@ -20,10 +20,7 @@ export default function RoomList() {
 
     const fetchRooms = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const res = await axios.get("http://localhost:9999/api/rooms", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const res = await getAllRooms();
             setRooms(res.data);
         } catch (err) {
             console.error(err);

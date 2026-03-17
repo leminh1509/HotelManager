@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { getBookingById, updateBookingStatus, updateCheckoutDate } from "../../services/receptionistAPI";
+import { showToast } from "../Common/Toast";
 
 export default function BookingDetail() {
     const { id } = useParams();
@@ -21,10 +22,7 @@ export default function BookingDetail() {
 
     const fetchDetail = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const res = await axios.get(`http://localhost:9999/api/bookings/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const res = await getBookingById(id);
             setBooking(res.data);
             // Preset newCheckoutDate with current checkout date
             if (res.data.checkoutTime) {
@@ -43,22 +41,13 @@ export default function BookingDetail() {
 
         setUpdating(true);
         try {
-            const token = localStorage.getItem("token");
-            // Use PUT /api/bookings/{id}/status?status=...
-            await axios.put(
-                `http://localhost:9999/api/bookings/${id}/status`,
-                null,
-                {
-                    params: { status: newStatus },
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
+            await updateBookingStatus(id, newStatus);
             // Refresh
             fetchDetail();
         } catch (err) {
             console.error(err);
             const msg = err.response?.data?.message || err.message || "Failed to update status";
-            alert(msg);
+            showToast(msg, "error");
         } finally {
             setUpdating(false);
         }
@@ -70,19 +59,14 @@ export default function BookingDetail() {
 
         setUpdating(true);
         try {
-            const token = localStorage.getItem("token");
-            await axios.patch(
-                `http://localhost:9999/api/bookings/${id}/checkout`,
-                { checkoutDate: newCheckoutDate },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            alert("Check-out date updated successfully!");
+            await updateCheckoutDate(id, { checkoutDate: newCheckoutDate });
+            showToast("Check-out date updated successfully!", "success");
             setShowExtendModal(false);
             fetchDetail();
         } catch (err) {
             console.error(err);
             const msg = err.response?.data?.message || err.message || "Failed to update check-out date";
-            alert(msg);
+            showToast(msg, "error");
         } finally {
             setUpdating(false);
         }

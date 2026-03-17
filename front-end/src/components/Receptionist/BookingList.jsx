@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import axios from "axios";
+import { Link } from "react-router-dom";
+import { getAllRooms, getAllBooking, createBooking } from "../../services/receptionistAPI";
+import { showToast } from "../Common/Toast";
 
 export default function BookingList() {
   const location = useLocation();
@@ -93,7 +94,7 @@ export default function BookingList() {
 
   const fetchRooms = async () => {
     try {
-      const res = await axios.get("http://localhost:9999/api/rooms");
+      const res = await getAllRooms();
       setRooms(res.data);
     } catch (err) {
       console.error("Failed to fetch rooms:", err);
@@ -102,10 +103,7 @@ export default function BookingList() {
 
   const fetchBookings = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:9999/api/bookings", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await getAllBooking();
       setBookings(res.data);
     } catch (err) {
       console.error(err);
@@ -119,10 +117,7 @@ export default function BookingList() {
     e.preventDefault();
     setCreating(true);
     try {
-      const token = localStorage.getItem("token");
-      await axios.post("http://localhost:9999/api/bookings", newBooking, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await createBooking(newBooking);
       setIsModalOpen(false);
       setNewBooking({
         roomId: "", checkinTime: today, checkoutTime: "", guestCount: 1,
@@ -131,10 +126,10 @@ export default function BookingList() {
         earlyCheckin: false, lateCheckout: false
       });
       fetchBookings(); // Refresh the list
-      alert("Booking created successfully!");
+      showToast("Booking created successfully!", "success");
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || "Failed to create booking. Please check requirements.");
+      showToast(err.response?.data?.message || "Failed to create booking. Please check requirements.", "error");
     } finally {
       setCreating(false);
     }

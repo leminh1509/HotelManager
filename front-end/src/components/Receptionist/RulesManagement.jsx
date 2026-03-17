@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Pagination from "../Common/Pagination";
+import { getRules, createRule, updateRule, deleteRule } from "../../services/receptionistAPI";
+import { showToast } from "../Common/Toast";
 import "../Admin/AdminLayout.css";
 import "./RulesManagement.css";
 
@@ -23,11 +25,7 @@ export default function RulesManagement() {
   const fetchRules = async (page) => {
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:9999/api/rules?page=${page}&size=10`);
-      if (!res.ok) {
-        throw new Error("Failed to fetch rules");
-      }
-      const data = await res.json();
+      const data = await getRules(page, 10);
       setRules(data.content || []);
       setTotalPages(data.totalPages || 0);
     } catch (err) {
@@ -69,37 +67,27 @@ export default function RulesManagement() {
   const handleSave = async (e) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.content.trim()) {
-      alert("Title and Content are required.");
+      showToast("Title and Content are required.", "warning");
       return;
     }
 
     try {
       setIsSaving(true);
       const isEditing = !!editingRule;
-      const url = isEditing
-        ? `http://localhost:9999/api/rules/${editingRule.ruleId}`
-        : "http://localhost:9999/api/rules";
-      
-      const method = isEditing ? "PUT" : "POST";
 
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!res.ok) {
-        throw new Error(`Failed to ${isEditing ? "update" : "create"} rule`);
+      if (isEditing) {
+        await updateRule(editingRule.ruleId, formData);
+        showToast("Rule updated successfully!", "success");
+      } else {
+        await createRule(formData);
+        showToast("Rule created successfully!", "success");
       }
 
-      await fetchRules(currentPage); 
+      await fetchRules(currentPage);
       handleCloseModal();
     } catch (err) {
       console.error(err);
-      alert(err.message);
+      showToast(err.message, "error");
     } finally {
       setIsSaving(false);
     }
@@ -111,21 +99,12 @@ export default function RulesManagement() {
     }
 
     try {
-      const res = await fetch(`http://localhost:9999/api/rules/${id}`, {
-        method: "DELETE",
-        headers: {
-           "Authorization": `Bearer ${localStorage.getItem("token")}`
-        }
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to delete rule");
-      }
-
+      await deleteRule(id);
+      showToast("Rule deleted successfully!", "success");
       await fetchRules(currentPage);
     } catch (err) {
       console.error(err);
-      alert(err.message);
+      showToast(err.message, "error");
     }
   };
 
@@ -169,17 +148,17 @@ export default function RulesManagement() {
                     </td>
                     <td>{formatDate(r.updatedAt)}</td>
                     <td className="text-center actions-col">
-                      <button 
-                         className="btn btn-sm btn-outline-primary me-2" 
-                         onClick={() => handleOpenEditModal(r)}
-                         title="Edit"
+                      <button
+                        className="btn btn-sm btn-outline-primary me-2"
+                        onClick={() => handleOpenEditModal(r)}
+                        title="Edit"
                       >
                         <i className="fa fa-edit"></i>
                       </button>
-                      <button 
-                         className="btn btn-sm btn-outline-danger" 
-                         onClick={() => handleDelete(r.ruleId)}
-                         title="Delete"
+                      <button
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => handleDelete(r.ruleId)}
+                        title="Delete"
                       >
                         <i className="fa fa-trash"></i>
                       </button>
@@ -193,10 +172,10 @@ export default function RulesManagement() {
       )}
 
       {!loading && !error && (
-        <Pagination 
-          currentPage={currentPage} 
-          totalPages={totalPages} 
-          onPageChange={handlePageChange} 
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
         />
       )}
 

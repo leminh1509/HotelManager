@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import * as XLSX from "xlsx";
+import { showToast } from "../Common/Toast";
 import MaintenanceHeader from "../Header/MaintenanceHeader";
 import Footer from "../Footer/Footer";
+import { searchRequests, updateRequestStatus } from "../../services/receptionistAPI";
 import "./MaintenanceDashboard.css"; // Reuse dashboard styles
 
 export default function CleaningTaskList() {
@@ -13,14 +14,10 @@ export default function CleaningTaskList() {
 
     const fetchCleaningTasks = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const res = await axios.get("http://localhost:9999/api/requests/search", {
-                headers: { Authorization: `Bearer ${token}` },
-                params: {
-                    type: "CLEANING",
-                    status: "PENDING",
-                    assignedTo: user.userId // Filter by current staff ID
-                }
+            const res = await searchRequests({
+                type: "CLEANING",
+                status: "PENDING",
+                assignedTo: user.userId // Filter by current staff ID
             });
             setTasks(res.data.content || []);
         } catch (err) {
@@ -51,14 +48,11 @@ export default function CleaningTaskList() {
 
     const handleAccept = async (id) => {
         try {
-            const token = localStorage.getItem("token");
-            await axios.put(`http://localhost:9999/api/requests/${id}/status`,
-                { status: "IN_PROGRESS", notes: "Accepted for cleaning" },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            await updateRequestStatus(id, "IN_PROGRESS");
             fetchCleaningTasks();
         } catch (err) {
-            alert("Failed to accept task");
+            console.error(err);
+            showToast("Failed to accept task", "error");
         }
     };
 

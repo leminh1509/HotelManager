@@ -4,6 +4,7 @@ import { getMyBookings, cancelBooking } from "../../services/bookingAPI";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
 import FeedbackForm from "./FeedbackForm";
+import { showToast } from "../Common/Toast";
 import "./MyBookings.css";
 
 // ─── Mock data fallback ───────────────────────────────────
@@ -117,18 +118,20 @@ export default function MyBookings({ user, role, onLogout }) {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [feedbackBooking, setFeedbackBooking] = useState(null);
 
-  useEffect(() => {
-    async function fetchBookings() {
-      try {
-        const res = await getMyBookings();
-        setBookings(res.data);
-      } catch {
-        setBookings(MOCK_BOOKINGS);
-      } finally {
-        setLoading(false);
-      }
+  const loadMyBookings = async () => {
+    setLoading(true);
+    try {
+      const res = await getMyBookings();
+      setBookings(res.data);
+    } catch {
+      setBookings(MOCK_BOOKINGS);
+    } finally {
+      setLoading(false);
     }
-    fetchBookings();
+  };
+
+  useEffect(() => {
+    loadMyBookings();
   }, []);
 
   const now = new Date();
@@ -484,6 +487,18 @@ export default function MyBookings({ user, role, onLogout }) {
             </div>
           </div>
         </div>
+      )}
+
+      {feedbackBooking && (
+        <FeedbackForm
+          booking={feedbackBooking}
+          onClose={() => setFeedbackBooking(null)}
+          onSuccess={() => {
+            setFeedbackBooking(null);
+            showToast("Cảm ơn bạn đã gửi đánh giá!", "success");
+            loadMyBookings();
+          }}
+        />
       )}
 
       <Footer />

@@ -51,7 +51,12 @@ export default function FeedbackForm({ booking, onClose, onSuccess }) {
             });
             onSuccess();
         } catch (err) {
-            setError(err.response?.data?.message || "Không thể gửi đánh giá. Vui lòng thử lại.");
+            const msg = err.response?.data?.message || err.message;
+            if (msg.includes("MaxUploadSizeExceededException") || msg.includes("size exceeded")) {
+                setError("Ảnh quá lớn. Vui lòng chọn ảnh dưới 10MB.");
+            } else {
+                setError("Không thể gửi đánh giá. Vui lòng thử lại.");
+            }
         } finally {
             setSubmitting(false);
         }
@@ -95,7 +100,7 @@ export default function FeedbackForm({ booking, onClose, onSuccess }) {
                     </div>
 
                     <div className="ff-image-section">
-                        <label>Thêm ảnh (tối đa 5 ảnh)</label>
+                        <label>Thêm ảnh (tối đa 5 ảnh - không bắt buộc)</label>
                         <div className="ff-image-grid">
                             {previews.map((src, idx) => (
                                 <div key={idx} className="ff-image-preview">

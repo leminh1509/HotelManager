@@ -5,7 +5,6 @@ const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:9999/api";
 
 const api = axios.create({
   baseURL: BASE_URL,
-  headers: { "Content-Type": "application/json" },
 });
 
 // Tự gắn token nếu đã login
@@ -57,11 +56,7 @@ export const getCategories = () => api.get("/categories");
 export const submitFeedback = (payload) => api.post("/feedbacks", payload);
 
 export const uploadFeedbackImages = (formData) => {
-  return api.post("/feedbacks/upload", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  return api.post("/feedbacks/upload", formData);
 };
 
 export const getRoomFeedbacks = (roomId) => api.get(`/feedbacks/room/${roomId}`);
