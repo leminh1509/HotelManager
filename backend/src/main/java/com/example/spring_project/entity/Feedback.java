@@ -37,6 +37,9 @@ public class Feedback {
     @Column(name = "comment", length = 1000)
     private String comment;
 
+    @Column(name = "image_urls", length = 2000)
+    private String imageUrls;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

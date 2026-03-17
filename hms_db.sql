@@ -164,7 +164,7 @@ CREATE TABLE maintenance_request (
   photo_url VARCHAR(500) NULL,
 
   priority ENUM('Low','Medium','High','Urgent') NOT NULL DEFAULT 'Low',
-  status ENUM('New','In Progress','On Hold','Completed','Rejected') NOT NULL DEFAULT 'New',
+  status ENUM('New','In Progress','On Hold','Completed','Rejected','Cancelled') NOT NULL DEFAULT 'New',
 
   assigned_to INT NULL, 
   notes VARCHAR(1000) NULL,

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { submitFeedback } from "../../services/bookingAPI";
+import React, { useState, useRef } from "react";
+import { submitFeedback, uploadFeedbackImages } from "../../services/bookingAPI";
 import "./FeedbackForm.css";
 
 export default function FeedbackForm({ booking, onClose, onSuccess }) {
@@ -7,6 +7,27 @@ export default function FeedbackForm({ booking, onClose, onSuccess }) {
     const [comment, setComment] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
+    const [images, setImages] = useState([]);
+    const [previews, setPreviews] = useState([]);
+    const fileInputRef = useRef(null);
+
+    const handleImageChange = (e) => {
+        const selectedFiles = Array.from(e.target.files);
+        if (selectedFiles.length + images.length > 5) {
+            setError("Bạn chỉ có thể chọn tối đa 5 ảnh.");
+            return;
+        }
+
+        setImages((prev) => [...prev, ...selectedFiles]);
+
+        const newPreviews = selectedFiles.map((file) => URL.createObjectURL(file));
+        setPreviews((prev) => [...prev, ...newPreviews]);
+    };
+
+    const removeImage = (index) => {
+        setImages((prev) => prev.filter((_, i) => i !== index));
+        setPreviews((prev) => prev.filter((_, i) => i !== index));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -14,10 +35,19 @@ export default function FeedbackForm({ booking, onClose, onSuccess }) {
         setError(null);
 
         try {
+            let uploadedUrls = [];
+            if (images.length > 0) {
+                const formData = new FormData();
+                images.forEach((img) => formData.append("files", img));
+                const uploadRes = await uploadFeedbackImages(formData);
+                uploadedUrls = uploadRes.data.imageUrls;
+            }
+
             await submitFeedback({
                 bookingId: booking.bookingId,
                 rating,
                 comment,
+                imageUrls: uploadedUrls,
             });
             onSuccess();
         } catch (err) {
@@ -60,8 +90,39 @@ export default function FeedbackForm({ booking, onClose, onSuccess }) {
                         <textarea
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
-                            placeholder="Phòng có sạch sẽ không? Nhân viên phục vụ như thế nào?..."
                             rows={4}
+                        />
+                    </div>
+
+                    <div className="ff-image-section">
+                        <label>Thêm ảnh (tối đa 5 ảnh)</label>
+                        <div className="ff-image-grid">
+                            {previews.map((src, idx) => (
+                                <div key={idx} className="ff-image-preview">
+                                    <img src={src} alt={`preview-${idx}`} />
+                                    <button type="button" className="ff-remove-img" onClick={() => removeImage(idx)}>
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
+                            {previews.length < 5 && (
+                                <button
+                                    type="button"
+                                    className="ff-add-img-btn"
+                                    onClick={() => fileInputRef.current.click()}
+                                >
+                                    <span>+</span>
+                                    <p>Thêm ảnh</p>
+                                </button>
+                            )}
+                        </div>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            style={{ display: "none" }}
+                            accept="image/*"
+                            multiple
+                            onChange={handleImageChange}
                         />
                     </div>
 
