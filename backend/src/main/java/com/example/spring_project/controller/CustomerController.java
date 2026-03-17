@@ -1,9 +1,9 @@
 package com.example.spring_project.controller;
 
 import com.example.spring_project.dto.BookingResponse;
-import com.example.spring_project.dto.UserResponse;
+import com.example.spring_project.dto.CustomerDTO;
+import com.example.spring_project.repository.BookingRepository;
 import com.example.spring_project.service.BookingService;
-import com.example.spring_project.service.UserManagementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,7 +22,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CustomerController {
 
-    private final UserManagementService userService;
+    private final BookingRepository bookingRepo;
     private final BookingService bookingService;
 
     @GetMapping
@@ -30,22 +30,36 @@ public class CustomerController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "") String keyword) {
-        
+
         Pageable pageable = PageRequest.of(page, size);
-        Page<UserResponse> pageResult = userService.getAllUsers(keyword, "customer", pageable);
+        Page<Object[]> guestPage = bookingRepo.findUniqueGuests(keyword.isEmpty() ? null : keyword, pageable);
+
+        List<CustomerDTO> customers = guestPage.getContent().stream()
+                .map(obj -> CustomerDTO.builder()
+                        .name((String) obj[0])
+                        .email((String) obj[1])
+                        .phone((String) obj[2])
+                        .idNumber((String) obj[3])
+                        .nationality((String) obj[4])
+                        .address((String) obj[5])
+                        .build())
+                .toList();
 
         Map<String, Object> response = new HashMap<>();
-        response.put("customers", pageResult.getContent());
-        response.put("currentPage", pageResult.getNumber());
-        response.put("totalPages", pageResult.getTotalPages());
-        response.put("totalItems", pageResult.getTotalElements());
+        response.put("customers", customers);
+        response.put("currentPage", guestPage.getNumber());
+        response.put("totalPages", guestPage.getTotalPages());
+        response.put("totalItems", guestPage.getTotalElements());
 
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{userId}/bookings")
-    public ResponseEntity<List<BookingResponse>> getCustomerBookings(@PathVariable Integer userId) {
-        List<BookingResponse> bookings = bookingService.getMyBookings(userId);
+    @GetMapping("/bookings")
+    public ResponseEntity<List<BookingResponse>> getCustomerBookings(
+            @RequestParam String name,
+            @RequestParam(required = false) String email,
+            @RequestParam String phone) {
+        List<BookingResponse> bookings = bookingService.getBookingsByGuest(name, email, phone);
         return ResponseEntity.ok(bookings);
     }
 }

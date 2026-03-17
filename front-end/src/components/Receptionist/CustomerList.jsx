@@ -77,37 +77,24 @@ const CustomerList = () => {
                         <table className="table table-hover mgmt-table">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th>#</th>
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Phone</th>
-                                    <th>Status</th>
+                                    <th>ID Number</th>
+                                    <th>Nationality</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {customers.map((customer) => (
-                                    <tr key={customer.userId}>
-                                        <td>{customer.userId}</td>
-                                        <td>
-                                            <div className="d-flex align-items-center">
-                                                {customer.avatarUrl ? (
-                                                    <img src={customer.avatarUrl} alt="" className="avatar-sm me-2" />
-                                                ) : (
-                                                    <div className="avatar-placeholder me-2">
-                                                        {customer.firstName.charAt(0)}
-                                                    </div>
-                                                )}
-                                                {customer.firstName} {customer.lastName}
-                                            </div>
-                                        </td>
-                                        <td>{customer.email}</td>
-                                        <td>{customer.mobilePhone || 'N/A'}</td>
-                                        <td>
-                                            <span className={`badge bg-${customer.isActive ? 'success' : 'danger'}`}>
-                                                {customer.isActive ? 'Active' : 'Inactive'}
-                                            </span>
-                                        </td>
+                                {customers.map((customer, index) => (
+                                    <tr key={`${customer.phone}-${customer.name}`}>
+                                        <td>{currentPage * PAGE_SIZE + index + 1}</td>
+                                        <td>{customer.name}</td>
+                                        <td>{customer.email || 'N/A'}</td>
+                                        <td>{customer.phone || 'N/A'}</td>
+                                        <td>{customer.idNumber || 'N/A'}</td>
+                                        <td>{customer.nationality || 'N/A'}</td>
                                         <td className="actions-col">
                                             <button 
                                                 className="btn btn-sm btn-outline-primary"
@@ -120,7 +107,7 @@ const CustomerList = () => {
                                 ))}
                                 {customers.length === 0 && (
                                     <tr>
-                                        <td colSpan="6" className="text-center p-4">No customers found.</td>
+                                        <td colSpan="7" className="text-center p-4">No customers found.</td>
                                     </tr>
                                 )}
                             </tbody>

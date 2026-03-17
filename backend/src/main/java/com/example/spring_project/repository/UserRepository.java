@@ -14,35 +14,35 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
-    Optional<User> findByEmail(String email);
+        Optional<User> findByEmail(String email);
 
-    Boolean existsByEmail(String email);
+        Boolean existsByEmail(String email);
 
-    Boolean existsByMobilePhone(String mobilePhone);
+        Boolean existsByMobilePhone(String mobilePhone);
 
-    List<User> findByRole_Name(String roleName);
+        List<User> findByRole_Name(String roleName);
 
-    List<User> findByRole(Role role);
+        List<User> findByRole(Role role);
 
-    Page<User> findByRole_Name(String roleName, Pageable pageable);
+        Page<User> findByRole_Name(String roleName, Pageable pageable);
 
-    Long countByRole_Name(String roleName);
+        Long countByRole_Name(String roleName);
 
-    Long countByIsActiveTrue();
+        Long countByIsActiveTrue();
 
-    Long countByIsBlackListTrue();
+        Long countByIsBlackListTrue();
 
-    List<User> findByIsActiveTrue();
+        List<User> findByIsActiveTrue();
 
-    @Query("SELECT u FROM User u WHERE " +
-            "(:roleName IS NULL OR u.role.name = :roleName) AND " +
-            "(:keyword IS NULL OR " +
-            " LOWER(u.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            " LOWER(u.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            " LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            " LOWER(u.mobilePhone) LIKE LOWER(CONCAT('%', :keyword, '%'))) ")
-    Page<User> searchUsers(
-            @Param("roleName") String roleName,
-            @Param("keyword") String keyword,
-            Pageable pageable);
+        @Query("SELECT u FROM User u WHERE " +
+                        "(:roleName IS NULL OR u.role.name = :roleName) AND " +
+                        "(:keyword IS NULL OR " +
+                        " LOWER(u.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        " LOWER(u.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        " LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        " LOWER(u.mobilePhone) LIKE LOWER(CONCAT('%', :keyword, '%'))) ")
+        Page<User> searchUsers(
+                        @Param("roleName") String roleName,
+                        @Param("keyword") String keyword,
+                        Pageable pageable);
 }

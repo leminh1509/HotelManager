@@ -295,7 +295,7 @@ public class BookingService {
         if (newStatus == Status.Confirmed || newStatus == Status.CheckedIn) {
             Room room = booking.getRoom();
             String roomStatusName = room.getStatus().getName();
-            
+
             // Per requirement: Check-in is only allowed if the room status is 'Reserved'.
             // (Walk-in bookings set the room to 'Reserved' upon creation).
             if (!"Reserved".equalsIgnoreCase(roomStatusName)) {
@@ -369,7 +369,8 @@ public class BookingService {
                     "High");
 
             // Real-time WebSocket notification
-            messagingTemplate.convertAndSend("/topic/maintenance", "New cleaning request for room " + room.getRoomNumber());
+            messagingTemplate.convertAndSend("/topic/maintenance",
+                    "New cleaning request for room " + room.getRoomNumber());
         }
 
         return BookingMapper.toBookingResponse(saved);
@@ -417,5 +418,13 @@ public class BookingService {
 
         Booking saved = bookingRepo.save(booking);
         return BookingMapper.toBookingResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getBookingsByGuest(String name, String email, String phone) {
+        List<Booking> list = bookingRepo.findByGuestInfo(name, email, phone);
+        return list.stream()
+                .map(BookingMapper::toBookingResponse)
+                .collect(Collectors.toList());
     }
 }

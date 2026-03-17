@@ -18,7 +18,12 @@ const CustomerBookingsModal = ({ isOpen, onClose, customer }) => {
         setError(null);
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get(`http://localhost:9999/api/receptionist/customers/${customer.userId}/bookings`, {
+            const response = await axios.get(`http://localhost:9999/api/receptionist/customers/bookings`, {
+                params: {
+                    name: customer.name,
+                    email: customer.email,
+                    phone: customer.phone
+                },
                 headers: { Authorization: `Bearer ${token}` }
             });
             setBookings(response.data);
@@ -36,7 +41,7 @@ const CustomerBookingsModal = ({ isOpen, onClose, customer }) => {
         <div className="modal-overlay">
             <div className="custom-modal" style={{ maxWidth: '900px' }}>
                 <div className="modal-header">
-                    <h3>Booking History: {customer?.firstName} {customer?.lastName}</h3>
+                    <h3>Booking History: {customer?.name}</h3>
                     <button className="close-btn" onClick={onClose}>&times;</button>
                 </div>
                 <div className="modal-body">
