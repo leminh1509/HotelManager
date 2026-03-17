@@ -1,8 +1,9 @@
 /* src/components/Maintenance/StaffDashboard.jsx */
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import MaintenanceHeader from "../Header/MaintenanceHeader";
 import Footer from "../Footer/Footer";
+import { showToast } from "../Common/Toast";
+import { searchRequests, updateRequestStatus } from "../../services/receptionistAPI";
 import "./StaffDashboard.css";
 
 const StaffDashboard = () => {
@@ -21,18 +22,14 @@ const StaffDashboard = () => {
 
     const fetchMyTasks = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const res = await axios.get("http://localhost:9999/api/requests/search", {
-                headers: { Authorization: `Bearer ${token}` },
-                params: { assignedTo: user.userId }
-            });
+            const res = await searchRequests({ assignedTo: user.userId });
 
             const allTasks = res.data.content || [];
             setTasks(allTasks);
 
             // Calculate stats
             const s = {
-                pending: allTasks.filter(t => t.status === 'New' || t.status === 'PENDING').length, // Assuming Backend uses 'New' or 'PENDING'
+                pending: allTasks.filter(t => t.status === 'New' || t.status === 'PENDING').length,
                 inProgress: allTasks.filter(t => t.status === 'In Progress').length,
                 completed: allTasks.filter(t => t.status === 'Completed').length
             };
@@ -46,14 +43,11 @@ const StaffDashboard = () => {
 
     const handleStatusUpdate = async (taskId, newStatus) => {
         try {
-            const token = localStorage.getItem("token");
-            await axios.put(`http://localhost:9999/api/requests/${taskId}/status`,
-                { status: newStatus, notes: `Status updated by ${user.firstName}` },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            await updateRequestStatus(taskId, newStatus);
             fetchMyTasks();
         } catch (err) {
-            alert("Không thể cập nhật trạng thái!");
+            showToast("Không thể cập nhật trạng thái!", "error");
+            console.error(err);
         }
     };
 

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { getBookingsByStatus } from "../../services/receptionistAPI";
 
 export default function PaymentList() {
     const [payments, setPayments] = useState([]);
@@ -20,10 +20,7 @@ export default function PaymentList() {
     useEffect(() => {
         const fetchPayments = async () => {
             try {
-                const token = localStorage.getItem("token");
-                const res = await axios.get("http://localhost:9999/api/bookings?status=Checked-out", {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                const res = await getBookingsByStatus("Checked-out");
                 setPayments(res.data);
             } catch (err) {
                 console.error(err);
@@ -61,7 +58,7 @@ export default function PaymentList() {
 
     const exportSinglePDF = (booking) => {
         const doc = new jsPDF();
-        
+
         // Header
         doc.setFontSize(22);
         doc.setFont("helvetica", "bold");
@@ -80,7 +77,7 @@ export default function PaymentList() {
         doc.text(`INVOICE NO: INV-${booking.bookingId}`, 150, 30);
         doc.setFont("helvetica", "normal");
         doc.text(`Date: ${new Date().toLocaleDateString()}`, 150, 35);
-        
+
         // Line break
         doc.setLineWidth(0.5);
         doc.line(14, 50, 196, 50);
@@ -120,7 +117,7 @@ export default function PaymentList() {
         doc.text("Total Paid:", 120, finalY + 15);
         doc.setTextColor(39, 174, 96); // Green text
         doc.text(`${(booking.totalPrice || 0).toLocaleString()} VND`, 160, finalY + 15);
-        
+
         // Status Stamp
         doc.setTextColor(0);
         doc.setFontSize(14);
@@ -226,8 +223,8 @@ export default function PaymentList() {
                                         <span className="badge bg-success">Completed</span>
                                     </td>
                                     <td className="text-center">
-                                        <button 
-                                            className="btn btn-sm btn-outline-danger" 
+                                        <button
+                                            className="btn btn-sm btn-outline-danger"
                                             onClick={() => exportSinglePDF(booking)}
                                             title="Download PDF Invoice"
                                         >

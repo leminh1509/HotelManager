@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
+import { getAllRooms, getMaintenanceRequests, createMaintenanceRequest } from "../../services/receptionistAPI";
+import { showToast } from "../Common/Toast";
 
 const PAGE_SIZE = 10;
 
@@ -15,14 +16,6 @@ export default function MaintenanceRequestList() {
 
     // Real-time notification state
     const [wsMessage, setWsMessage] = useState(null);
-
-    // Custom Toast State
-    const [toast, setToast] = useState(null);
-
-    const showToast = (message, type = 'success') => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 3000);
-    };
 
     // Search and Pagination state
     const [searchTerm, setSearchTerm] = useState("");
@@ -45,10 +38,7 @@ export default function MaintenanceRequestList() {
 
     const fetchRooms = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const res = await axios.get("http://localhost:9999/api/rooms", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const res = await getAllRooms();
             const roomList = res.data;
             setRooms(roomList);
             if (roomList.length > 0) {
@@ -61,11 +51,8 @@ export default function MaintenanceRequestList() {
 
     const fetchRequests = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const res = await axios.get("http://localhost:9999/api/requests/maintenance", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setRequests(res.data.content || []);
+            const data = await getMaintenanceRequests();
+            setRequests(data.content || []);
             setLoading(false);
         } catch (err) {
             console.error(err);
@@ -86,7 +73,6 @@ export default function MaintenanceRequestList() {
         stompClient.debug = () => { };
 
         stompClient.connect({}, (frame) => {
-            console.log("Connected to WebSocket: " + frame);
             stompClient.subscribe("/topic/maintenance", (message) => {
                 if (message && message.body) {
                     setWsMessage(message.body);
@@ -122,10 +108,7 @@ export default function MaintenanceRequestList() {
 
         setSubmitting(true);
         try {
-            const token = localStorage.getItem("token");
-            await axios.post("http://localhost:9999/api/requests/maintenance", newRequest, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            await createMaintenanceRequest(newRequest);
             showToast("Request created successfully!");
             setShowModal(false);
             setNewRequest({ roomId: "", description: "", priority: "MEDIUM" });

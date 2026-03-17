@@ -98,11 +98,17 @@
 }
 
 /* body layout */
-.rd-body {
+.rd-grid {
   display: grid;
   grid-template-columns: 1fr 380px;
   gap: 60px;
   align-items: start;
+}
+
+.rd-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
 }
 
 /* ── left: info ── */
@@ -127,7 +133,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 16px;
-  margin-bottom: 48px;
+  margin-bottom: 0;
 }
 
 .rd-spec {
@@ -157,7 +163,7 @@
 }
 
 .rd-section {
-  margin-bottom: 48px;
+  margin-bottom: 0;
 }
 
 .rd-section h3 {
@@ -217,6 +223,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  margin: 0;
 }
 
 .rd-policy::before {
@@ -224,14 +231,17 @@
   font-size: 20px;
 }
 
-/* ── right: price card ── */
+/* ── right: sidebar / price card ── */
+.rd-sidebar {
+  position: sticky;
+  top: 100px;
+}
+
 .rd-price-card {
   background: white;
   border-radius: 28px;
   padding: 40px;
   box-shadow: var(--shadow-premium);
-  position: sticky;
-  top: 40px;
   border: 1px solid #f1f5f9;
 }
 
@@ -242,14 +252,14 @@
 }
 
 .rd-price-amount {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 800;
   color: var(--text-main);
   letter-spacing: -0.03em;
 }
 
 .rd-price-unit {
-  font-size: 16px;
+  font-size: 15px;
   color: var(--text-muted);
   font-weight: 500;
 }
@@ -316,7 +326,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  margin-top: 24px;
+  margin-top: 10px;
 }
 
 .rd-feedback-card {
@@ -396,6 +406,34 @@
   font-size: 15px !important;
   color: var(--text-main) !important;
   line-height: 1.6;
+  margin-bottom: 16px !important;
+}
+
+.rd-fb-images {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.rd-fb-img-box {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid #f1f5f9;
+  transition: transform 0.2s;
+}
+
+.rd-fb-img-box:hover {
+  transform: scale(1.05);
+}
+
+.rd-fb-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .rd-no-feedbacks {
@@ -408,12 +446,12 @@
 
 /* responsive */
 @media (max-width: 1024px) {
-  .rd-body {
+  .rd-grid {
     grid-template-columns: 1fr;
     gap: 40px;
   }
 
-  .rd-price-card {
+  .rd-sidebar {
     position: static;
     order: -1;
   }

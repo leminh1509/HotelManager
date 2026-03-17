@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Pagination from "../Common/Pagination";
-import "../Admin/AdminLayout.css"; // Reuse generic admin styles or create specific ones if needed
+import { getGuidelines, createGuideline, updateGuideline, deleteGuideline } from "../../services/receptionistAPI";
+import { showToast } from "../Common/Toast";
 import "./GuidelinesManagement.css";
 
 export default function GuidelinesManagement() {
@@ -23,16 +24,13 @@ export default function GuidelinesManagement() {
   const fetchGuidelines = async (page) => {
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:9999/api/guidelines?page=${page}&size=10`);
-      if (!res.ok) {
-        throw new Error("Failed to fetch guidelines");
-      }
-      const data = await res.json();
+      const data = await getGuidelines(page, 10); // Assuming size is 10
       setGuidelines(data.content || []);
       setTotalPages(data.totalPages || 0);
     } catch (err) {
       console.error(err);
       setError("Unable to load guidelines. Please try again later.");
+      showToast("Unable to load guidelines. Please try again later.", "error");
     } finally {
       setLoading(false);
     }
@@ -71,37 +69,27 @@ export default function GuidelinesManagement() {
   const handleSave = async (e) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.content.trim()) {
-      alert("Title and Content are required.");
+      showToast("Title and Content are required.", "warning");
       return;
     }
 
     try {
       setIsSaving(true);
       const isEditing = !!editingGuideline;
-      const url = isEditing
-        ? `http://localhost:9999/api/guidelines/${editingGuideline.guidelineId}`
-        : "http://localhost:9999/api/guidelines";
-      
-      const method = isEditing ? "PUT" : "POST";
 
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!res.ok) {
-        throw new Error(`Failed to ${isEditing ? "update" : "create"} guideline`);
+      if (isEditing) {
+        await updateGuideline(editingGuideline.guidelineId, formData);
+        showToast("Guideline updated successfully!", "success");
+      } else {
+        await createGuideline(formData);
+        showToast("Guideline created successfully!", "success");
       }
 
-      await fetchGuidelines(currentPage); 
+      await fetchGuidelines(currentPage);
       handleCloseModal();
     } catch (err) {
       console.error(err);
-      alert(err.message);
+      showToast(err.message, "error");
     } finally {
       setIsSaving(false);
     }
@@ -113,21 +101,12 @@ export default function GuidelinesManagement() {
     }
 
     try {
-      const res = await fetch(`http://localhost:9999/api/guidelines/${id}`, {
-        method: "DELETE",
-        headers: {
-           "Authorization": `Bearer ${localStorage.getItem("token")}`
-        }
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to delete guideline");
-      }
-
+      await deleteGuideline(id);
+      showToast("Guideline deleted successfully!", "success");
       await fetchGuidelines(currentPage);
     } catch (err) {
       console.error(err);
-      alert(err.message);
+      showToast(err.message, "error");
     }
   };
 
@@ -171,15 +150,15 @@ export default function GuidelinesManagement() {
                     </td>
                     <td>{formatDate(g.updatedAt)}</td>
                     <td className="text-center actions-col">
-                      <button 
-                        className="btn btn-sm btn-outline-primary me-2" 
+                      <button
+                        className="btn btn-sm btn-outline-primary me-2"
                         onClick={() => handleOpenEditModal(g)}
                         title="Edit"
                       >
                         <i className="fa fa-edit"></i>
                       </button>
-                      <button 
-                        className="btn btn-sm btn-outline-danger" 
+                      <button
+                        className="btn btn-sm btn-outline-danger"
                         onClick={() => handleDelete(g.guidelineId)}
                         title="Delete"
                       >
@@ -195,10 +174,10 @@ export default function GuidelinesManagement() {
       )}
 
       {!loading && !error && (
-        <Pagination 
-          currentPage={currentPage} 
-          totalPages={totalPages} 
-          onPageChange={handlePageChange} 
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
         />
       )}
 

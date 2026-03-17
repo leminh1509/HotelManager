@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MaintenanceHeader from '../Header/MaintenanceHeader';
 import Footer from '../Footer/Footer';
 import './MaintenanceDashboard.css';
-import { getAllRooms } from '../../services/roomAPI'; // Assuming this exists or I'll use fetch
-import axios from 'axios';
+import { getAllRooms, searchRequests, updateRequestStatus, getMaintenanceRequests } from '../../services/receptionistAPI';
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
 
@@ -58,8 +57,6 @@ const MaintenanceDashboard = () => {
         notes: ''
     });
 
-    const API_URL = 'http://localhost:9999/api/requests';
-
     useEffect(() => {
         fetchRequests();
     }, [filters]); // Re-fetch when filters change (including page)
@@ -74,7 +71,6 @@ const MaintenanceDashboard = () => {
         stompClient.debug = () => { };
 
         stompClient.connect({}, (frame) => {
-            console.log("Connected to WebSocket: " + frame);
             stompClient.subscribe("/topic/maintenance", (message) => {
                 if (message && message.body) {
                     setWsMessage(message.body);
@@ -98,8 +94,6 @@ const MaintenanceDashboard = () => {
 
     const fetchRequests = async () => {
         try {
-            const token = localStorage.getItem('token');
-            // If using Search API
             const params = {
                 page: filters.page,
                 size: filters.size,
@@ -108,34 +102,22 @@ const MaintenanceDashboard = () => {
                 type: filters.type || undefined
             };
 
-            const res = await axios.get(`${API_URL}/search`, {
-                headers: { Authorization: `Bearer ${token}` },
-                params
-            });
+            const res = await searchRequests(params);
 
-            // Backend returns Page<ServiceRequest>
             setRequests(res.data.content);
             setTotalPages(res.data.totalPages);
 
-            // For stats, we might need a separate call or just mock it based on current View 
-            // Better: separate endpoint for stats. For now, let's keep stats static or simple logic?
-            // Since getAllRequests was simple, let's do a quick separate fetch for full stats if feasible, 
-            // or just rely on backend to provide stats endpoint later. 
-            // To prevent breaking stats, let's fetch ALL for stats calculation once.
-            fetchAllForStats(token);
+            fetchAllForStats();
 
         } catch (error) {
             console.error("Error fetching requests", error);
         }
     };
 
-    const fetchAllForStats = async (token) => {
+    const fetchAllForStats = async () => {
         try {
-            // Optional: If backend supports simple stats endpoint, use that. 
-            // Currently fallback to fetching all for correct counts (Performance warning with large data)
-            // Temporarily fetch all just to calculate stats numbers
-            const res = await axios.get(API_URL, { headers: { Authorization: `Bearer ${token}` } });
-            calculateStats(res.data);
+            const data = await getMaintenanceRequests();
+            calculateStats(data.content || []);
         } catch (e) {
             console.error("Stats fetch error", e);
         }
@@ -179,10 +161,7 @@ const MaintenanceDashboard = () => {
     const handleCreateSubmit = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            await axios.post(API_URL, newRequest, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await createMaintenanceRequest(newRequest);
             setCreateModalOpen(false);
             setNewRequest({ roomId: '', description: '', type: 'MAINTENANCE', priority: 'MEDIUM' });
             fetchRequests();
@@ -202,10 +181,7 @@ const MaintenanceDashboard = () => {
     const handleUpdateSubmit = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            await axios.put(`${API_URL}/${selectedRequest.id}/status`, updateData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await updateRequestStatus(selectedRequest.id, updateData.status);
             setUpdateModalOpen(false);
             fetchRequests();
             showToast('Cập nhật thành công', 'success');
@@ -217,15 +193,12 @@ const MaintenanceDashboard = () => {
 
     const handleQuickStatusUpdate = async (req, newStatus) => {
         try {
-            const token = localStorage.getItem('token');
             let notes = '';
             if (newStatus === 'CANCELLED') {
                 notes = window.prompt("Vui lòng nhập lý do từ chối (Ghi chú):");
                 if (notes === null) return; // User cancelled
             }
-            await axios.put(`${API_URL}/${req.id}/status`, { status: newStatus, notes: notes }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await updateRequestStatus(req.id, newStatus);
             fetchRequests();
             showToast('Đã cập nhật yêu cầu');
         } catch (error) {

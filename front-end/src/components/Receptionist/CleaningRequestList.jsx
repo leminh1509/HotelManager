@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
+import { getCleaningRequests } from "../../services/receptionistAPI";
 
 export default function CleaningRequestList() {
     const [requests, setRequests] = useState([]);
@@ -15,11 +15,8 @@ export default function CleaningRequestList() {
     useEffect(() => {
         const fetchRequests = async () => {
             try {
-                const token = localStorage.getItem("token");
-                const res = await axios.get("http://localhost:9999/api/requests/cleaning", {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                setRequests(res.data.content || []);
+                const data = await getCleaningRequests();
+                setRequests(data.content || []);
             } catch (err) {
                 console.error(err);
                 setError("Failed to load cleaning requests");

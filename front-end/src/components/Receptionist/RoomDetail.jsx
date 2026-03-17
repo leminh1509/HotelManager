@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { getRoomById, updateRoomStatus, getRoomStatuses } from "../../services/receptionistAPI";
+import { showToast } from "../Common/Toast";
 
 export default function RoomDetail() {
     const { id } = useParams();
@@ -20,10 +21,7 @@ export default function RoomDetail() {
 
     const fetchRoomDetail = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const res = await axios.get(`http://localhost:9999/api/rooms/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const res = await getRoomById(id);
             setRoom(res.data);
         } catch (err) {
             console.error(err);
@@ -35,28 +33,32 @@ export default function RoomDetail() {
 
     const fetchStatuses = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const res = await axios.get("http://localhost:9999/api/rooms/statuses", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const res = await getRoomStatuses();
             setAllStatuses(res.data);
         } catch (err) {
             console.error("Failed to fetch statuses", err);
         }
     };
 
-    const updateStatus = async (newStatus) => {
-        if (!window.confirm(`Change status to ${newStatus}?`)) return;
+    const updateStatus = async (newStatusName) => {
+        if (!window.confirm(`Change status to ${newStatusName}?`)) return;
         setUpdating(true);
         try {
-            const token = localStorage.getItem("token");
-            await axios.patch(`http://localhost:9999/api/rooms/${id}/status`,
-                { status: newStatus },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            fetchRoomDetail(); // reload
+            const selectedStatus = allStatuses.find(s => s.name === newStatusName);
+            if (!selectedStatus) {
+                showToast("Invalid status selected", "error");
+                setUpdating(false);
+                return;
+            }
+            const res = await updateRoomStatus(id, { status: selectedStatus.statusId });
+            if (res.status === 200) {
+                setRoom(prevRoom => ({ ...prevRoom, statusName: newStatusName, statusId: selectedStatus.statusId }));
+                showToast("Status updated successfully", "success");
+            } else {
+                showToast("Failed to update status", "error");
+            }
         } catch (err) {
-            alert("Failed to update status");
+            showToast("Failed to update status", "error");
             console.error(err);
         } finally {
             setUpdating(false);
@@ -139,8 +141,6 @@ export default function RoomDetail() {
                         </div>
                         <div className="card-footer bg-white text-end">
                             <button className="btn btn-secondary" onClick={() => navigate(-1)}>Back</button>
-                            {/* Placeholder for Edit button */}
-                            {/* <button className="btn btn-primary ms-2">Edit</button> */}
                         </div>
                     </div>
                 </div>
