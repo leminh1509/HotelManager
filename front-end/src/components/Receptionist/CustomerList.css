@@ -1,0 +1,59 @@
+/* src/components/Receptionist/CustomerList.css */
+
+.customer-mgmt-container {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.search-box {
+    max-width: 400px;
+}
+
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #2a5298;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.mgmt-table thead th {
+    background-color: #f8f9fa;
+    color: #333;
+    font-weight: 600;
+}
+
+.actions-col button {
+    transition: all 0.2s;
+}
+
+.actions-col button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Modal specific tweaks */
+.table-responsive {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.badge {
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+}

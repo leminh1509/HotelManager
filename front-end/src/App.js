@@ -30,6 +30,7 @@ import Guidelines from "./components/Guidelines/Guidelines";
 import GuidelinesManagement from "./components/Receptionist/GuidelinesManagement";
 import Rules from "./components/Rules/Rules";
 import RulesManagement from "./components/Receptionist/RulesManagement";
+import CustomerList from "./components/Receptionist/CustomerList";
 
 const Forbidden = () => (
   <div style={{ padding: 40, textAlign: "center" }}>
@@ -149,6 +150,7 @@ export default function App() {
             <Route path="rooms/:id" element={<ReceptionistRoomDetail />} />
             <Route path="guidelines" element={<GuidelinesManagement />} />
             <Route path="rules" element={<RulesManagement />} />
+            <Route path="customers" element={<CustomerList />} />
           </Route>
         </Route>
       </Route>
