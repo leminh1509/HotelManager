@@ -32,8 +32,8 @@ public class RoomController {
 
     @GetMapping("/search")
     public ResponseEntity<List<RoomResponse>> search(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate checkin,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate checkout,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkin,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkout,
             @RequestParam(defaultValue = "1") int guests,
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) Double minPrice,
@@ -52,8 +52,8 @@ public class RoomController {
 
     @GetMapping("/search/page")
     public ResponseEntity<org.springframework.data.domain.Page<RoomResponse>> searchPage(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate checkin,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate checkout,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkin,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkout,
             @RequestParam(defaultValue = "1") int guests,
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) Double minPrice,

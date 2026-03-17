@@ -88,6 +88,13 @@ export default function ReceptionistLayout() {
           >
             <i className="fa fa-gavel"></i> {!isCollapsed && "Rules"}
           </NavLink>
+
+          <NavLink
+            to="/receptionist/customers"
+            className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
+          >
+            <i className="fa fa-users"></i> {!isCollapsed && "Customers"}
+          </NavLink>
           {/* Add more links if needed */}
 
           <button onClick={handleLogout} className="nav-item logout-btn">

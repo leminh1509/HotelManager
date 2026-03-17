@@ -11,8 +11,6 @@ export default function MaintenanceRequestList() {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [showModal, setShowModal] = useState(false);
-    const [rooms, setRooms] = useState([]);
 
     // Real-time notification state
     const [wsMessage, setWsMessage] = useState(null);
@@ -22,15 +20,6 @@ export default function MaintenanceRequestList() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
 
-    // Form state
-    const [newRequest, setNewRequest] = useState({
-        roomId: "",
-        description: "",
-        priority: "MEDIUM"
-    });
-    const [submitting, setSubmitting] = useState(false);
-
-    const navigate = useNavigate();
 
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
@@ -63,7 +52,6 @@ export default function MaintenanceRequestList() {
 
     useEffect(() => {
         fetchRequests();
-        fetchRooms();
 
         // Setup WebSocket
         const socket = new SockJS("http://localhost:9999/ws");
@@ -139,7 +127,6 @@ export default function MaintenanceRequestList() {
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2>Maintenance Requests</h2>
                 <div className="d-flex gap-3 align-items-center">
-                    <div className="search-box">
                         <div className="input-group">
                             <span className="input-group-text bg-white border-end-0">
                                 <i className="fa fa-search text-muted"></i>
@@ -153,11 +140,7 @@ export default function MaintenanceRequestList() {
                             />
                         </div>
                     </div>
-                    <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-                        + Create
-                    </button>
                 </div>
-            </div>
 
             {error && <div className="alert alert-danger">{error}</div>}
 
@@ -238,11 +221,6 @@ export default function MaintenanceRequestList() {
                     </div>
                 )
             }
-
-            <div className="text-center text-muted mt-2 small">
-                Showing {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} requests
-                {searchTerm && ` (filtered from ${requests.length} total)`}
-            </div>
         </div>
     );
 }

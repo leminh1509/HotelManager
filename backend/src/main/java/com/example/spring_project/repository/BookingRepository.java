@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -94,5 +96,63 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                         """)
         List<Booking> findOverdueCheckedIn(@Param("today") LocalDate today);
 
+        @Query("""
+                    SELECT COUNT(b) > 0 FROM Booking b
+                    WHERE b.guestPhone = :phone
+                      AND b.status IN (com.example.spring_project.entity.Booking.Status.Confirmed, com.example.spring_project.entity.Booking.Status.CheckedIn)
+                """)
+        boolean existsByActivePhone(@Param("phone") String phone);
+
+        @Query("""
+                    SELECT COUNT(b) > 0 FROM Booking b
+                    WHERE b.guestEmail = :email
+                      AND b.status IN (com.example.spring_project.entity.Booking.Status.Confirmed, com.example.spring_project.entity.Booking.Status.CheckedIn)
+                """)
+        boolean existsByActiveEmail(@Param("email") String email);
+
+        @Query("""
+                    SELECT COUNT(b) > 0 FROM Booking b
+                    WHERE b.guestIdNumber = :idNumber
+                      AND b.status IN (com.example.spring_project.entity.Booking.Status.Confirmed, com.example.spring_project.entity.Booking.Status.CheckedIn)
+                """)
+        boolean existsByActiveIdNumber(@Param("idNumber") String idNumber);
+
         List<Booking> findByRoomRoomIdAndStatus(Integer roomId, Status status);
+
+        @Query(value = """
+                            SELECT
+                                guest_name,
+                                MAX(guest_email) as guest_email,
+                                guest_phone,
+                                MAX(guest_id_number) as guest_id_number,
+                                MAX(guest_nationality) as guest_nationality,
+                                MAX(guest_address) as guest_address,
+                                MAX(CASE WHEN status IN ('Confirmed', 'Checked-in') THEN 1 ELSE 0 END) as has_active_booking
+                            FROM booking
+                            WHERE (:keyword IS NULL OR
+                                   LOWER(guest_name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                                   LOWER(guest_email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                                   LOWER(guest_phone) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                                   LOWER(guest_id_number) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                            GROUP BY guest_name, guest_phone
+                        """, countQuery = """
+                            SELECT COUNT(*) FROM (
+                                SELECT guest_name, guest_phone
+                                FROM booking
+                                WHERE (:keyword IS NULL OR
+                                       LOWER(guest_name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                                       LOWER(guest_email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                                       LOWER(guest_phone) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                                       LOWER(guest_id_number) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                                GROUP BY guest_name, guest_phone
+                            ) AS sub
+                        """, nativeQuery = true)
+        Page<Object[]> findUniqueGuests(@Param("keyword") String keyword, Pageable pageable);
+
+        @Query("""
+                            SELECT b FROM Booking b
+                            WHERE b.guestName = :name AND b.guestPhone = :phone
+                            ORDER BY b.createdAt DESC
+                        """)
+        List<Booking> findByGuestInfo(@Param("name") String name, @Param("phone") String phone);
 }

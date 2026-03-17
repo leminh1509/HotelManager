@@ -32,7 +32,7 @@ import Guidelines from "./components/Guidelines/Guidelines";
 import GuidelinesManagement from "./components/Receptionist/GuidelinesManagement";
 import Rules from "./components/Rules/Rules";
 import RulesManagement from "./components/Receptionist/RulesManagement";
-import Toast from "./components/Common/Toast";
+import CustomerList from "./components/Receptionist/CustomerList";
 
 const Forbidden = () => (
   <div style={{ padding: 40, textAlign: "center" }}>

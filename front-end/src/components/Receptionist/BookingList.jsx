@@ -4,16 +4,20 @@ import { getAllRooms, getAllBooking, createBooking } from "../../services/recept
 import { showToast } from "../Common/Toast";
 
 export default function BookingList() {
+  const location = useLocation();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchPhone, setSearchPhone] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterRoom, setFilterRoom] = useState("");
   const [filterDateCreated, setFilterDateCreated] = useState("");
   const [filterDateCheckout, setFilterDateCheckout] = useState("");
   const [rooms, setRooms] = useState([]);
+  const [availableRoomIds, setAvailableRoomIds] = useState([]);
+  const [fetchingAvailability, setFetchingAvailability] = useState(false);
 
   // Get today's date in YYYY-MM-DD format for the min date attribute
   const today = new Date().toISOString().split('T')[0];
@@ -22,7 +26,7 @@ export default function BookingList() {
   const [isRoomPickerOpen, setIsRoomPickerOpen] = useState(false);
   const [newBooking, setNewBooking] = useState({
     roomId: "",
-    checkinTime: "",
+    checkinTime: today,
     checkoutTime: "",
     guestCount: 1,
     guestName: "",
@@ -41,7 +45,52 @@ export default function BookingList() {
   useEffect(() => {
     fetchBookings();
     fetchRooms();
-  }, []);
+
+    // Check for rebooking data from CustomerList -> BookingsModal
+    if (location.state && location.state.rebookData) {
+      const { rebookData } = location.state;
+      setNewBooking(prev => ({
+        ...prev,
+        guestName: rebookData.guestName || "",
+        guestEmail: rebookData.guestEmail || "",
+        guestPhone: rebookData.guestPhone || "",
+        guestIdNumber: rebookData.guestIdNumber || "",
+        guestNationality: rebookData.guestNationality || "Vietnam",
+        guestAddress: rebookData.guestAddress || "",
+      }));
+      setIsModalOpen(true);
+      // Clear state so it doesn't reopen on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+
+  useEffect(() => {
+    if (newBooking.checkoutTime && newBooking.checkinTime) {
+      fetchAvailableRooms();
+    } else {
+      setAvailableRoomIds([]);
+    }
+  }, [newBooking.checkoutTime, newBooking.checkinTime, newBooking.guestCount]);
+
+  const fetchAvailableRooms = async () => {
+    setFetchingAvailability(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get("http://localhost:9999/api/rooms/search", {
+        params: {
+          checkin: newBooking.checkinTime,
+          checkout: newBooking.checkoutTime,
+          guests: newBooking.guestCount
+        },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAvailableRoomIds(res.data.map(r => r.roomId));
+    } catch (err) {
+      console.error("Failed to fetch available rooms:", err);
+    } finally {
+      setFetchingAvailability(false);
+    }
+  };
 
   const fetchRooms = async () => {
     try {
@@ -71,7 +120,7 @@ export default function BookingList() {
       await createBooking(newBooking);
       setIsModalOpen(false);
       setNewBooking({
-        roomId: "", checkinTime: "", checkoutTime: "", guestCount: 1,
+        roomId: "", checkinTime: today, checkoutTime: "", guestCount: 1,
         guestName: "", guestEmail: "", guestPhone: "", guestIdNumber: "",
         guestNationality: "Vietnam", guestAddress: "", specialRequest: "",
         earlyCheckin: false, lateCheckout: false
@@ -103,6 +152,7 @@ export default function BookingList() {
 
   const filtered = bookings.filter(b => {
     const matchSearch = searchQuery ? b.guestName?.toLowerCase().includes(searchQuery.toLowerCase()) : true;
+    const matchPhone = searchPhone ? b.guestPhone?.includes(searchPhone) : true;
     const matchStatus = filterStatus ? b.status === filterStatus : true;
     const matchRoom = filterRoom ?
       b.roomNumber?.toString().includes(filterRoom) || b.roomName?.toLowerCase().includes(filterRoom.toLowerCase())
@@ -114,13 +164,13 @@ export default function BookingList() {
       new Date(b.checkoutTime).toISOString().split('T')[0] === filterDateCheckout
       : true;
 
-    return matchSearch && matchStatus && matchRoom && matchCreated && matchCheckout;
+    return matchSearch && matchPhone && matchStatus && matchRoom && matchCreated && matchCheckout;
   });
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  const hasFilters = searchQuery || filterStatus || filterRoom || filterDateCreated || filterDateCheckout;
+  const hasFilters = searchQuery || searchPhone || filterStatus || filterRoom || filterDateCreated || filterDateCheckout;
 
   return (
     <div className="container-fluid position-relative">
@@ -133,13 +183,22 @@ export default function BookingList() {
 
       {/* Filters */}
       <div className="row mb-3 g-2">
-        <div className="col-md-3">
+        <div className="col-md-2">
           <input
             type="text"
             className="form-control"
-            placeholder="Search guest name..."
+            placeholder="Guest name..."
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+          />
+        </div>
+        <div className="col-md-2">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Phone number..."
+            value={searchPhone}
+            onChange={(e) => { setSearchPhone(e.target.value); setCurrentPage(1); }}
           />
         </div>
         <div className="col-md-2">
@@ -156,13 +215,13 @@ export default function BookingList() {
             <option value="Cancelled">Cancelled</option>
           </select>
         </div>
-        <div className="col-md-2">
+        <div className="col-md-1">
           <select
-            className="form-select"
+            className="form-select px-1"
             value={filterRoom}
             onChange={(e) => { setFilterRoom(e.target.value); setCurrentPage(1); }}
           >
-            <option value="">All Rooms</option>
+            <option value="">Room</option>
             {rooms.map(r => (
               <option key={r.roomId} value={r.roomNumber}>{r.roomNumber}</option>
             ))}
@@ -176,7 +235,7 @@ export default function BookingList() {
             value={filterDateCreated}
             onChange={(e) => { setFilterDateCreated(e.target.value); setCurrentPage(1); }}
           />
-          <small className="text-muted" style={{ fontSize: "0.75rem" }}>Date Created</small>
+          <small className="text-muted" style={{ fontSize: "0.75rem" }}>Created</small>
         </div>
         <div className="col-md-2">
           <input
@@ -190,9 +249,10 @@ export default function BookingList() {
         </div>
         <div className="col-md-1">
           <button
-            className="btn btn-outline-secondary w-100"
+            className="btn btn-outline-secondary w-100 p-1"
             onClick={() => {
               setSearchQuery("");
+              setSearchPhone("");
               setFilterStatus("");
               setFilterRoom("");
               setFilterDateCreated("");
@@ -332,11 +392,28 @@ export default function BookingList() {
                     <hr className="my-4" />
 
                     <div className="col-md-6">
+                      <label className="form-label">Check-out Date *</label>
+                      <input type="date" className="form-control" required
+                        min={newBooking.checkinTime || today}
+                        value={newBooking.checkoutTime} onChange={e => setNewBooking({ ...newBooking, checkoutTime: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="col-md-6">
+                      <label className="form-label">Guest Count *</label>
+                      <input type="number" className="form-control" min="1" required
+                        value={newBooking.guestCount} onChange={e => setNewBooking({ ...newBooking, guestCount: parseInt(e.target.value) })}
+                      />
+                    </div>
+
+                    <div className="col-md-6">
                       <label className="form-label">Room *</label>
                       <div className="d-flex align-items-center gap-2">
                         <button
                           type="button"
                           className="btn btn-outline-primary"
+                          disabled={!newBooking.checkoutTime}
+                          title={!newBooking.checkoutTime ? "Please select check-out date first" : ""}
                           onClick={() => setIsRoomPickerOpen(true)}
                         >
                           {newBooking.roomId
@@ -349,26 +426,6 @@ export default function BookingList() {
                         {/* Hidden input to keep HTML5 'required' validation working */}
                         <input type="hidden" required value={newBooking.roomId} />
                       </div>
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label">Guest Count *</label>
-                      <input type="number" className="form-control" min="1" required
-                        value={newBooking.guestCount} onChange={e => setNewBooking({ ...newBooking, guestCount: parseInt(e.target.value) })}
-                      />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label">Check-in Date *</label>
-                      <input type="date" className="form-control" required
-                        min={today}
-                        value={newBooking.checkinTime} onChange={e => setNewBooking({ ...newBooking, checkinTime: e.target.value })}
-                      />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label">Check-out Date *</label>
-                      <input type="date" className="form-control" required
-                        min={newBooking.checkinTime || today}
-                        value={newBooking.checkoutTime} onChange={e => setNewBooking({ ...newBooking, checkoutTime: e.target.value })}
-                      />
                     </div>
                   </div>
                 </form>
@@ -449,12 +506,12 @@ export default function BookingList() {
                 gap: "20px",
               }}>
                 {rooms.map((r) => {
-                  const isAvailable = r.statusName === "Available";
-                  const isOccupied = r.statusName === "Occupied" || r.statusName === "Reserved";
+                  const isTrulyAvailable = availableRoomIds.includes(r.roomId);
+                  const isOccupiedInSystem = r.statusName === "Occupied" || r.statusName === "Reserved";
 
-                  let bg = "#6c757d";
-                  if (isAvailable) bg = "#198754";
-                  else if (isOccupied) bg = "#dc3545";
+                  let bg = "#6c757d"; // Maintenance or other
+                  if (isTrulyAvailable) bg = "#198754"; // Green
+                  else if (isOccupiedInSystem || !isTrulyAvailable) bg = "#dc3545"; // Red
 
                   const isSelected = newBooking.roomId === r.roomId;
 
@@ -462,7 +519,7 @@ export default function BookingList() {
                     <div
                       key={r.roomId}
                       onClick={() => {
-                        if (isAvailable) {
+                        if (isTrulyAvailable) {
                           setNewBooking({ ...newBooking, roomId: r.roomId });
                           setIsRoomPickerOpen(false);
                         }
@@ -473,8 +530,8 @@ export default function BookingList() {
                         borderRadius: "10px",
                         padding: "16px 12px",
                         textAlign: "center",
-                        cursor: isAvailable ? "pointer" : "not-allowed",
-                        opacity: isAvailable ? 1 : 0.65,
+                        cursor: isTrulyAvailable ? "pointer" : "not-allowed",
+                        opacity: isTrulyAvailable ? 1 : 0.65,
                         boxShadow: isSelected
                           ? "0 0 0 4px #ffc107, 0 4px 12px rgba(0,0,0,0.2)"
                           : "0 2px 8px rgba(0,0,0,0.15)",
@@ -500,12 +557,23 @@ export default function BookingList() {
                         fontSize: "0.75rem",
                         fontWeight: 600,
                       }}>
-                        {r.statusName}
+                        {isTrulyAvailable ? "Available" : (isOccupiedInSystem ? "Occupied" : "Unavailable")}
                       </div>
                     </div>
                   );
                 })}
               </div>
+              {fetchingAvailability && (
+                <div style={{ 
+                  textAlign: "center", 
+                  marginTop: "20px", 
+                  color: "#0d6efd",
+                  fontWeight: "600"
+                }}>
+                  <i className="fa fa-spinner fa-spin me-2"></i>
+                  Refreshing actual availability for selected dates...
+                </div>
+              )}
             </div>
           </div>
         </div>

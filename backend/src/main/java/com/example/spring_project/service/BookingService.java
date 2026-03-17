@@ -81,6 +81,23 @@ public class BookingService {
             throw new ConflictException("Room is not available for the selected dates");
         }
 
+        // 5.1) Validate Guest Info (Prevent multiple active bookings for same identity)
+        if (req.getGuestPhone() != null && !req.getGuestPhone().isEmpty()) {
+            if (bookingRepo.existsByActivePhone(req.getGuestPhone())) {
+                throw new ConflictException("Guest with this phone number already has an active booking.");
+            }
+        }
+        if (req.getGuestEmail() != null && !req.getGuestEmail().isEmpty()) {
+            if (bookingRepo.existsByActiveEmail(req.getGuestEmail())) {
+                throw new ConflictException("Guest with this email address already has an active booking.");
+            }
+        }
+        if (req.getGuestIdNumber() != null && !req.getGuestIdNumber().isEmpty()) {
+            if (bookingRepo.existsByActiveIdNumber(req.getGuestIdNumber())) {
+                throw new ConflictException("Guest with this ID/Passport number already has an active booking.");
+            }
+        }
+
         // 6) tính giá: linh động theo Cuối tuần / Lễ
         double totalPrice = calculateTotalPrice(room, req.getCheckinTime(), req.getCheckoutTime());
         // prevent 0 or negative price on edge cases
@@ -358,6 +375,10 @@ public class BookingService {
                     description,
                     ServiceRequestType.CLEANING,
                     "High");
+
+            // Real-time WebSocket notification
+            messagingTemplate.convertAndSend("/topic/maintenance",
+                    "New cleaning request for room " + room.getRoomNumber());
         }
 
         return BookingMapper.toBookingResponse(saved);
@@ -405,5 +426,13 @@ public class BookingService {
 
         Booking saved = bookingRepo.save(booking);
         return BookingMapper.toBookingResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getBookingsByGuest(String name, String phone) {
+        List<Booking> list = bookingRepo.findByGuestInfo(name, phone);
+        return list.stream()
+                .map(BookingMapper::toBookingResponse)
+                .collect(Collectors.toList());
     }
 }
