@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { getCustomerBookings } from '../../services/receptionistAPI';
 import './CustomerList.css'; // Reusing some base styles
 
 const CustomerBookingsModal = ({ isOpen, onClose, customer }) => {
@@ -18,15 +17,11 @@ const CustomerBookingsModal = ({ isOpen, onClose, customer }) => {
         setLoading(true);
         setError(null);
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get(`http://localhost:9999/api/receptionist/customers/bookings`, {
-                params: {
-                    name: customer.name,
-                    phone: customer.phone
-                },
-                headers: { Authorization: `Bearer ${token}` }
+            const data = await getCustomerBookings({
+                name: customer.name,
+                phone: customer.phone
             });
-            setBookings(response.data);
+            setBookings(data);
         } catch (err) {
             console.error('Error fetching customer bookings:', err);
             setError('Failed to load bookings.');
@@ -75,12 +70,11 @@ const CustomerBookingsModal = ({ isOpen, onClose, customer }) => {
                                                     <td>{new Date(booking.checkinTime).toLocaleDateString()}</td>
                                                     <td>{new Date(booking.checkoutTime).toLocaleDateString()}</td>
                                                     <td>
-                                                        <span className={`badge bg-${
-                                                            booking.status === 'Checked-out' ? 'secondary' :
-                                                            booking.status === 'Checked-in' ? 'success' :
-                                                            booking.status === 'Confirmed' ? 'primary' :
-                                                            booking.status === 'Cancelled' ? 'danger' : 'warning'
-                                                        }`}>
+                                                        <span className={`badge bg-${booking.status === 'Checked-out' ? 'secondary' :
+                                                                booking.status === 'Checked-in' ? 'success' :
+                                                                    booking.status === 'Confirmed' ? 'primary' :
+                                                                        booking.status === 'Cancelled' ? 'danger' : 'warning'
+                                                            }`}>
                                                             {booking.status}
                                                         </span>
                                                     </td>
