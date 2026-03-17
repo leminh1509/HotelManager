@@ -9,6 +9,7 @@ export default function BookingList() {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchPhone, setSearchPhone] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterRoom, setFilterRoom] = useState("");
   const [filterDateCreated, setFilterDateCreated] = useState("");
@@ -156,6 +157,7 @@ export default function BookingList() {
 
   const filtered = bookings.filter(b => {
     const matchSearch = searchQuery ? b.guestName?.toLowerCase().includes(searchQuery.toLowerCase()) : true;
+    const matchPhone = searchPhone ? b.guestPhone?.includes(searchPhone) : true;
     const matchStatus = filterStatus ? b.status === filterStatus : true;
     const matchRoom = filterRoom ?
       b.roomNumber?.toString().includes(filterRoom) || b.roomName?.toLowerCase().includes(filterRoom.toLowerCase())
@@ -167,13 +169,13 @@ export default function BookingList() {
       new Date(b.checkoutTime).toISOString().split('T')[0] === filterDateCheckout
       : true;
 
-    return matchSearch && matchStatus && matchRoom && matchCreated && matchCheckout;
+    return matchSearch && matchPhone && matchStatus && matchRoom && matchCreated && matchCheckout;
   });
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  const hasFilters = searchQuery || filterStatus || filterRoom || filterDateCreated || filterDateCheckout;
+  const hasFilters = searchQuery || searchPhone || filterStatus || filterRoom || filterDateCreated || filterDateCheckout;
 
   return (
     <div className="container-fluid position-relative">
@@ -186,13 +188,22 @@ export default function BookingList() {
 
       {/* Filters */}
       <div className="row mb-3 g-2">
-        <div className="col-md-3">
+        <div className="col-md-2">
           <input
             type="text"
             className="form-control"
-            placeholder="Search guest name..."
+            placeholder="Guest name..."
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+          />
+        </div>
+        <div className="col-md-2">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Phone number..."
+            value={searchPhone}
+            onChange={(e) => { setSearchPhone(e.target.value); setCurrentPage(1); }}
           />
         </div>
         <div className="col-md-2">
@@ -209,13 +220,13 @@ export default function BookingList() {
             <option value="Cancelled">Cancelled</option>
           </select>
         </div>
-        <div className="col-md-2">
+        <div className="col-md-1">
           <select
-            className="form-select"
+            className="form-select px-1"
             value={filterRoom}
             onChange={(e) => { setFilterRoom(e.target.value); setCurrentPage(1); }}
           >
-            <option value="">All Rooms</option>
+            <option value="">Room</option>
             {rooms.map(r => (
               <option key={r.roomId} value={r.roomNumber}>{r.roomNumber}</option>
             ))}
@@ -229,7 +240,7 @@ export default function BookingList() {
             value={filterDateCreated}
             onChange={(e) => { setFilterDateCreated(e.target.value); setCurrentPage(1); }}
           />
-          <small className="text-muted" style={{ fontSize: "0.75rem" }}>Date Created</small>
+          <small className="text-muted" style={{ fontSize: "0.75rem" }}>Created</small>
         </div>
         <div className="col-md-2">
           <input
@@ -243,9 +254,10 @@ export default function BookingList() {
         </div>
         <div className="col-md-1">
           <button
-            className="btn btn-outline-secondary w-100"
+            className="btn btn-outline-secondary w-100 p-1"
             onClick={() => {
               setSearchQuery("");
+              setSearchPhone("");
               setFilterStatus("");
               setFilterRoom("");
               setFilterDateCreated("");
