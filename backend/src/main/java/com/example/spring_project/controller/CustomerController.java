@@ -29,10 +29,17 @@ public class CustomerController {
     public ResponseEntity<Map<String, Object>> getAllCustomers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "") String keyword) {
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String idNumber) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Object[]> guestPage = bookingRepo.findUniqueGuests(keyword.isEmpty() ? null : keyword, pageable);
+        
+        String n = (name == null || name.isEmpty()) ? null : name;
+        String p = (phone == null || phone.isEmpty()) ? null : phone;
+        String id = (idNumber == null || idNumber.isEmpty()) ? null : idNumber;
+
+        Page<Object[]> guestPage = bookingRepo.findUniqueGuests(n, p, id, pageable);
 
         List<CustomerDTO> customers = guestPage.getContent().stream()
                 .map(obj -> CustomerDTO.builder()

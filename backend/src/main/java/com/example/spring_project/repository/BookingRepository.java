@@ -129,25 +129,25 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                                 MAX(guest_address) as guest_address,
                                 MAX(CASE WHEN status IN ('Confirmed', 'Checked-in') THEN 1 ELSE 0 END) as has_active_booking
                             FROM booking
-                            WHERE (:keyword IS NULL OR
-                                   LOWER(guest_name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                                   LOWER(guest_email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                                   LOWER(guest_phone) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                                   LOWER(guest_id_number) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                            WHERE (:name IS NULL OR LOWER(guest_name) LIKE LOWER(CONCAT('%', :name, '%')))
+                              AND (:phone IS NULL OR guest_phone LIKE CONCAT('%', :phone, '%'))
+                              AND (:idNumber IS NULL OR guest_id_number LIKE CONCAT('%', :idNumber, '%'))
                             GROUP BY guest_name, guest_phone
                         """, countQuery = """
                             SELECT COUNT(*) FROM (
                                 SELECT guest_name, guest_phone
                                 FROM booking
-                                WHERE (:keyword IS NULL OR
-                                       LOWER(guest_name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                                       LOWER(guest_email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                                       LOWER(guest_phone) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                                       LOWER(guest_id_number) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                                WHERE (:name IS NULL OR LOWER(guest_name) LIKE LOWER(CONCAT('%', :name, '%')))
+                                  AND (:phone IS NULL OR guest_phone LIKE CONCAT('%', :phone, '%'))
+                                  AND (:idNumber IS NULL OR guest_id_number LIKE CONCAT('%', :idNumber, '%'))
                                 GROUP BY guest_name, guest_phone
                             ) AS sub
                         """, nativeQuery = true)
-        Page<Object[]> findUniqueGuests(@Param("keyword") String keyword, Pageable pageable);
+        Page<Object[]> findUniqueGuests(
+                        @Param("name") String name,
+                        @Param("phone") String phone,
+                        @Param("idNumber") String idNumber,
+                        Pageable pageable);
 
         @Query("""
                             SELECT b FROM Booking b

@@ -10,7 +10,9 @@ const CustomerList = () => {
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [searchKeyword, setSearchKeyword] = useState('');
+    const [searchName, setSearchName] = useState('');
+    const [searchPhone, setSearchPhone] = useState('');
+    const [searchIdNumber, setSearchIdNumber] = useState('');
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
@@ -20,7 +22,7 @@ const CustomerList = () => {
 
     useEffect(() => {
         fetchCustomers(currentPage);
-    }, [currentPage, searchKeyword]);
+    }, [currentPage, searchName, searchPhone, searchIdNumber]);
 
     const fetchCustomers = async (page = 0) => {
         setLoading(true);
@@ -30,7 +32,9 @@ const CustomerList = () => {
                 params: {
                     page: page,
                     size: PAGE_SIZE,
-                    keyword: searchKeyword
+                    name: searchName,
+                    phone: searchPhone,
+                    idNumber: searchIdNumber
                 },
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -63,21 +67,66 @@ const CustomerList = () => {
         navigate('/receptionist', { state: { rebookData } });
     };
 
+    const hasFilters = searchName || searchPhone || searchIdNumber;
+
     return (
         <div className="guidelines-mgmt-container customer-mgmt-container">
-            <div className="mgmt-header">
-                <h2>Customer List</h2>
-                <div className="search-box">
-                    <input 
-                        type="text" 
-                        placeholder="Search by name, email or phone..." 
-                        className="form-control"
-                        value={searchKeyword}
-                        onChange={(e) => {
-                            setSearchKeyword(e.target.value);
-                            setCurrentPage(0); // Reset to first page on search
-                        }}
-                    />
+            <div className="mgmt-header d-flex flex-column gap-3">
+                <div className="d-flex justify-content-between align-items-center w-100">
+                    <h2>Customer List</h2>
+                </div>
+                
+                <div className="row g-2 w-100">
+                    <div className="col-md-3">
+                        <input 
+                            type="text" 
+                            placeholder="Search by name..." 
+                            className="form-control"
+                            value={searchName}
+                            onChange={(e) => {
+                                setSearchName(e.target.value);
+                                setCurrentPage(0);
+                            }}
+                        />
+                    </div>
+                    <div className="col-md-3">
+                        <input 
+                            type="text" 
+                            placeholder="Search by phone..." 
+                            className="form-control"
+                            value={searchPhone}
+                            onChange={(e) => {
+                                setSearchPhone(e.target.value);
+                                setCurrentPage(0);
+                            }}
+                        />
+                    </div>
+                    <div className="col-md-3">
+                        <input 
+                            type="text" 
+                            placeholder="Search ID/Passport..." 
+                            className="form-control"
+                            value={searchIdNumber}
+                            onChange={(e) => {
+                                setSearchIdNumber(e.target.value);
+                                setCurrentPage(0);
+                            }}
+                        />
+                    </div>
+                    <div className="col-md-1">
+                        <button 
+                            className="btn btn-outline-secondary w-100"
+                            onClick={() => {
+                                setSearchName('');
+                                setSearchPhone('');
+                                setSearchIdNumber('');
+                                setCurrentPage(0);
+                            }}
+                            disabled={!hasFilters}
+                        >
+                            Clear
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -149,7 +198,7 @@ const CustomerList = () => {
 
                     <div className="text-center text-muted mt-2 small">
                         Showing {totalItems === 0 ? 0 : (currentPage * PAGE_SIZE + 1)}–{Math.min((currentPage + 1) * PAGE_SIZE, totalItems)} of {totalItems} customers
-                        {searchKeyword && ` (filtered from searching)`}
+                        {hasFilters && ` (filtered from searching)`}
                     </div>
                 </>
             )}
