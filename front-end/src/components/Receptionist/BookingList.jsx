@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { getAllRooms, getAllBooking, createBooking } from "../../services/receptionistAPI";
+import { Link, useLocation } from "react-router-dom";
+import { getAllRooms, getAllBooking, createBooking, searchRooms } from "../../services/receptionistAPI";
 import { showToast } from "../Common/Toast";
 
 export default function BookingList() {
@@ -75,14 +75,10 @@ export default function BookingList() {
   const fetchAvailableRooms = async () => {
     setFetchingAvailability(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:9999/api/rooms/search", {
-        params: {
-          checkin: newBooking.checkinTime,
-          checkout: newBooking.checkoutTime,
-          guests: newBooking.guestCount
-        },
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await searchRooms({
+        checkin: newBooking.checkinTime,
+        checkout: newBooking.checkoutTime,
+        guests: newBooking.guestCount
       });
       setAvailableRoomIds(res.data.map(r => r.roomId));
     } catch (err) {
@@ -564,9 +560,9 @@ export default function BookingList() {
                 })}
               </div>
               {fetchingAvailability && (
-                <div style={{ 
-                  textAlign: "center", 
-                  marginTop: "20px", 
+                <div style={{
+                  textAlign: "center",
+                  marginTop: "20px",
                   color: "#0d6efd",
                   fontWeight: "600"
                 }}>

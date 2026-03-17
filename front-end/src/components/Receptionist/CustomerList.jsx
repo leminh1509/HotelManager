@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { getCustomers } from '../../services/receptionistAPI';
 import CustomerBookingsModal from './CustomerBookingsModal';
 import Pagination from '../Common/Pagination';
 import './CustomerList.css';
@@ -25,19 +25,15 @@ const CustomerList = () => {
     const fetchCustomers = async (page = 0) => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get('http://localhost:9999/api/receptionist/customers', {
-                params: {
-                    page: page,
-                    size: PAGE_SIZE,
-                    keyword: searchKeyword
-                },
-                headers: { Authorization: `Bearer ${token}` }
+            const data = await getCustomers({
+                page: page,
+                size: PAGE_SIZE,
+                keyword: searchKeyword
             });
-            setCustomers(response.data.customers);
-            setTotalPages(response.data.totalPages);
-            setCurrentPage(response.data.currentPage);
-            setTotalItems(response.data.totalItems);
+            setCustomers(data.customers);
+            setTotalPages(data.totalPages);
+            setCurrentPage(data.currentPage);
+            setTotalItems(data.totalItems);
         } catch (err) {
             console.error('Error fetching customers:', err);
             setError('Failed to load customers.');
@@ -68,9 +64,9 @@ const CustomerList = () => {
             <div className="mgmt-header">
                 <h2>Customer List</h2>
                 <div className="search-box">
-                    <input 
-                        type="text" 
-                        placeholder="Search by name, email or phone..." 
+                    <input
+                        type="text"
+                        placeholder="Search by name, email or phone..."
                         className="form-control"
                         value={searchKeyword}
                         onChange={(e) => {
@@ -111,14 +107,14 @@ const CustomerList = () => {
                                         <td>{customer.nationality || 'N/A'}</td>
                                         <td className="actions-col">
                                             <div className="d-flex gap-2">
-                                                <button 
+                                                <button
                                                     className="btn btn-sm btn-outline-primary"
                                                     onClick={() => handleViewBookings(customer)}
                                                     title="View booking history"
                                                 >
                                                     <i className="fa fa-history"></i> Bookings
                                                 </button>
-                                                <button 
+                                                <button
                                                     className={`btn btn-sm ${customer.hasActiveBooking ? 'btn-outline-secondary' : 'btn-success'}`}
                                                     onClick={() => handleRebook(customer)}
                                                     disabled={customer.hasActiveBooking}
@@ -140,10 +136,10 @@ const CustomerList = () => {
                     </div>
 
                     {totalPages > 1 && (
-                        <Pagination 
-                            currentPage={currentPage} 
-                            totalPages={totalPages} 
-                            onPageChange={(page) => setCurrentPage(page)} 
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={(page) => setCurrentPage(page)}
                         />
                     )}
 
@@ -154,7 +150,7 @@ const CustomerList = () => {
                 </>
             )}
 
-            <CustomerBookingsModal 
+            <CustomerBookingsModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 customer={selectedCustomer}

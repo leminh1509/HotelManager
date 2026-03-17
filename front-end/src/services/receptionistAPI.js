@@ -44,6 +44,7 @@ export const deleteRule = (id) =>
 // ─── Room APIs (Receptionist) ────────────────────────────
 export const getAllRooms = () => api.get("/rooms");
 export const getRoomById = (id) => api.get(`/rooms/${id}`);
+export const searchRooms = (params) => api.get("/rooms/search", { params });
 export const updateRoomStatus = (id, payload) =>
     api.patch(`/rooms/${id}/status`, payload);
 export const getRoomStatuses = () => api.get("/rooms/statuses");
@@ -59,6 +60,12 @@ export const updateCheckoutDate = (id, payload) =>
     api.patch(`/bookings/${id}/checkout`, payload);
 export const getBookingsByStatus = (status) =>
     api.get("/bookings", { params: { status } });
+
+// ─── Customer APIs (Receptionist) ────────────────────────
+export const getCustomers = (params) =>
+    api.get("/receptionist/customers", { params }).then(res => res.data);
+export const getCustomerBookings = (params) =>
+    api.get("/receptionist/customers/bookings", { params }).then(res => res.data);
 
 // ─── Request APIs (Maintenance/Cleaning) ────────────────
 export const getMaintenanceRequests = () => api.get("/requests/maintenance");
