@@ -81,6 +81,23 @@ public class BookingService {
             throw new ConflictException("Room is not available for the selected dates");
         }
 
+        // 5.1) Validate Guest Info (Prevent multiple active bookings for same identity)
+        if (req.getGuestPhone() != null && !req.getGuestPhone().isEmpty()) {
+            if (bookingRepo.existsByActivePhone(req.getGuestPhone())) {
+                throw new ConflictException("Guest with this phone number already has an active booking.");
+            }
+        }
+        if (req.getGuestEmail() != null && !req.getGuestEmail().isEmpty()) {
+            if (bookingRepo.existsByActiveEmail(req.getGuestEmail())) {
+                throw new ConflictException("Guest with this email address already has an active booking.");
+            }
+        }
+        if (req.getGuestIdNumber() != null && !req.getGuestIdNumber().isEmpty()) {
+            if (bookingRepo.existsByActiveIdNumber(req.getGuestIdNumber())) {
+                throw new ConflictException("Guest with this ID/Passport number already has an active booking.");
+            }
+        }
+
         // 6) tính giá: linh động theo Cuối tuần / Lễ
         double totalPrice = calculateTotalPrice(room, req.getCheckinTime(), req.getCheckoutTime());
         // prevent 0 or negative price on edge cases
@@ -412,8 +429,8 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public List<BookingResponse> getBookingsByGuest(String name, String email, String phone) {
-        List<Booking> list = bookingRepo.findByGuestInfo(name, email, phone);
+    public List<BookingResponse> getBookingsByGuest(String name, String phone) {
+        List<Booking> list = bookingRepo.findByGuestInfo(name, phone);
         return list.stream()
                 .map(BookingMapper::toBookingResponse)
                 .collect(Collectors.toList());

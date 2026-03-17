@@ -14,6 +14,8 @@ export default function BookingList() {
   const [filterDateCreated, setFilterDateCreated] = useState("");
   const [filterDateCheckout, setFilterDateCheckout] = useState("");
   const [rooms, setRooms] = useState([]);
+  const [availableRoomIds, setAvailableRoomIds] = useState([]);
+  const [fetchingAvailability, setFetchingAvailability] = useState(false);
 
   // Get today's date in YYYY-MM-DD format for the min date attribute
   const today = new Date().toISOString().split('T')[0];
@@ -59,6 +61,34 @@ export default function BookingList() {
       window.history.replaceState({}, document.title);
     }
   }, [location]);
+
+  useEffect(() => {
+    if (newBooking.checkoutTime && newBooking.checkinTime) {
+      fetchAvailableRooms();
+    } else {
+      setAvailableRoomIds([]);
+    }
+  }, [newBooking.checkoutTime, newBooking.checkinTime, newBooking.guestCount]);
+
+  const fetchAvailableRooms = async () => {
+    setFetchingAvailability(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get("http://localhost:9999/api/rooms/search", {
+        params: {
+          checkin: newBooking.checkinTime,
+          checkout: newBooking.checkoutTime,
+          guests: newBooking.guestCount
+        },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAvailableRoomIds(res.data.map(r => r.roomId));
+    } catch (err) {
+      console.error("Failed to fetch available rooms:", err);
+    } finally {
+      setFetchingAvailability(false);
+    }
+  };
 
   const fetchRooms = async () => {
     try {
@@ -469,12 +499,12 @@ export default function BookingList() {
                 gap: "20px",
               }}>
                 {rooms.map((r) => {
-                  const isAvailable = r.statusName === "Available";
-                  const isOccupied = r.statusName === "Occupied" || r.statusName === "Reserved";
+                  const isTrulyAvailable = availableRoomIds.includes(r.roomId);
+                  const isOccupiedInSystem = r.statusName === "Occupied" || r.statusName === "Reserved";
 
-                  let bg = "#6c757d";
-                  if (isAvailable) bg = "#198754";
-                  else if (isOccupied) bg = "#dc3545";
+                  let bg = "#6c757d"; // Maintenance or other
+                  if (isTrulyAvailable) bg = "#198754"; // Green
+                  else if (isOccupiedInSystem || !isTrulyAvailable) bg = "#dc3545"; // Red
 
                   const isSelected = newBooking.roomId === r.roomId;
 
@@ -482,7 +512,7 @@ export default function BookingList() {
                     <div
                       key={r.roomId}
                       onClick={() => {
-                        if (isAvailable) {
+                        if (isTrulyAvailable) {
                           setNewBooking({ ...newBooking, roomId: r.roomId });
                           setIsRoomPickerOpen(false);
                         }
@@ -493,8 +523,8 @@ export default function BookingList() {
                         borderRadius: "10px",
                         padding: "16px 12px",
                         textAlign: "center",
-                        cursor: isAvailable ? "pointer" : "not-allowed",
-                        opacity: isAvailable ? 1 : 0.65,
+                        cursor: isTrulyAvailable ? "pointer" : "not-allowed",
+                        opacity: isTrulyAvailable ? 1 : 0.65,
                         boxShadow: isSelected
                           ? "0 0 0 4px #ffc107, 0 4px 12px rgba(0,0,0,0.2)"
                           : "0 2px 8px rgba(0,0,0,0.15)",
@@ -520,12 +550,23 @@ export default function BookingList() {
                         fontSize: "0.75rem",
                         fontWeight: 600,
                       }}>
-                        {r.statusName}
+                        {isTrulyAvailable ? "Available" : (isOccupiedInSystem ? "Occupied" : "Unavailable")}
                       </div>
                     </div>
                   );
                 })}
               </div>
+              {fetchingAvailability && (
+                <div style={{ 
+                  textAlign: "center", 
+                  marginTop: "20px", 
+                  color: "#0d6efd",
+                  fontWeight: "600"
+                }}>
+                  <i className="fa fa-spinner fa-spin me-2"></i>
+                  Refreshing actual availability for selected dates...
+                </div>
+              )}
             </div>
           </div>
         </div>

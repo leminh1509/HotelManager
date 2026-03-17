@@ -96,6 +96,27 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                         """)
         List<Booking> findOverdueCheckedIn(@Param("today") LocalDate today);
 
+        @Query("""
+                    SELECT COUNT(b) > 0 FROM Booking b
+                    WHERE b.guestPhone = :phone
+                      AND b.status IN (com.example.spring_project.entity.Booking.Status.Confirmed, com.example.spring_project.entity.Booking.Status.CheckedIn)
+                """)
+        boolean existsByActivePhone(@Param("phone") String phone);
+
+        @Query("""
+                    SELECT COUNT(b) > 0 FROM Booking b
+                    WHERE b.guestEmail = :email
+                      AND b.status IN (com.example.spring_project.entity.Booking.Status.Confirmed, com.example.spring_project.entity.Booking.Status.CheckedIn)
+                """)
+        boolean existsByActiveEmail(@Param("email") String email);
+
+        @Query("""
+                    SELECT COUNT(b) > 0 FROM Booking b
+                    WHERE b.guestIdNumber = :idNumber
+                      AND b.status IN (com.example.spring_project.entity.Booking.Status.Confirmed, com.example.spring_project.entity.Booking.Status.CheckedIn)
+                """)
+        boolean existsByActiveIdNumber(@Param("idNumber") String idNumber);
+
         List<Booking> findByRoomRoomIdAndStatus(Integer roomId, Status status);
 
         @Query(value = """
@@ -130,8 +151,8 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
 
         @Query("""
                             SELECT b FROM Booking b
-                            WHERE b.guestPhone = :phone OR b.guestName = :name OR b.guestEmail = :email
+                            WHERE b.guestName = :name AND b.guestPhone = :phone
                             ORDER BY b.createdAt DESC
                         """)
-        List<Booking> findByGuestInfo(@Param("name") String name, @Param("email") String email, @Param("phone") String phone);
+        List<Booking> findByGuestInfo(@Param("name") String name, @Param("phone") String phone);
 }

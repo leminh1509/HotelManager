@@ -22,7 +22,6 @@ const CustomerBookingsModal = ({ isOpen, onClose, customer }) => {
             const response = await axios.get(`http://localhost:9999/api/receptionist/customers/bookings`, {
                 params: {
                     name: customer.name,
-                    email: customer.email,
                     phone: customer.phone
                 },
                 headers: { Authorization: `Bearer ${token}` }
