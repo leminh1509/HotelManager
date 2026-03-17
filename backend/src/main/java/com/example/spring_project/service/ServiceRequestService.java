@@ -36,7 +36,7 @@ public class ServiceRequestService {
 
         // Auto-assign to least busy staff if it's a cleaning request or if assignedTo
         // is null
-        User assignee = findLeastBusyStaff("MAINTENANCE");
+        User assignee = findLeastBusyStaff("maintenance");
 
         ServiceRequest request = ServiceRequest.builder()
                 .booking(booking)

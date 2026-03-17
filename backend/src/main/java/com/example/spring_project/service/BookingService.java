@@ -295,7 +295,7 @@ public class BookingService {
         if (newStatus == Status.Confirmed || newStatus == Status.CheckedIn) {
             Room room = booking.getRoom();
             String roomStatusName = room.getStatus().getName();
-            
+
             // Per requirement: Check-in is only allowed if the room status is 'Reserved'.
             // (Walk-in bookings set the room to 'Reserved' upon creation).
             if (!"Reserved".equalsIgnoreCase(roomStatusName)) {
@@ -307,17 +307,8 @@ public class BookingService {
         }
 
         if (newStatus == Status.CheckedOut) {
-            // When checking out, change the room status to 'Cleaning' to trigger automatic
-            // maintenance
-            try {
-                roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Cleaning");
-            } catch (Exception e) {
-                // Fallback to integer IDs if name-based lookup fails (assuming 3 is Cleaning)
-                roomService.updateStatus(booking.getRoom().getRoomId(), 3);
-            }
-            // Broadcast realtime notification
-            messagingTemplate.convertAndSend("/topic/maintenance",
-                    "Room " + booking.getRoom().getRoomNumber() + " requires cleaning after checkout.");
+            // Room status update and cleaning request will be handled below in the
+            // auto-creation block
         } else if (newStatus == Status.CheckedIn) {
             try {
                 roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Occupied");
@@ -369,7 +360,8 @@ public class BookingService {
                     "High");
 
             // Real-time WebSocket notification
-            messagingTemplate.convertAndSend("/topic/maintenance", "New cleaning request for room " + room.getRoomNumber());
+            messagingTemplate.convertAndSend("/topic/maintenance",
+                    "New cleaning request for room " + room.getRoomNumber());
         }
 
         return BookingMapper.toBookingResponse(saved);
