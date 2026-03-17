@@ -1,0 +1,260 @@
+/* src/components/Maintenance/StaffDashboard.css */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --staff-primary: #6366f1;
+    --staff-secondary: #a855f7;
+    --staff-bg: #f8fafc;
+    --staff-card-bg: rgba(255, 255, 255, 0.8);
+    --staff-text-dark: #1e293b;
+    --staff-text-light: #64748b;
+    --staff-glass: rgba(255, 255, 255, 0.7);
+    --staff-accent-green: #10b981;
+    --staff-accent-yellow: #f59e0b;
+    --staff-accent-red: #ef4444;
+}
+
+.staff-dashboard-root {
+    font-family: 'Outfit', sans-serif;
+    background: linear-gradient(135deg, #f0f4ff 0%, #f9f6ff 100%);
+    min-height: 100vh;
+    padding-bottom: 50px;
+}
+
+.staff-dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 20px;
+}
+
+/* Greeting & Header */
+.staff-welcome-section {
+    margin-bottom: 40px;
+    animation: fadeInDown 0.8s ease-out;
+}
+
+.staff-welcome-section h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--staff-text-dark);
+    margin: 0;
+    background: linear-gradient(to right, var(--staff-primary), var(--staff-secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.staff-welcome-section p {
+    color: var(--staff-text-light);
+    font-size: 1.1rem;
+    margin-top: 8px;
+}
+
+/* Stats Cards */
+.staff-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.staff-stat-card {
+    background: var(--staff-glass);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: fadeInUp 0.6s ease-out forwards;
+    opacity: 0;
+}
+
+.staff-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+}
+
+.staff-stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.icon-blue {
+    background: linear-gradient(135deg, #6366f1, #818cf8);
+}
+
+.icon-green {
+    background: linear-gradient(135deg, #10b981, #34d399);
+}
+
+.icon-yellow {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+}
+
+.staff-stat-info h3 {
+    font-size: 0.9rem;
+    color: var(--staff-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 4px 0;
+}
+
+.staff-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--staff-text-dark);
+}
+
+/* Task Section Layout */
+.staff-main-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+}
+
+@media (max-width: 992px) {
+    .staff-main-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Task List Styling */
+.staff-card-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--staff-text-dark);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.staff-task-item {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid #eef2f6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.staff-task-item:hover {
+    border-color: var(--staff-primary);
+    background: #fdfdff;
+}
+
+.staff-task-info {
+    flex: 1;
+}
+
+.staff-task-room {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--staff-primary);
+    margin-bottom: 4px;
+}
+
+.staff-task-desc {
+    color: var(--staff-text-light);
+    font-size: 0.95rem;
+}
+
+.staff-task-metadata {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+    font-size: 0.85rem;
+}
+
+.staff-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.badge-high {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.badge-cleaning {
+    background: #e0f2fe;
+    color: #0ea5e9;
+}
+
+.staff-task-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-accept {
+    background: #ecfdf5;
+    color: #10b981;
+}
+
+.btn-accept:hover {
+    background: #10b981;
+    color: white;
+}
+
+/* Animations */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.staff-stat-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.staff-stat-card:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.staff-stat-card:nth-child(3) {
+    animation-delay: 0.3s;
+}
