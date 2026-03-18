@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { getAllRooms, getAllBooking, createBooking, searchRooms } from "../../services/receptionistAPI";
+import { getAllRooms, getAllBooking, createBooking, searchRooms, getAllCategories } from "../../services/receptionistAPI";
 import { showToast } from "../Common/Toast";
 
 export default function BookingList() {
@@ -18,6 +18,8 @@ export default function BookingList() {
   const [rooms, setRooms] = useState([]);
   const [availableRoomIds, setAvailableRoomIds] = useState([]);
   const [fetchingAvailability, setFetchingAvailability] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
 
   // Get today's date in YYYY-MM-DD format for the min date attribute
   const today = new Date().toISOString().split('T')[0];
@@ -45,6 +47,7 @@ export default function BookingList() {
   useEffect(() => {
     fetchBookings();
     fetchRooms();
+    fetchCategories();
 
     // Check for rebooking data from CustomerList -> BookingsModal
     if (location.state && location.state.rebookData) {
@@ -94,6 +97,15 @@ export default function BookingList() {
       setRooms(res.data);
     } catch (err) {
       console.error("Failed to fetch rooms:", err);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await getAllCategories();
+      setCategories(res.data);
+    } catch (err) {
+      console.error("Failed to fetch categories:", err);
     }
   };
 
@@ -466,7 +478,6 @@ export default function BookingList() {
               overflow: "hidden",
             }}
           >
-            {/* Header */}
             <div style={{
               display: "flex",
               justifyContent: "space-between",
@@ -475,7 +486,21 @@ export default function BookingList() {
               borderBottom: "1px solid #dee2e6",
               flexShrink: 0,
             }}>
-              <h5 style={{ margin: 0, fontWeight: 700, fontSize: "1.25rem" }}>🏨 Select an Available Room</h5>
+              <div className="d-flex align-items-center gap-4">
+                <h5 style={{ margin: 0, fontWeight: 700, fontSize: "1.25rem" }}>🏨 Select an Available Room</h5>
+                <div style={{ width: "250px" }}>
+                  <select
+                    className="form-select form-select-sm"
+                    value={selectedCategoryId}
+                    onChange={(e) => setSelectedCategoryId(e.target.value)}
+                  >
+                    <option value="">All Room Types</option>
+                    {categories.map(cat => (
+                      <option key={cat.categoryId} value={cat.categoryId}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
               <button className="btn-close" onClick={() => setIsRoomPickerOpen(false)} />
             </div>
 
@@ -501,7 +526,9 @@ export default function BookingList() {
                 gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
                 gap: "20px",
               }}>
-                {rooms.map((r) => {
+                {rooms
+                  .filter(r => !selectedCategoryId || r.categoryId === parseInt(selectedCategoryId))
+                  .map((r) => {
                   const isTrulyAvailable = availableRoomIds.includes(r.roomId);
                   const isOccupiedInSystem = r.statusName === "Occupied" || r.statusName === "Reserved";
 

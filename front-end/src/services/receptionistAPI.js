@@ -45,11 +45,11 @@ export const deleteRule = (id) =>
 export const getAllRooms = () => api.get("/rooms");
 export const getRoomById = (id) => api.get(`/rooms/${id}`);
 export const searchRooms = (params) => api.get("/rooms/search", { params });
-export const getRoomStatuses = () => api.get("/rooms/statuses");
+export const getAllBooking = () => api.get("/bookings/all");
+export const getAllCategories = () => api.get("/categories");
 export const getCategoryById = (id) => api.get(`/categories/${id}`);
 
 // ─── Booking APIs (Receptionist) ─────────────────────────
-export const getAllBooking = () => api.get("/bookings");
 export const getBookingById = (id) => api.get(`/bookings/${id}`);
 export const createBooking = (payload) => api.post("/bookings", payload);
 export const updateBookingStatus = (id, status) =>
