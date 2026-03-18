@@ -45,6 +45,15 @@ public class BookingMapper {
     // ─────────────────────────────────────────────────────
     // Booking → BookingResponse
     // ─────────────────────────────────────────────────────
+    public static com.example.spring_project.dto.CategoryResponse toCategoryResponse(com.example.spring_project.entity.Category category) {
+        com.example.spring_project.dto.CategoryResponse dto = new com.example.spring_project.dto.CategoryResponse();
+        dto.setCategoryId(category.getCategoryId());
+        dto.setName(category.getName());
+        dto.setDescription(category.getDescription());
+        dto.setImgUrl(category.getImgUrl());
+        return dto;
+    }
+
     public static BookingResponse toBookingResponse(Booking booking) {
         BookingResponse dto = new BookingResponse();
 

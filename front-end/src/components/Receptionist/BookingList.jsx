@@ -20,6 +20,7 @@ export default function BookingList() {
   const [fetchingAvailability, setFetchingAvailability] = useState(false);
   const [categories, setCategories] = useState([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [roomSearchTerm, setRoomSearchTerm] = useState("");
 
   // Get today's date in YYYY-MM-DD format for the min date attribute
   const today = new Date().toISOString().split('T')[0];
@@ -488,17 +489,28 @@ export default function BookingList() {
             }}>
               <div className="d-flex align-items-center gap-4">
                 <h5 style={{ margin: 0, fontWeight: 700, fontSize: "1.25rem" }}>🏨 Select an Available Room</h5>
-                <div style={{ width: "250px" }}>
-                  <select
-                    className="form-select form-select-sm"
-                    value={selectedCategoryId}
-                    onChange={(e) => setSelectedCategoryId(e.target.value)}
-                  >
-                    <option value="">All Room Types</option>
-                    {categories.map(cat => (
-                      <option key={cat.categoryId} value={cat.categoryId}>{cat.name}</option>
-                    ))}
-                  </select>
+                <div className="d-flex align-items-center gap-2">
+                  <div style={{ width: "200px" }}>
+                    <select
+                      className="form-select form-select-sm"
+                      value={selectedCategoryId}
+                      onChange={(e) => setSelectedCategoryId(e.target.value)}
+                    >
+                      <option value="">All Room Types</option>
+                      {categories.map(cat => (
+                        <option key={cat.categoryId} value={cat.categoryId}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ width: "150px" }}>
+                    <input
+                      type="text"
+                      className="form-control form-select-sm"
+                      placeholder="Search room..."
+                      value={roomSearchTerm}
+                      onChange={(e) => setRoomSearchTerm(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
               <button className="btn-close" onClick={() => setIsRoomPickerOpen(false)} />
@@ -527,7 +539,8 @@ export default function BookingList() {
                 gap: "20px",
               }}>
                 {rooms
-                  .filter(r => !selectedCategoryId || r.categoryId === parseInt(selectedCategoryId))
+                  .filter(r => (!selectedCategoryId || r.categoryId === parseInt(selectedCategoryId)) &&
+                               (!roomSearchTerm || r.roomNumber.toLowerCase().includes(roomSearchTerm.toLowerCase())))
                   .map((r) => {
                   const isTrulyAvailable = availableRoomIds.includes(r.roomId);
                   const isOccupiedInSystem = r.statusName === "Occupied" || r.statusName === "Reserved";
