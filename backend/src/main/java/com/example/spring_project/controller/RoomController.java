@@ -64,12 +64,6 @@ public class RoomController {
         return ResponseEntity.ok(rooms);
     }
 
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<RoomResponse> updateRoomStatus(@PathVariable Integer id,
-            @RequestBody java.util.Map<String, String> body) {
-        String statusName = body.get("status");
-        return ResponseEntity.ok(roomService.updateRoomStatus(id, statusName));
-    }
 
     @GetMapping("/statuses")
     public ResponseEntity<java.util.List<com.example.spring_project.entity.RoomStatus>> getAllStatuses() {

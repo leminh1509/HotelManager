@@ -45,8 +45,6 @@ export const deleteRule = (id) =>
 export const getAllRooms = () => api.get("/rooms");
 export const getRoomById = (id) => api.get(`/rooms/${id}`);
 export const searchRooms = (params) => api.get("/rooms/search", { params });
-export const updateRoomStatus = (id, payload) =>
-    api.patch(`/rooms/${id}/status`, payload);
 export const getRoomStatuses = () => api.get("/rooms/statuses");
 export const getCategoryById = (id) => api.get(`/categories/${id}`);
 

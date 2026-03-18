@@ -33,11 +33,12 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
 
   @Query("""
               SELECT r FROM Room r
-              WHERE r.status.name = 'Available'
+              WHERE r.status.name NOT IN ('Maintenance', 'OutOfService')
                 AND r.capacity >= :guestCount
-                AND r.roomId NOT IN (
-                    SELECT b.room.roomId FROM Booking b
-                    WHERE b.status <> com.example.spring_project.entity.Booking.Status.Cancelled
+                AND NOT EXISTS (
+                    SELECT 1 FROM Booking b
+                    WHERE b.room.roomId = r.roomId
+                      AND b.status IN (com.example.spring_project.entity.Booking.Status.Confirmed, com.example.spring_project.entity.Booking.Status.CheckedIn)
                       AND b.checkinTime  < :checkout
                       AND b.checkoutTime > :checkin
                 )
@@ -52,14 +53,15 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
    */
   @Query("""
               SELECT r FROM Room r
-              WHERE r.status.name = 'Available'
+              WHERE r.status.name NOT IN ('Maintenance', 'OutOfService')
                 AND r.capacity >= :guestCount
                 AND (:categoryId IS NULL OR r.category.categoryId = :categoryId)
                 AND (:minPrice   IS NULL OR r.price >= :minPrice)
                 AND (:maxPrice   IS NULL OR r.price <= :maxPrice)
-                AND r.roomId NOT IN (
-                    SELECT b.room.roomId FROM Booking b
-                    WHERE b.status <> com.example.spring_project.entity.Booking.Status.Cancelled
+                AND NOT EXISTS (
+                    SELECT 1 FROM Booking b
+                    WHERE b.room.roomId = r.roomId
+                      AND b.status IN (com.example.spring_project.entity.Booking.Status.Confirmed, com.example.spring_project.entity.Booking.Status.CheckedIn)
                       AND b.checkinTime  < :checkout
                       AND b.checkoutTime > :checkin
                 )
@@ -75,14 +77,15 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
 
   @Query("""
               SELECT r FROM Room r
-              WHERE r.status.name = 'Available'
+              WHERE r.status.name NOT IN ('Maintenance', 'OutOfService')
                 AND r.capacity >= :guestCount
                 AND (:categoryId IS NULL OR r.category.categoryId = :categoryId)
                 AND (:minPrice   IS NULL OR r.price >= :minPrice)
                 AND (:maxPrice   IS NULL OR r.price <= :maxPrice)
-                AND r.roomId NOT IN (
-                    SELECT b.room.roomId FROM Booking b
-                    WHERE b.status <> com.example.spring_project.entity.Booking.Status.Cancelled
+                AND NOT EXISTS (
+                    SELECT 1 FROM Booking b
+                    WHERE b.room.roomId = r.roomId
+                      AND b.status IN (com.example.spring_project.entity.Booking.Status.Confirmed, com.example.spring_project.entity.Booking.Status.CheckedIn)
                       AND b.checkinTime  < :checkout
                       AND b.checkoutTime > :checkin
                 )

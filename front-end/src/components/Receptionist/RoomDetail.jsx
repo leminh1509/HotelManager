@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getRoomById, updateRoomStatus, getRoomStatuses } from "../../services/receptionistAPI";
+import { getRoomById } from "../../services/receptionistAPI";
 import { showToast } from "../Common/Toast";
 
 export default function RoomDetail() {
@@ -9,13 +9,13 @@ export default function RoomDetail() {
     const [room, setRoom] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [allStatuses, setAllStatuses] = useState([]);
-    const [updating, setUpdating] = useState(false);
+    // const [allStatuses, setAllStatuses] = useState([]); // Removed
+    // const [updating, setUpdating] = useState(false); // Removed
 
     useEffect(() => {
         if (id) {
             fetchRoomDetail();
-            fetchStatuses();
+            // fetchStatuses(); // Removed
         }
     }, [id]);
 
@@ -31,39 +31,8 @@ export default function RoomDetail() {
         }
     };
 
-    const fetchStatuses = async () => {
-        try {
-            const res = await getRoomStatuses();
-            setAllStatuses(res.data);
-        } catch (err) {
-            console.error("Failed to fetch statuses", err);
-        }
-    };
-
-    const updateStatus = async (newStatusName) => {
-        if (!window.confirm(`Change status to ${newStatusName}?`)) return;
-        setUpdating(true);
-        try {
-            const selectedStatus = allStatuses.find(s => s.name === newStatusName);
-            if (!selectedStatus) {
-                showToast("Invalid status selected", "error");
-                setUpdating(false);
-                return;
-            }
-            const res = await updateRoomStatus(id, { status: selectedStatus.statusId });
-            if (res.status === 200) {
-                setRoom(prevRoom => ({ ...prevRoom, statusName: newStatusName, statusId: selectedStatus.statusId }));
-                showToast("Status updated successfully", "success");
-            } else {
-                showToast("Failed to update status", "error");
-            }
-        } catch (err) {
-            showToast("Failed to update status", "error");
-            console.error(err);
-        } finally {
-            setUpdating(false);
-        }
-    };
+    // const fetchStatuses = ... (Removed)
+    // const updateStatus = ... (Removed)
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div className="text-danger">{error}</div>;
@@ -94,19 +63,11 @@ export default function RoomDetail() {
 
                             {/* Status Update Dropdown */}
                             <div className="row mb-3">
-                                <div className="col-sm-3 fw-bold">Status</div>
+                                <div className="col-sm-3 fw-bold">Current Physical Status</div>
                                 <div className="col-sm-9">
-                                    <select
-                                        className="form-select form-select-sm d-inline-block w-auto"
-                                        value={room.statusName}
-                                        onChange={(e) => updateStatus(e.target.value)}
-                                        disabled={updating}
-                                    >
-                                        {allStatuses.map(s => (
-                                            <option key={s.statusId} value={s.name}>{s.name}</option>
-                                        ))}
-                                    </select>
-                                    {updating && <span className="ms-2 spinner-border spinner-border-sm"></span>}
+                                    <span className={`badge ${room.statusName === 'Available' ? 'bg-success' : 'bg-warning'}`}>
+                                        {room.statusName}
+                                    </span>
                                 </div>
                             </div>
 

@@ -11,7 +11,16 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
+import com.example.spring_project.entity.Room;
+import java.util.Optional;
+
 public interface BookingRepository extends JpaRepository<Booking, Integer> {
+
+        @Lock(LockModeType.PESSIMISTIC_WRITE)
+        @Query("SELECT r FROM Room r WHERE r.roomId = :roomId")
+        Optional<Room> findRoomForUpdate(@Param("roomId") Integer roomId);
 
         /**
          * Lấy tất cả bookings của một user, sắp xếp mới nhất trước.
@@ -40,15 +49,14 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
         @Query("""
                                 SELECT COUNT(b) FROM Booking b
                                 WHERE b.room.roomId    = :roomId
-                                  AND b.status        <> :cancelled
+                                  AND b.status IN (com.example.spring_project.entity.Booking.Status.Confirmed, com.example.spring_project.entity.Booking.Status.CheckedIn)
                                   AND b.checkinTime   < :checkout
                                   AND b.checkoutTime  > :checkin
                         """)
         Long countOverlapping(
                         @Param("roomId") Integer roomId,
                         @Param("checkin") LocalDate checkin,
-                        @Param("checkout") LocalDate checkout,
-                        @Param("cancelled") Status cancelled);
+                        @Param("checkout") LocalDate checkout);
 
         /**
          * Kiểm tra overlap trừ booking hiện tại (dùng khi update booking).
@@ -57,7 +65,7 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                                 SELECT COUNT(b) FROM Booking b
                                 WHERE b.room.roomId    = :roomId
                                   AND b.bookingId     <> :excludeBookingId
-                                  AND b.status        <> :cancelled
+                                  AND b.status IN (com.example.spring_project.entity.Booking.Status.Confirmed, com.example.spring_project.entity.Booking.Status.CheckedIn)
                                   AND b.checkinTime   < :checkout
                                   AND b.checkoutTime  > :checkin
                         """)
@@ -65,7 +73,6 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                         @Param("roomId") Integer roomId,
                         @Param("checkin") LocalDate checkin,
                         @Param("checkout") LocalDate checkout,
-                        @Param("cancelled") Status cancelled,
                         @Param("excludeBookingId") Integer excludeBookingId);
 
         List<Booking> findByStatus(Status status);

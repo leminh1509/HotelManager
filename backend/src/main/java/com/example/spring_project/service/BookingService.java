@@ -55,9 +55,15 @@ public class BookingService {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
 
-        // 2) load room (validate tồn tại)
-        Room room = roomService.getEntityById(req.getRoomId());
-        roomService.updateStatus(req.getRoomId(), 5);
+        // 2) load and LOCK room (to prevent race conditions / double booking)
+        Room room = bookingRepo.findRoomForUpdate(req.getRoomId())
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found: " + req.getRoomId()));
+
+        // Check if room is in a physically unbookable state (Maintenance/OutOfService)
+        String physicalStatus = room.getStatus().getName();
+        if ("Maintenance".equalsIgnoreCase(physicalStatus) || "OutOfService".equalsIgnoreCase(physicalStatus)) {
+            throw new ConflictException("Room " + room.getRoomNumber() + " is currently under " + physicalStatus);
+        }
 
         // 3) validate capacity
         if (req.getGuestCount() > room.getCapacity()) {
@@ -74,8 +80,7 @@ public class BookingService {
         long overlap = bookingRepo.countOverlapping(
                 room.getRoomId(),
                 req.getCheckinTime(),
-                req.getCheckoutTime(),
-                Status.Cancelled // trừ các booking đã hủy
+                req.getCheckoutTime()
         );
         if (overlap > 0) {
             throw new ConflictException("Room is not available for the selected dates");
@@ -309,33 +314,23 @@ public class BookingService {
             }
         }
 
-        if (newStatus == Status.Confirmed || newStatus == Status.CheckedIn) {
-            Room room = booking.getRoom();
-            String roomStatusName = room.getStatus().getName();
+        if (newStatus == Status.CheckedIn) {
+            // Strict Time Validation
+            LocalDate today = LocalDate.now();
+            if (today.isBefore(booking.getCheckinTime())) {
+                throw new ConflictException("Cannot check-in before the reservation date (" + booking.getCheckinTime() + ")");
+            }
+            if (today.isAfter(booking.getCheckoutTime()) || today.isEqual(booking.getCheckoutTime())) {
+                throw new ConflictException("Reservation period has already passed. Scheduled checkout was " + booking.getCheckoutTime());
+            }
 
-            // Per requirement: Check-in is only allowed if the room status is 'Reserved'.
-            // (Walk-in bookings set the room to 'Reserved' upon creation).
-            if (!"Reserved".equalsIgnoreCase(roomStatusName)) {
-                throw new ConflictException("Room " + room.getRoomNumber()
-                        + " is not ready. Current status: " + roomStatusName
-                        + ". Room must be 'Reserved' before "
-                        + (newStatus == Status.Confirmed ? "confirming" : "checking in") + ".");
+            // Check Physical Room Status (Source of Truth remains the Booking)
+            String roomStatusName = booking.getRoom().getStatus().getName();
+            // If room is 'Cleaning', we block check-in to ensure quality.
+            if ("Cleaning".equalsIgnoreCase(roomStatusName)) {
+                throw new ConflictException("Room " + booking.getRoom().getRoomNumber() + " is still being cleaned. Please wait or use housekeeping override.");
             }
         }
-
-        if (newStatus == Status.CheckedOut) {
-            // Room status update and cleaning request will be handled below in the
-            // auto-creation block
-        } else if (newStatus == Status.CheckedIn) {
-            try {
-                roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Occupied");
-            } catch (Exception e) {
-                roomService.updateStatus(booking.getRoom().getRoomId(), 2);
-            }
-        }
-
-        booking.setStatus(newStatus);
-        booking.setUpdatedAt(LocalDateTime.now());
 
         // Cập nhật trạng thái phòng khi check-in
         if (newStatus == Status.CheckedIn) {
@@ -395,6 +390,10 @@ public class BookingService {
             throw new ConflictException("Cannot update checkout date for Cancelled or Checked-out bookings");
         }
 
+        // Lock the room to prevent race conditions during checkout extension
+        bookingRepo.findRoomForUpdate(booking.getRoom().getRoomId())
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found"));
+
         if (!newCheckoutDate.isAfter(booking.getCheckinTime())) {
             throw new ConflictException(
                     "New checkout date must be after check-in date (" + booking.getCheckinTime() + ")");
@@ -406,7 +405,6 @@ public class BookingService {
                 booking.getRoom().getRoomId(),
                 booking.getCheckinTime(),
                 newCheckoutDate,
-                Status.Cancelled,
                 bookingId);
 
         if (overlap > 0) {
