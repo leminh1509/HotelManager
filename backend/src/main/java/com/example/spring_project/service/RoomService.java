@@ -11,7 +11,7 @@ import jakarta.persistence.criteria.CriteriaBuilder.In;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,8 +55,8 @@ public class RoomService {
     // Tìm phòng trống (search)
     // ─────────────────────────────────────────────────────
     public List<RoomResponse> search(
-            LocalDate checkin,
-            LocalDate checkout,
+            LocalDateTime checkin,
+            LocalDateTime checkout,
             int guestCount,
             Integer categoryId,
             Double minPrice,
@@ -74,8 +74,8 @@ public class RoomService {
     // ─────────────────────────────────────────────────────
 
     public org.springframework.data.domain.Page<RoomResponse> searchPage(
-            LocalDate checkin,
-            LocalDate checkout,
+            LocalDateTime checkin,
+            LocalDateTime checkout,
             int guestCount,
             Integer categoryId,
             Double minPrice,

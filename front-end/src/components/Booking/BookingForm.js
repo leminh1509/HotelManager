@@ -422,12 +422,33 @@ export default function BookingForm({ user, role, onLogout }) {
                           onChange={(e) => updateBookingData({ checkinDate: e.target.value })}
                           className={errors.checkinDate ? "bf-input error" : "bf-input"}
                         />
-                        <input
-                          type="time"
-                          value={bookingData.checkinTime || "14:00"}
-                          onChange={(e) => updateBookingData({ checkinTime: e.target.value })}
-                          className="bf-input bf-time-input"
-                        />
+                        <div className="d-flex gap-2">
+                          <select className="bf-input bf-time-input"
+                            value={bookingData.checkinTime ? bookingData.checkinTime.split(':')[0] : "14"}
+                            onChange={(e) => {
+                              const hour = e.target.value;
+                              const minute = bookingData.checkinTime ? bookingData.checkinTime.split(':')[1] : "00";
+                              updateBookingData({ checkinTime: `${hour}:${minute}` });
+                            }}
+                          >
+                            {Array.from({ length: 24 }).map((_, i) => (
+                              <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</option>
+                            ))}
+                          </select>
+                          <select className="bf-input bf-time-input"
+                            value={bookingData.checkinTime ? bookingData.checkinTime.split(':')[1] : "00"}
+                            onChange={(e) => {
+                              const hour = bookingData.checkinTime ? bookingData.checkinTime.split(':')[0] : "14";
+                              const minute = e.target.value;
+                              updateBookingData({ checkinTime: `${hour}:${minute}` });
+                            }}
+                          >
+                            <option value="00">00</option>
+                            <option value="15">15</option>
+                            <option value="30">30</option>
+                            <option value="45">45</option>
+                          </select>
+                        </div>
                       </div>
                       {errors.checkinDate && <span className="bf-error">{errors.checkinDate}</span>}
                     </div>
@@ -441,12 +462,33 @@ export default function BookingForm({ user, role, onLogout }) {
                           onChange={(e) => updateBookingData({ checkoutDate: e.target.value })}
                           className={errors.checkoutDate ? "bf-input error" : "bf-input"}
                         />
-                        <input
-                          type="time"
-                          value={bookingData.checkoutTime || "12:00"}
-                          onChange={(e) => updateBookingData({ checkoutTime: e.target.value })}
-                          className="bf-input bf-time-input"
-                        />
+                        <div className="d-flex gap-2">
+                          <select className="bf-input bf-time-input"
+                            value={bookingData.checkoutTime ? bookingData.checkoutTime.split(':')[0] : "12"}
+                            onChange={(e) => {
+                              const hour = e.target.value;
+                              const minute = bookingData.checkoutTime ? bookingData.checkoutTime.split(':')[1] : "00";
+                              updateBookingData({ checkoutTime: `${hour}:${minute}` });
+                            }}
+                          >
+                            {Array.from({ length: 24 }).map((_, i) => (
+                              <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</option>
+                            ))}
+                          </select>
+                          <select className="bf-input bf-time-input"
+                            value={bookingData.checkoutTime ? bookingData.checkoutTime.split(':')[1] : "00"}
+                            onChange={(e) => {
+                              const hour = bookingData.checkoutTime ? bookingData.checkoutTime.split(':')[0] : "12";
+                              const minute = e.target.value;
+                              updateBookingData({ checkoutTime: `${hour}:${minute}` });
+                            }}
+                          >
+                            <option value="00">00</option>
+                            <option value="15">15</option>
+                            <option value="30">30</option>
+                            <option value="45">45</option>
+                          </select>
+                        </div>
                       </div>
                       {errors.checkoutDate && <span className="bf-error">{errors.checkoutDate}</span>}
                     </div>

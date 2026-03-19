@@ -11,7 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -67,8 +67,8 @@ public class BookingController {
             @RequestParam Integer roomId,
             @RequestParam String checkin,
             @RequestParam String checkout) {
-        LocalDate checkinDate = LocalDate.parse(checkin);
-        LocalDate checkoutDate = LocalDate.parse(checkout);
+        LocalDateTime checkinDate = LocalDateTime.parse(checkin);
+        LocalDateTime checkoutDate = LocalDateTime.parse(checkout);
         double price = bookingService.previewPrice(roomId, checkinDate, checkoutDate);
         return ResponseEntity.ok(price);
     }
@@ -127,7 +127,7 @@ public class BookingController {
         if (dateStr == null) {
             throw new IllegalArgumentException("checkoutDate is required");
         }
-        LocalDate newDate = LocalDate.parse(dateStr);
+        LocalDateTime newDate = LocalDateTime.parse(dateStr);
         return ResponseEntity.ok(bookingService.updateCheckoutDate(bookingId, newDate));
     }
 

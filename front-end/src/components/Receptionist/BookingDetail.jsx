@@ -30,7 +30,7 @@ export default function BookingDetail() {
             }
         } catch (err) {
             console.error(err);
-            setError("Failed to load booking details");
+            setError("Failed to load booking details: " + (err.response?.data?.message || err.message));
         } finally {
             setLoading(false);
         }
@@ -55,11 +55,17 @@ export default function BookingDetail() {
 
     const handleExtendStay = async () => {
         if (!newCheckoutDate) return;
-        if (!window.confirm(`Confirm change check-out date to ${newCheckoutDate}? Total price will be updated.`)) return;
+        
+        // Ensure format is ISO LocalDateTime
+        let payloadDate = newCheckoutDate;
+        if (payloadDate.length === 10) payloadDate += "T12:00:00";
+        else if (payloadDate.length === 16) payloadDate += ":00";
+
+        if (!window.confirm(`Confirm change check-out date to ${payloadDate}? Total price will be updated.`)) return;
 
         setUpdating(true);
         try {
-            await updateCheckoutDate(id, { checkoutDate: newCheckoutDate });
+            await updateCheckoutDate(id, { checkoutDate: payloadDate });
             showToast("Check-out date updated successfully!", "success");
             setShowExtendModal(false);
             fetchDetail();
@@ -230,14 +236,48 @@ export default function BookingDetail() {
                             <div className="modal-body">
                                 <p>Current Check-out: <strong>{booking.checkoutTime}</strong></p>
                                 <div className="mb-3">
-                                    <label className="form-label">New Check-out Date</label>
-                                    <input
-                                        type="date"
-                                        className="form-control"
-                                        value={newCheckoutDate}
-                                        min={booking.checkinTime}
-                                        onChange={(e) => setNewCheckoutDate(e.target.value)}
-                                    />
+                                    <label className="form-label">New Check-out Date & Time</label>
+                                    <div className="d-flex gap-2">
+                                        <input
+                                            type="date"
+                                            className="form-control"
+                                            style={{ flex: 2 }}
+                                            value={newCheckoutDate ? newCheckoutDate.split('T')[0] : ""}
+                                            min={booking.checkinTime ? booking.checkinTime.split('T')[0] : ""}
+                                            onChange={(e) => {
+                                                const date = e.target.value;
+                                                const time = newCheckoutDate.includes('T') ? newCheckoutDate.split('T')[1] : "12:00";
+                                                setNewCheckoutDate(`${date}T${time}`);
+                                            }}
+                                        />
+                                        <select className="form-select" style={{ flex: 1 }}
+                                            value={newCheckoutDate && newCheckoutDate.includes('T') ? newCheckoutDate.split('T')[1].split(':')[0] : "12"}
+                                            onChange={(e) => {
+                                                const date = newCheckoutDate.split('T')[0] || (booking.checkoutTime ? booking.checkoutTime.split('T')[0] : "");
+                                                const hour = e.target.value;
+                                                const minute = newCheckoutDate.includes('T') && newCheckoutDate.split('T')[1].includes(':') ? newCheckoutDate.split('T')[1].split(':')[1] : "00";
+                                                setNewCheckoutDate(`${date}T${hour}:${minute}`);
+                                            }}
+                                        >
+                                            {Array.from({ length: 24 }).map((_, i) => (
+                                                <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</option>
+                                            ))}
+                                        </select>
+                                        <select className="form-select" style={{ flex: 1 }}
+                                            value={newCheckoutDate && newCheckoutDate.includes('T') && newCheckoutDate.split('T')[1].includes(':') ? newCheckoutDate.split('T')[1].split(':')[1] : "00"}
+                                            onChange={(e) => {
+                                                const date = newCheckoutDate.split('T')[0] || (booking.checkoutTime ? booking.checkoutTime.split('T')[0] : "");
+                                                const hour = newCheckoutDate.includes('T') ? newCheckoutDate.split('T')[1].split(':')[0] : "12";
+                                                const minute = e.target.value;
+                                                setNewCheckoutDate(`${date}T${hour}:${minute}`);
+                                            }}
+                                        >
+                                            <option value="00">00</option>
+                                            <option value="15">15</option>
+                                            <option value="30">30</option>
+                                            <option value="45">45</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div className="alert alert-warning">
                                     Changing the date will automatically check room availability and recalculate the total price.

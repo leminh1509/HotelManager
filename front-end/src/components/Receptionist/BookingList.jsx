@@ -17,19 +17,22 @@ export default function BookingList() {
   const [filterDateCheckout, setFilterDateCheckout] = useState("");
   const [rooms, setRooms] = useState([]);
   const [availableRoomIds, setAvailableRoomIds] = useState([]);
+  const [submittingError, setSubmittingError] = useState("");
   const [fetchingAvailability, setFetchingAvailability] = useState(false);
   const [categories, setCategories] = useState([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [roomSearchTerm, setRoomSearchTerm] = useState("");
 
-  // Get today's date in YYYY-MM-DD format for the min date attribute
-  const today = new Date().toISOString().split('T')[0];
+  // Get today's date and current time in YYYY-MM-DDTHH:mm format for the min datetime attribute
+  const todayDate = new Date();
+  todayDate.setMinutes(todayDate.getMinutes() - todayDate.getTimezoneOffset());
+  const nowStr = todayDate.toISOString().slice(0, 16);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRoomPickerOpen, setIsRoomPickerOpen] = useState(false);
   const [newBooking, setNewBooking] = useState({
     roomId: "",
-    checkinTime: today,
+    checkinTime: nowStr,
     checkoutTime: "",
     guestCount: 1,
     guestName: "",
@@ -79,14 +82,34 @@ export default function BookingList() {
   const fetchAvailableRooms = async () => {
     setFetchingAvailability(true);
     try {
+      // For walk-in, check-in is always "now"
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      const currentNowStr = now.toISOString().slice(0, 19);
+
+      let cOut = newBooking.checkoutTime;
+      if (cOut && cOut.length === 16) cOut += ":00";
+
+      console.log("Searching rooms with:", { checkin: currentNowStr, checkout: cOut, guests: newBooking.guestCount });
+      
       const res = await searchRooms({
-        checkin: newBooking.checkinTime,
-        checkout: newBooking.checkoutTime,
+        checkin: currentNowStr,
+        checkout: cOut,
         guests: newBooking.guestCount
       });
-      setAvailableRoomIds(res.data.map(r => r.roomId));
+
+      console.log("Search result:", res.data);
+
+      if (res.data && Array.isArray(res.data)) {
+        setAvailableRoomIds(res.data.map(r => r.roomId));
+      } else {
+        setAvailableRoomIds([]);
+      }
     } catch (err) {
       console.error("Failed to fetch available rooms:", err);
+      // Don't show toast for every search keystroke, but maybe show in room picker UI
+      setSubmittingError("Error checking room availability: " + (err.message || "Unknown error"));
+      setAvailableRoomIds([]);
     } finally {
       setFetchingAvailability(false);
     }
@@ -124,13 +147,34 @@ export default function BookingList() {
 
   const handleCreateBooking = async (e) => {
     e.preventDefault();
+    setSubmittingError("");
+    
+    if (!newBooking.roomId) {
+      setSubmittingError("Please select a room first.");
+      return;
+    }
+
     setCreating(true);
     try {
-      await createBooking(newBooking);
+      // Ensure check-in is "now" for walk-in and formatting is correct
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      const currentNowStr = now.toISOString().slice(0, 19);
+
+      const payload = { 
+        ...newBooking,
+        checkinTime: currentNowStr 
+      };
+      
+      if (payload.checkoutTime && payload.checkoutTime.length === 16) {
+        payload.checkoutTime = payload.checkoutTime + ":00";
+      }
+
+      await createBooking(payload);
       setIsModalOpen(false);
       setNewBooking({
-        roomId: "", checkinTime: today, checkoutTime: "", guestCount: 1,
-        guestName: "", guestEmail: "", guestPhone: "", guestIdNumber: "",
+        roomId: "", guestName: "", guestPhone: "", guestIdNumber: "", guestEmail: "",
+        checkinTime: nowStr, checkoutTime: "", guestCount: 1,
         guestNationality: "Vietnam", guestAddress: "", specialRequest: "",
         earlyCheckin: false, lateCheckout: false
       });
@@ -138,7 +182,9 @@ export default function BookingList() {
       showToast("Booking created successfully!", "success");
     } catch (err) {
       console.error(err);
-      showToast(err.response?.data?.message || "Failed to create booking. Please check requirements.", "error");
+      const msg = err.response?.data?.message || err.message || "Failed to create booking";
+      setSubmittingError(msg);
+      showToast(msg, "error");
     } finally {
       setCreating(false);
     }
@@ -167,10 +213,11 @@ export default function BookingList() {
       b.roomNumber?.toString().includes(filterRoom) || b.roomName?.toLowerCase().includes(filterRoom.toLowerCase())
       : true;
     const matchCreated = filterDateCreated ?
-      new Date(b.createdAt).toISOString().split('T')[0] === filterDateCreated
+      (b.createdAt && !isNaN(new Date(b.createdAt).getTime()) && new Date(b.createdAt).toISOString().split('T')[0] === filterDateCreated)
       : true;
+
     const matchCheckout = filterDateCheckout ?
-      new Date(b.checkoutTime).toISOString().split('T')[0] === filterDateCheckout
+      (b.checkoutTime && !isNaN(new Date(b.checkoutTime).getTime()) && new Date(b.checkoutTime).toISOString().split('T')[0] === filterDateCheckout)
       : true;
 
     return matchSearch && matchPhone && matchStatus && matchRoom && matchCreated && matchCheckout;
@@ -299,8 +346,8 @@ export default function BookingList() {
                       <small>{b.guestPhone}</small>
                     </td>
                     <td>{b.roomNumber} ({b.roomName})</td>
-                    <td>{new Date(b.checkinTime).toLocaleString()}</td>
-                    <td>{new Date(b.checkoutTime).toLocaleString()}</td>
+                    <td>{b.checkinTime ? new Date(b.checkinTime).toLocaleString() : ""}</td>
+                    <td>{b.checkoutTime ? new Date(b.checkoutTime).toLocaleString() : ""}</td>
                     <td>{getStatusBadge(b.status)}</td>
                     <td>{new Date(b.createdAt).toLocaleDateString()}</td>
                     <td>
@@ -400,12 +447,47 @@ export default function BookingList() {
 
                     <hr className="my-4" />
 
-                    <div className="col-md-6">
-                      <label className="form-label">Check-out Date *</label>
-                      <input type="date" className="form-control" required
-                        min={newBooking.checkinTime || today}
-                        value={newBooking.checkoutTime} onChange={e => setNewBooking({ ...newBooking, checkoutTime: e.target.value })}
-                      />
+                    <div className="col-12">
+                      <label className="form-label">Check-out Date & Time *</label>
+                      <div className="d-flex gap-2">
+                        <input type="date" className="form-control" required
+                          style={{ flex: 3 }}
+                          min={nowStr.split('T')[0]}
+                          value={newBooking.checkoutTime ? newBooking.checkoutTime.split('T')[0] : ""}
+                          onChange={e => {
+                            const date = e.target.value;
+                            const time = newBooking.checkoutTime.includes('T') ? newBooking.checkoutTime.split('T')[1] : "12:00";
+                            setNewBooking({ ...newBooking, checkoutTime: `${date}T${time}` });
+                          }}
+                        />
+                        <select className="form-select" style={{ flex: 1 }}
+                          value={newBooking.checkoutTime && newBooking.checkoutTime.includes('T') ? newBooking.checkoutTime.split('T')[1].split(':')[0] : "12"}
+                          onChange={e => {
+                            const date = newBooking.checkoutTime.split('T')[0] || nowStr.split('T')[0];
+                            const hour = e.target.value;
+                            const minute = newBooking.checkoutTime.includes('T') && newBooking.checkoutTime.split('T')[1].includes(':') ? newBooking.checkoutTime.split('T')[1].split(':')[1] : "00";
+                            setNewBooking({ ...newBooking, checkoutTime: `${date}T${hour}:${minute}` });
+                          }}
+                        >
+                          {Array.from({ length: 24 }).map((_, i) => (
+                            <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</option>
+                          ))}
+                        </select>
+                        <select className="form-select" style={{ flex: 1 }}
+                          value={newBooking.checkoutTime && newBooking.checkoutTime.includes('T') && newBooking.checkoutTime.split('T')[1].includes(':') ? newBooking.checkoutTime.split('T')[1].split(':')[1] : "00"}
+                          onChange={e => {
+                            const date = newBooking.checkoutTime.split('T')[0] || nowStr.split('T')[0];
+                            const hour = newBooking.checkoutTime.includes('T') ? newBooking.checkoutTime.split('T')[1].split(':')[0] : "12";
+                            const minute = e.target.value;
+                            setNewBooking({ ...newBooking, checkoutTime: `${date}T${hour}:${minute}` });
+                          }}
+                        >
+                          <option value="00">00</option>
+                          <option value="15">15</option>
+                          <option value="30">30</option>
+                          <option value="45">45</option>
+                        </select>
+                      </div>
                     </div>
 
                     <div className="col-md-6">
@@ -437,6 +519,14 @@ export default function BookingList() {
                       </div>
                     </div>
                   </div>
+
+                  {submittingError && (
+                    <div className="alert alert-danger mt-3 py-2 small">
+                      <i className="fa fa-exclamation-triangle me-2"></i>
+                      {submittingError}
+                    </div>
+                  )}
+
                 </form>
               </div>
               <div className="modal-footer">

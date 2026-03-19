@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.Lock;
@@ -55,8 +55,8 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                         """)
         Long countOverlapping(
                         @Param("roomId") Integer roomId,
-                        @Param("checkin") LocalDate checkin,
-                        @Param("checkout") LocalDate checkout);
+                        @Param("checkin") LocalDateTime checkin,
+                        @Param("checkout") LocalDateTime checkout);
 
         /**
          * Kiểm tra overlap trừ booking hiện tại (dùng khi update booking).
@@ -71,8 +71,8 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                         """)
         Long countOverlappingExcludingBooking(
                         @Param("roomId") Integer roomId,
-                        @Param("checkin") LocalDate checkin,
-                        @Param("checkout") LocalDate checkout,
+                        @Param("checkin") LocalDateTime checkin,
+                        @Param("checkout") LocalDateTime checkout,
                         @Param("excludeBookingId") Integer excludeBookingId);
 
         List<Booking> findByStatus(Status status);
@@ -101,7 +101,7 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                                 WHERE b.checkoutTime <= :today
                                   AND b.status IN (com.example.spring_project.entity.Booking.Status.CheckedIn, com.example.spring_project.entity.Booking.Status.Confirmed)
                         """)
-        List<Booking> findOverdueCheckedIn(@Param("today") LocalDate today);
+        List<Booking> findOverdueCheckedIn(@Param("today") LocalDateTime today);
 
         @Query("""
                     SELECT COUNT(b) > 0 FROM Booking b

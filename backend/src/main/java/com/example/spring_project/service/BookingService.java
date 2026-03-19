@@ -18,7 +18,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -142,14 +141,14 @@ public class BookingService {
     // ─────────────────────────────────────────────────────
     // Tính tổng giá tiền linh động (Holiday +50%, Weekend +20%)
     // ─────────────────────────────────────────────────────
-    public double calculateTotalPrice(Room room, LocalDate checkin, LocalDate checkout) {
+    public double calculateTotalPrice(Room room, LocalDateTime checkin, LocalDateTime checkout) {
         if (!checkin.isBefore(checkout)) {
             return 0.0;
         }
 
         double totalPrice = 0.0;
         double basePrice = room.getPrice();
-        LocalDate currentDate = checkin;
+        LocalDateTime currentDate = checkin;
 
         while (currentDate.isBefore(checkout)) {
             if (isHoliday(currentDate)) {
@@ -165,7 +164,7 @@ public class BookingService {
         return totalPrice;
     }
 
-    private boolean isHoliday(LocalDate date) {
+    private boolean isHoliday(LocalDateTime date) {
         int month = date.getMonthValue();
         int day = date.getDayOfMonth();
 
@@ -186,13 +185,13 @@ public class BookingService {
     // Lấy trước tổng giá
     // ─────────────────────────────────────────────────────
     @Transactional(readOnly = true)
-    public double previewPrice(Integer roomId, LocalDate checkin, LocalDate checkout) {
+    public double previewPrice(Integer roomId, LocalDateTime checkin, LocalDateTime checkout) {
         Room room = roomService.getEntityById(roomId);
         double price = calculateTotalPrice(room, checkin, checkout);
         return price <= 0 ? room.getPrice() : price;
     }
 
-    private boolean isWeekend(LocalDate date) {
+    private boolean isWeekend(LocalDateTime date) {
         java.time.DayOfWeek day = date.getDayOfWeek();
         return day == java.time.DayOfWeek.FRIDAY || day == java.time.DayOfWeek.SATURDAY;
     }
@@ -316,7 +315,7 @@ public class BookingService {
 
         if (newStatus == Status.CheckedIn) {
             // Strict Time Validation
-            LocalDate today = LocalDate.now();
+            LocalDateTime today = LocalDateTime.now();
             if (today.isBefore(booking.getCheckinTime())) {
                 throw new ConflictException("Cannot check-in before the reservation date (" + booking.getCheckinTime() + ")");
             }
@@ -380,7 +379,7 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResponse updateCheckoutDate(Integer bookingId, LocalDate newCheckoutDate) {
+    public BookingResponse updateCheckoutDate(Integer bookingId, LocalDateTime newCheckoutDate) {
         Booking booking = bookingRepo.findByIdWithDetails(bookingId);
         if (booking == null) {
             throw new ResourceNotFoundException("Booking not found: " + bookingId);
@@ -412,11 +411,10 @@ public class BookingService {
         }
 
         // Recalculate price
-        long nights = ChronoUnit.DAYS.between(booking.getCheckinTime(), newCheckoutDate);
-        if (nights < 1)
-            nights = 1; // Minimum 1 night
-
-        double newTotalPrice = booking.getRoom().getPrice() * nights;
+        double newTotalPrice = calculateTotalPrice(booking.getRoom(), booking.getCheckinTime(), newCheckoutDate);
+        if (newTotalPrice <= 0) {
+            newTotalPrice = booking.getRoom().getPrice();
+        }
 
         booking.setCheckoutTime(newCheckoutDate);
         booking.setTotalPrice(newTotalPrice);

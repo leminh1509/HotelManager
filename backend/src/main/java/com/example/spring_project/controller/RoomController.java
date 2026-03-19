@@ -6,7 +6,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -32,8 +32,8 @@ public class RoomController {
 
     @GetMapping("/search")
     public ResponseEntity<List<RoomResponse>> search(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkin,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkout,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime checkin,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime checkout,
             @RequestParam(defaultValue = "1") int guests,
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) Double minPrice,
@@ -52,8 +52,8 @@ public class RoomController {
 
     @GetMapping("/search/page")
     public ResponseEntity<org.springframework.data.domain.Page<RoomResponse>> searchPage(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkin,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkout,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime checkin,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime checkout,
             @RequestParam(defaultValue = "1") int guests,
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) Double minPrice,

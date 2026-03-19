@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -35,25 +35,25 @@ public class AutoCheckoutScheduler {
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void performAutoCheckout() {
-        LocalDate today = LocalDate.now();
-        int currentHour = java.time.LocalTime.now().getHour();
+        LocalDateTime now = LocalDateTime.now();
+        int currentHour = now.getHour();
         log.info("[AutoCheckout] Scheduler triggered at {}h. Checking for overdue bookings on {}...", currentHour,
-                today);
+                now);
 
         // 1. Find overdue CheckedIn bookings (includes today)
-        List<Booking> candidates = bookingRepository.findOverdueCheckedIn(today);
+        List<Booking> candidates = bookingRepository.findOverdueCheckedIn(now);
         if (candidates.isEmpty()) {
             log.info("[AutoCheckout] No overdue bookings found.");
             return;
         }
 
-        // Filter: If checkout is today, only process if it's 12:00 or later
+        // Filter: Since checkout is now LocalDateTime, we can check directly
         List<Booking> toProcess = candidates.stream()
-                .filter(b -> b.getCheckoutTime().isBefore(today) || currentHour >= 12)
+                .filter(b -> b.getCheckoutTime().isBefore(now))
                 .toList();
 
         if (toProcess.isEmpty()) {
-            log.info("[AutoCheckout] Found candidates for today, but skipping until 12:00 PM.");
+            log.info("[AutoCheckout] Found candidates for today, but none are past their exact checkout time.");
             return;
         }
 

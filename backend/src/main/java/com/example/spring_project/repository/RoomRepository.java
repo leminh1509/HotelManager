@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface RoomRepository extends JpaRepository<Room, Integer> {
@@ -44,8 +44,8 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
                 )
       """)
   List<Room> findAvailableRooms(
-      @Param("checkin") LocalDate checkin,
-      @Param("checkout") LocalDate checkout,
+      @Param("checkin") LocalDateTime checkin,
+      @Param("checkout") LocalDateTime checkout,
       @Param("guestCount") Integer guestCount);
 
   /**
@@ -68,8 +68,8 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
               ORDER BY r.price ASC
       """)
   List<Room> findAvailableRoomsFiltered(
-      @Param("checkin") LocalDate checkin,
-      @Param("checkout") LocalDate checkout,
+      @Param("checkin") LocalDateTime checkin,
+      @Param("checkout") LocalDateTime checkout,
       @Param("guestCount") Integer guestCount,
       @Param("categoryId") Integer categoryId,
       @Param("minPrice") Double minPrice,
@@ -91,8 +91,8 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
                 )
       """)
   org.springframework.data.domain.Page<Room> findAvailableRoomsFilteredPage(
-      @Param("checkin") LocalDate checkin,
-      @Param("checkout") LocalDate checkout,
+      @Param("checkin") LocalDateTime checkin,
+      @Param("checkout") LocalDateTime checkout,
       @Param("guestCount") Integer guestCount,
       @Param("categoryId") Integer categoryId,
       @Param("minPrice") Double minPrice,
