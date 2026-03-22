@@ -52,8 +52,21 @@ export const getCategoryById = (id) => api.get(`/categories/${id}`);
 // ─── Booking APIs (Receptionist) ─────────────────────────
 export const getBookingById = (id) => api.get(`/bookings/${id}`);
 export const createBooking = (payload) => api.post("/bookings", payload);
-export const updateBookingStatus = (id, status) =>
-    api.put(`/bookings/${id}/status`, null, { params: { status } });
+
+export const checkInBooking = (id) => api.put(`/bookings/${id}/checkin`);
+export const checkOutBooking = (id) => api.put(`/bookings/${id}/checkout`);
+export const cancelBooking = (id) => api.put(`/bookings/${id}/cancel`);
+
+/**
+ * @deprecated Use checkInBooking, checkOutBooking, or cancelBooking instead.
+ */
+export const updateBookingStatus = (id, status) => {
+    if (status === "Checked-in") return checkInBooking(id);
+    if (status === "Checked-out") return checkOutBooking(id);
+    if (status === "Cancelled") return cancelBooking(id);
+    return api.put(`/bookings/${id}/status`, null, { params: { status } });
+};
+
 export const updateCheckoutDate = (id, payload) =>
     api.patch(`/bookings/${id}/checkout`, payload);
 export const getBookingsByStatus = (status) =>
@@ -66,12 +79,12 @@ export const getCustomerBookings = (params) =>
     api.get("/receptionist/customers/bookings", { params }).then(res => res.data);
 
 // ─── Request APIs (Maintenance/Cleaning) ────────────────
-export const getMaintenanceRequests = () => api.get("/requests/maintenance");
+export const getMaintenanceRequests = () => api.get("/requests/maintenance").then(res => res.data);
 export const createMaintenanceRequest = (payload) =>
-    api.post("/requests/maintenance", payload);
-export const getCleaningRequests = () => api.get("/requests/cleaning");
+    api.post("/requests/maintenance", payload).then(res => res.data);
+export const getCleaningRequests = () => api.get("/requests/cleaning").then(res => res.data);
 export const searchRequests = (params) => api.get("/requests/search", { params });
 export const updateRequestStatus = (id, status) =>
-    api.put(`/requests/${id}/status`, null, { params: { status } });
+    api.put(`/requests/${id}/status`, { status }).then(res => res.data);
 
 export default api;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getBookingById, updateBookingStatus, updateCheckoutDate } from "../../services/receptionistAPI";
+import { getBookingById, checkInBooking, checkOutBooking, cancelBooking, updateCheckoutDate } from "../../services/receptionistAPI";
 import { showToast } from "../Common/Toast";
 
 export default function BookingDetail() {
@@ -41,7 +41,13 @@ export default function BookingDetail() {
 
         setUpdating(true);
         try {
-            await updateBookingStatus(id, newStatus);
+            if (newStatus === "Checked-in") {
+                await checkInBooking(id);
+            } else if (newStatus === "Checked-out") {
+                await checkOutBooking(id);
+            } else if (newStatus === "Cancelled") {
+                await cancelBooking(id);
+            }
             // Refresh
             fetchDetail();
         } catch (err) {

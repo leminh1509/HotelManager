@@ -131,18 +131,30 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.updateCheckoutDate(bookingId, newDate));
     }
 
+    @PutMapping("/{bookingId}/checkin")
+    public ResponseEntity<BookingResponse> checkIn(@PathVariable Integer bookingId) {
+        return ResponseEntity.ok(bookingService.checkIn(bookingId));
+    }
+
+    @PutMapping("/{bookingId}/checkout")
+    public ResponseEntity<BookingResponse> checkOut(@PathVariable Integer bookingId) {
+        return ResponseEntity.ok(bookingService.checkOut(bookingId));
+    }
+
     @PutMapping("/{bookingId}/cancel")
     public ResponseEntity<BookingResponse> cancel(@PathVariable Integer bookingId) {
         Integer userId = getCurrentUserId();
-        BookingResponse response = bookingService.cancel(bookingId, userId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(bookingService.cancel(bookingId, userId));
     }
 
+    /**
+     * @deprecated Use /checkin or /checkout endpoints instead.
+     */
+    @Deprecated
     @PutMapping("/{bookingId}/status")
     public ResponseEntity<BookingResponse> updateStatus(
             @PathVariable Integer bookingId,
             @RequestParam String status) {
-        BookingResponse response = bookingService.updateStatus(bookingId, status);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(bookingService.updateStatus(bookingId, status));
     }
 }

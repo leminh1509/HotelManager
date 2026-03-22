@@ -19,7 +19,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -79,10 +78,18 @@ public class BookingService {
         long overlap = bookingRepo.countOverlapping(
                 room.getRoomId(),
                 req.getCheckinTime(),
-                req.getCheckoutTime()
-        );
+                req.getCheckoutTime());
         if (overlap > 0) {
             throw new ConflictException("Room is not available for the selected dates");
+        }
+
+        // 5.0) Check Physical Room Status for immediate bookings
+        // If the booking starts today and the room is 'Cleaning', block creation.
+        String currentRoomStatus = room.getStatus().getName();
+        LocalDateTime nowLimit = LocalDateTime.now().plusHours(2); // Buffer of 2 hours
+        if ("Cleaning".equalsIgnoreCase(currentRoomStatus) && req.getCheckinTime().isBefore(nowLimit)) {
+            throw new ConflictException("Room " + room.getRoomNumber() 
+                    + " is currently being cleaned. It cannot be booked for immediate check-in.");
         }
 
         // 5.1) Validate Guest Info (Prevent multiple active bookings for same identity)
@@ -296,86 +303,105 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResponse updateStatus(Integer bookingId, String statusStr) {
+    public BookingResponse checkIn(Integer bookingId) {
         Booking booking = bookingRepo.findByIdWithDetails(bookingId);
         if (booking == null) {
             throw new ResourceNotFoundException("Booking not found: " + bookingId);
         }
 
-        Status newStatus;
-        try {
-            newStatus = Status.fromString(statusStr);
-        } catch (Exception e) {
-            try {
-                newStatus = Status.valueOf(statusStr);
-            } catch (IllegalArgumentException ex) {
-                throw new ConflictException("Invalid status: " + statusStr);
-            }
+        if (booking.getStatus() != Status.Confirmed) {
+            throw new ConflictException("Only Confirmed bookings can be checked-in. Current status: " + booking.getStatus());
         }
 
-        if (newStatus == Status.CheckedIn) {
-            // Strict Time Validation
-            LocalDateTime today = LocalDateTime.now();
-            if (today.isBefore(booking.getCheckinTime())) {
-                throw new ConflictException("Cannot check-in before the reservation date (" + booking.getCheckinTime() + ")");
-            }
-            if (today.isAfter(booking.getCheckoutTime()) || today.isEqual(booking.getCheckoutTime())) {
-                throw new ConflictException("Reservation period has already passed. Scheduled checkout was " + booking.getCheckoutTime());
-            }
-
-            // Check Physical Room Status (Source of Truth remains the Booking)
-            String roomStatusName = booking.getRoom().getStatus().getName();
-            // If room is 'Cleaning', we block check-in to ensure quality.
-            if ("Cleaning".equalsIgnoreCase(roomStatusName)) {
-                throw new ConflictException("Room " + booking.getRoom().getRoomNumber() + " is still being cleaned. Please wait or use housekeeping override.");
-            }
+        // Strict Time Validation
+        LocalDateTime today = LocalDateTime.now();
+        if (today.isBefore(booking.getCheckinTime())) {
+            throw new ConflictException(
+                    "Cannot check-in before the reservation date (" + booking.getCheckinTime() + ")");
+        }
+        if (today.isAfter(booking.getCheckoutTime()) || today.isEqual(booking.getCheckoutTime())) {
+            throw new ConflictException(
+                    "Reservation period has already passed. Scheduled checkout was " + booking.getCheckoutTime());
         }
 
-        // Cập nhật trạng thái phòng khi check-in
-        if (newStatus == Status.CheckedIn) {
-            roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Occupied");
+        // Check Physical Room Status
+        String roomStatusName = booking.getRoom().getStatus().getName();
+        if ("Cleaning".equalsIgnoreCase(roomStatusName)) {
+            throw new ConflictException("Room " + booking.getRoom().getRoomNumber()
+                    + " is still being cleaned. Please wait or use housekeeping override.");
         }
+
+        booking.setStatus(Status.CheckedIn);
+        booking.setUpdatedAt(LocalDateTime.now());
+        
+        // Cập nhật trạng thái phòng → Occupied
+        roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Occupied");
+
+        Booking saved = bookingRepo.save(booking);
+        return BookingMapper.toBookingResponse(saved);
+    }
+
+    @Transactional
+    public BookingResponse checkOut(Integer bookingId) {
+        Booking booking = bookingRepo.findByIdWithDetails(bookingId);
+        if (booking == null) {
+            throw new ResourceNotFoundException("Booking not found: " + bookingId);
+        }
+
+        if (booking.getStatus() != Status.CheckedIn) {
+            throw new ConflictException("Only Checked-in bookings can be checked-out. Current status: " + booking.getStatus());
+        }
+
+        booking.setStatus(Status.CheckedOut);
+        booking.setUpdatedAt(LocalDateTime.now());
+
+        // Đổi trạng thái phòng → Cleaning
+        roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Cleaning");
 
         Booking saved = bookingRepo.save(booking);
 
-        // Tự động tạo cleaning request và đổi trạng thái phòng khi check-out
-        if (newStatus == Status.CheckedOut) {
-            Room room = booking.getRoom();
-
-            // Đổi trạng thái phòng → Cleaning
-            roomService.updateRoomStatus(room.getRoomId(), "Cleaning");
-
-            // Lấy user hiện tại (lễ tân)
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String currentUserEmail = auth != null ? auth.getName() : null;
-            User currentUser = null;
-            if (currentUserEmail != null) {
-                currentUser = userRepo.findByEmail(currentUserEmail).orElse(null);
-            }
-            // Fallback: use receptionist or booking owner if no auth (e.g. internal call)
-            if (currentUser == null) {
-                currentUser = saved.getReceptionist();
-            }
-            if (currentUser == null) {
-                currentUser = saved.getUser();
-            }
-
-            // Tạo cleaning request tự động
-            String description = "Room " + room.getRoomNumber() + " needs cleaning after guest check-out.";
-            serviceRequestService.createRequest(
-                    saved,
-                    currentUser,
-                    room.getRoomId(),
-                    description,
-                    ServiceRequestType.CLEANING,
-                    "High");
-
-            // Real-time WebSocket notification
-            messagingTemplate.convertAndSend("/topic/maintenance",
-                    "New cleaning request for room " + room.getRoomNumber());
+        // Tự động tạo cleaning request
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUserEmail = auth != null ? auth.getName() : null;
+        User currentUser = null;
+        if (currentUserEmail != null) {
+            currentUser = userRepo.findByEmail(currentUserEmail).orElse(null);
+        }
+        if (currentUser == null) {
+            currentUser = saved.getReceptionist();
+        }
+        if (currentUser == null) {
+            currentUser = saved.getUser();
         }
 
+        String description = "Room " + saved.getRoom().getRoomNumber() + " needs cleaning after guest check-out.";
+        serviceRequestService.createRequest(
+                saved,
+                currentUser,
+                saved.getRoom().getRoomId(),
+                description,
+                ServiceRequestType.CLEANING,
+                "High");
+
+        // Real-time WebSocket notification
+        messagingTemplate.convertAndSend("/topic/maintenance",
+                "New cleaning request for room " + saved.getRoom().getRoomNumber());
+
         return BookingMapper.toBookingResponse(saved);
+    }
+
+    /**
+     * @deprecated Use checkIn() or checkOut() instead.
+     */
+    @Deprecated
+    @Transactional
+    public BookingResponse updateStatus(Integer bookingId, String statusStr) {
+        Status newStatus = Status.fromString(statusStr);
+        if (newStatus == Status.CheckedIn) return checkIn(bookingId);
+        if (newStatus == Status.CheckedOut) return checkOut(bookingId);
+        if (newStatus == Status.Cancelled) return cancel(bookingId, null); // Basic cancel
+        
+        throw new ConflictException("Unsupported status transition via generic method: " + statusStr);
     }
 
     @Transactional

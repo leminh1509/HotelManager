@@ -120,7 +120,6 @@ public class RoomService {
                 .orElseThrow(() -> new RuntimeException("Status not found: " + statusName));
 
         room.setStatus(statusEntity);
-        // room.setUpdatedAt(...) if needed
         Room saved = roomRepository.save(room);
         return BookingMapper.toRoomResponse(saved);
     }

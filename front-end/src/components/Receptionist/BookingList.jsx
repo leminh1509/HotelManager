@@ -632,62 +632,74 @@ export default function BookingList() {
                   .filter(r => (!selectedCategoryId || r.categoryId === parseInt(selectedCategoryId)) &&
                                (!roomSearchTerm || r.roomNumber.toLowerCase().includes(roomSearchTerm.toLowerCase())))
                   .map((r) => {
-                  const isTrulyAvailable = availableRoomIds.includes(r.roomId);
-                  const isOccupiedInSystem = r.statusName === "Occupied" || r.statusName === "Reserved";
+                    const isLogicallyAvailable = availableRoomIds.includes(r.roomId);
+                    const isPhysicallyAvailable = r.statusName === "Available";
+                    const isCleaning = r.statusName === "Cleaning";
+                    const isOccupiedInSystem = r.statusName === "Occupied" || r.statusName === "Reserved";
 
-                  let bg = "#6c757d"; // Maintenance or other
-                  if (isTrulyAvailable) bg = "#198754"; // Green
-                  else if (isOccupiedInSystem || !isTrulyAvailable) bg = "#dc3545"; // Red
+                    const canSelect = isLogicallyAvailable && isPhysicallyAvailable;
 
-                  const isSelected = newBooking.roomId === r.roomId;
+                    let bg = "#6c757d"; // Default Grey (Maintenance/Other)
+                    let textCol = "#fff";
 
-                  return (
-                    <div
-                      key={r.roomId}
-                      onClick={() => {
-                        if (isTrulyAvailable) {
-                          setNewBooking({ ...newBooking, roomId: r.roomId });
-                          setIsRoomPickerOpen(false);
-                        }
-                      }}
-                      style={{
-                        backgroundColor: bg,
-                        color: "#fff",
-                        borderRadius: "10px",
-                        padding: "16px 12px",
-                        textAlign: "center",
-                        cursor: isTrulyAvailable ? "pointer" : "not-allowed",
-                        opacity: isTrulyAvailable ? 1 : 0.65,
-                        boxShadow: isSelected
-                          ? "0 0 0 4px #ffc107, 0 4px 12px rgba(0,0,0,0.2)"
-                          : "0 2px 8px rgba(0,0,0,0.15)",
-                        transform: isSelected ? "scale(1.06)" : "scale(1)",
-                        transition: "all 0.2s ease",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "6px",
-                        minHeight: "130px",
-                      }}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: "1.1rem" }}>{r.roomNumber}</div>
-                      <div style={{ fontSize: "0.8rem", opacity: 0.9, lineHeight: 1.3 }}>
-                        {r.categoryName || r.category?.name}
+                    if (isPhysicallyAvailable && isLogicallyAvailable) {
+                      bg = "#198754"; // Green (Truly Available)
+                    } else if (isCleaning) {
+                      bg = "#ffc107"; // Yellow (Cleaning)
+                      textCol = "#000";
+                    } else if (isOccupiedInSystem || !isLogicallyAvailable) {
+                      bg = "#dc3545"; // Red (Occupied or Reserved)
+                    }
+
+                    const isSelected = newBooking.roomId === r.roomId;
+
+                    return (
+                      <div
+                        key={r.roomId}
+                        onClick={() => {
+                          if (canSelect) {
+                            setNewBooking({ ...newBooking, roomId: r.roomId });
+                            setIsRoomPickerOpen(false);
+                          }
+                        }}
+                        style={{
+                          backgroundColor: bg,
+                          color: textCol,
+                          borderRadius: "10px",
+                          padding: "16px 12px",
+                          textAlign: "center",
+                          cursor: canSelect ? "pointer" : "not-allowed",
+                          opacity: canSelect ? 1 : 0.8,
+                          boxShadow: isSelected
+                            ? "0 0 0 4px #0d6efd, 0 4px 12px rgba(0,0,0,0.2)"
+                            : "0 2px 8px rgba(0,0,0,0.15)",
+                          transform: isSelected ? "scale(1.06)" : "scale(1)",
+                          transition: "all 0.2s ease",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px",
+                          minHeight: "130px",
+                        }}
+                      >
+                        <div style={{ fontWeight: 700, fontSize: "1.1rem" }}>{r.roomNumber}</div>
+                        <div style={{ fontSize: "0.8rem", opacity: 0.9, lineHeight: 1.3 }}>
+                          {r.categoryName || r.category?.name}
+                        </div>
+                        <div style={{
+                          marginTop: "6px",
+                          backgroundColor: "rgba(255,255,255,0.25)",
+                          borderRadius: "6px",
+                          padding: "3px 10px",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                        }}>
+                          {isCleaning ? "Cleaning" : (isPhysicallyAvailable && isLogicallyAvailable ? "Available" : "Occupied/Unavailable")}
+                        </div>
                       </div>
-                      <div style={{
-                        marginTop: "6px",
-                        backgroundColor: "rgba(255,255,255,0.25)",
-                        borderRadius: "6px",
-                        padding: "3px 10px",
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                      }}>
-                        {isTrulyAvailable ? "Available" : (isOccupiedInSystem ? "Occupied" : "Unavailable")}
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
               {fetchingAvailability && (
                 <div style={{
