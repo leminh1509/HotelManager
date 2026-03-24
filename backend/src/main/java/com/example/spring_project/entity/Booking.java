@@ -21,7 +21,11 @@ public class Booking {
 
         public static Status fromString(String s) {
             for (Status st : values()) {
-                if (st.dbValue.equalsIgnoreCase(s)) return st;
+                if (st.dbValue.equalsIgnoreCase(s) || st.name().equalsIgnoreCase(s)) return st;
+            }
+            String normalized = s.replaceAll("[-_\\s]", "");
+            for (Status st : values()) {
+                if (st.name().equalsIgnoreCase(normalized)) return st;
             }
             throw new IllegalArgumentException("Unknown booking status: " + s);
         }
@@ -83,9 +87,25 @@ public class Booking {
     private LocalDateTime checkoutTime;
 
     // ── status & price ──
-    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
+    @Convert(converter = StatusConverter.class)
     private Status status = Status.Pending;
+
+    /**
+     * JPA Converter để map Enum Status (CheckedIn) <=> DB String ("Checked-in")
+     */
+    @Converter(autoApply = true)
+    public static class StatusConverter implements AttributeConverter<Status, String> {
+        @Override
+        public String convertToDatabaseColumn(Status status) {
+            return (status == null) ? null : status.getDbValue();
+        }
+
+        @Override
+        public Status convertToEntityAttribute(String dbData) {
+            return (dbData == null) ? null : Status.fromString(dbData);
+        }
+    }
 
     @Column(name = "total_price", nullable = false)
     private Double totalPrice = 0.0;

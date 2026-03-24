@@ -19,7 +19,8 @@ const CustomerBookingsModal = ({ isOpen, onClose, customer }) => {
         try {
             const data = await getCustomerBookings({
                 name: customer.name,
-                phone: customer.phone
+                phone: customer.phone,
+                idNumber: customer.idNumber
             });
             setBookings(data);
         } catch (err) {

@@ -103,26 +103,11 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                         """)
         List<Booking> findOverdueCheckedIn(@Param("today") LocalDateTime today);
 
-        @Query("""
-                    SELECT COUNT(b) > 0 FROM Booking b
-                    WHERE b.guestPhone = :phone
-                      AND b.status IN (com.example.spring_project.entity.Booking.Status.Confirmed, com.example.spring_project.entity.Booking.Status.CheckedIn)
-                """)
-        boolean existsByActivePhone(@Param("phone") String phone);
+        boolean existsByGuestPhoneAndStatusIn(String phone, List<Status> statuses);
 
-        @Query("""
-                    SELECT COUNT(b) > 0 FROM Booking b
-                    WHERE b.guestEmail = :email
-                      AND b.status IN (com.example.spring_project.entity.Booking.Status.Confirmed, com.example.spring_project.entity.Booking.Status.CheckedIn)
-                """)
-        boolean existsByActiveEmail(@Param("email") String email);
+        boolean existsByGuestEmailAndStatusIn(String email, List<Status> statuses);
 
-        @Query("""
-                    SELECT COUNT(b) > 0 FROM Booking b
-                    WHERE b.guestIdNumber = :idNumber
-                      AND b.status IN (com.example.spring_project.entity.Booking.Status.Confirmed, com.example.spring_project.entity.Booking.Status.CheckedIn)
-                """)
-        boolean existsByActiveIdNumber(@Param("idNumber") String idNumber);
+        boolean existsByGuestIdNumberAndStatusIn(String idNumber, List<Status> statuses);
 
         List<Booking> findByRoomRoomIdAndStatus(Integer roomId, Status status);
 
@@ -138,7 +123,7 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                             WHERE (:name IS NULL OR LOWER(guest_name) LIKE LOWER(CONCAT('%', :name, '%')))
                               AND (:phone IS NULL OR guest_phone LIKE CONCAT('%', :phone, '%'))
                               AND (:idNumber IS NULL OR guest_id_number LIKE CONCAT('%', :idNumber, '%'))
-                            GROUP BY guest_name, guest_phone
+                            GROUP BY guest_name, guest_phone, guest_id_number
                         """, countQuery = """
                             SELECT COUNT(*) FROM (
                                 SELECT guest_name, guest_phone
@@ -146,7 +131,7 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                                 WHERE (:name IS NULL OR LOWER(guest_name) LIKE LOWER(CONCAT('%', :name, '%')))
                                   AND (:phone IS NULL OR guest_phone LIKE CONCAT('%', :phone, '%'))
                                   AND (:idNumber IS NULL OR guest_id_number LIKE CONCAT('%', :idNumber, '%'))
-                                GROUP BY guest_name, guest_phone
+                                GROUP BY guest_name, guest_phone, guest_id_number
                             ) AS sub
                         """, nativeQuery = true)
         Page<Object[]> findUniqueGuests(
@@ -157,8 +142,19 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
 
         @Query("""
                             SELECT b FROM Booking b
-                            WHERE b.guestName = :name AND b.guestPhone = :phone
+                            WHERE b.guestName = :name 
+                              AND b.guestPhone = :phone 
+                              AND b.guestIdNumber = :idNumber
                             ORDER BY b.createdAt DESC
                         """)
-        List<Booking> findByGuestInfo(@Param("name") String name, @Param("phone") String phone);
+        List<Booking> findByGuestInfo(
+                        @Param("name") String name,
+                        @Param("phone") String phone,
+                        @Param("idNumber") String idNumber);
+
+        boolean existsByGuestNameAndGuestPhoneAndGuestIdNumberAndStatusIn(
+                        String name,
+                        String phone,
+                        String idNumber,
+                        List<Status> statuses);
 }

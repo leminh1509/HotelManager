@@ -92,21 +92,13 @@ public class BookingService {
                     + " is currently being cleaned. It cannot be booked for immediate check-in.");
         }
 
-        // 5.1) Validate Guest Info (Prevent multiple active bookings for same identity)
-        if (req.getGuestPhone() != null && !req.getGuestPhone().isEmpty()) {
-            if (bookingRepo.existsByActivePhone(req.getGuestPhone())) {
-                throw new ConflictException("Guest with this phone number already has an active booking.");
-            }
-        }
-        if (req.getGuestEmail() != null && !req.getGuestEmail().isEmpty()) {
-            if (bookingRepo.existsByActiveEmail(req.getGuestEmail())) {
-                throw new ConflictException("Guest with this email address already has an active booking.");
-            }
-        }
-        if (req.getGuestIdNumber() != null && !req.getGuestIdNumber().isEmpty()) {
-            if (bookingRepo.existsByActiveIdNumber(req.getGuestIdNumber())) {
-                throw new ConflictException("Guest with this ID/Passport number already has an active booking.");
-            }
+
+        // 5.1) Validate Guest Info (Prevent multiple active bookings for same identity: Name + Phone + ID)
+        List<Status> activeStatuses = java.util.Arrays.asList(Status.Confirmed, Status.CheckedIn);
+        if (bookingRepo.existsByGuestNameAndGuestPhoneAndGuestIdNumberAndStatusIn(
+                req.getGuestName(), req.getGuestPhone(), req.getGuestIdNumber(), activeStatuses)) {
+            throw new ConflictException("Guest already has an active booking (Confirmed or Checked-in). " +
+                    "Please check out the current booking before rebooking.");
         }
 
         // 6) tính giá: linh động theo Cuối tuần / Lễ
@@ -475,8 +467,8 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public List<BookingResponse> getBookingsByGuest(String name, String phone) {
-        List<Booking> list = bookingRepo.findByGuestInfo(name, phone);
+    public List<BookingResponse> getBookingsByGuest(String name, String phone, String idNumber) {
+        List<Booking> list = bookingRepo.findByGuestInfo(name, phone, idNumber);
         return list.stream()
                 .map(BookingMapper::toBookingResponse)
                 .collect(Collectors.toList());

@@ -64,8 +64,9 @@ public class CustomerController {
     @GetMapping("/bookings")
     public ResponseEntity<List<BookingResponse>> getCustomerBookings(
             @RequestParam String name,
-            @RequestParam String phone) {
-        List<BookingResponse> bookings = bookingService.getBookingsByGuest(name, phone);
+            @RequestParam String phone,
+            @RequestParam String idNumber) {
+        List<BookingResponse> bookings = bookingService.getBookingsByGuest(name, phone, idNumber);
         return ResponseEntity.ok(bookings);
     }
 }
