@@ -39,7 +39,7 @@ export default function BookingList() {
     guestEmail: "",
     guestPhone: "",
     guestIdNumber: "",
-    guestNationality: "Vietnam",
+    guestNationality: "Việt Nam",
     guestAddress: "",
     specialRequest: "",
     earlyCheckin: false,
@@ -62,7 +62,7 @@ export default function BookingList() {
         guestEmail: rebookData.guestEmail || "",
         guestPhone: rebookData.guestPhone || "",
         guestIdNumber: rebookData.guestIdNumber || "",
-        guestNationality: rebookData.guestNationality || "Vietnam",
+        guestNationality: rebookData.guestNationality || "Việt Nam",
         guestAddress: rebookData.guestAddress || "",
       }));
       setIsModalOpen(true);
@@ -175,7 +175,7 @@ export default function BookingList() {
       setNewBooking({
         roomId: "", guestName: "", guestPhone: "", guestIdNumber: "", guestEmail: "",
         checkinTime: nowStr, checkoutTime: "", guestCount: 1,
-        guestNationality: "Vietnam", guestAddress: "", specialRequest: "",
+        guestNationality: "Việt Nam", guestAddress: "", specialRequest: "",
         earlyCheckin: false, lateCheckout: false
       });
       fetchBookings(); // Refresh the list
@@ -443,6 +443,18 @@ export default function BookingList() {
                       <input type="email" className="form-control"
                         value={newBooking.guestEmail} onChange={e => setNewBooking({ ...newBooking, guestEmail: e.target.value })}
                       />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Nationality / Quốc tịch *</label>
+                      <select 
+                        className="form-select" 
+                        required
+                        value={newBooking.guestNationality} 
+                        onChange={e => setNewBooking({ ...newBooking, guestNationality: e.target.value })}
+                      >
+                        <option value="Việt Nam">Việt Nam</option>
+                        <option value="Nước ngoài">Nước ngoài</option>
+                      </select>
                     </div>
 
                     <hr className="my-4" />
