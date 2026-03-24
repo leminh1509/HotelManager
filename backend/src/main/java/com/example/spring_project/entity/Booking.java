@@ -63,9 +63,6 @@ public class Booking {
     @Column(name = "guest_nationality", length = 80)
     private String guestNationality;
 
-    @Column(name = "guest_address", length = 255)
-    private String guestAddress;
-
     @Column(name = "guest_count", nullable = false)
     private Integer guestCount = 1;
 
@@ -127,9 +124,6 @@ public class Booking {
 
     public String         getGuestNationality()       { return guestNationality; }
     public void           setGuestNationality(String v){ this.guestNationality = v; }
-
-    public String         getGuestAddress()           { return guestAddress; }
-    public void           setGuestAddress(String v)   { this.guestAddress = v; }
 
     public Integer        getGuestCount()             { return guestCount; }
     public void           setGuestCount(Integer v)    { this.guestCount = v; }

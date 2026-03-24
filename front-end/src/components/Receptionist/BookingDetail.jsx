@@ -61,7 +61,7 @@ export default function BookingDetail() {
 
     const handleExtendStay = async () => {
         if (!newCheckoutDate) return;
-        
+
         // Ensure format is ISO LocalDateTime
         let payloadDate = newCheckoutDate;
         if (payloadDate.length === 10) payloadDate += "T12:00:00";
@@ -121,6 +121,12 @@ export default function BookingDetail() {
                             <p><strong>Check-In:</strong> {new Date(booking.checkinTime).toLocaleString()}</p>
                             <p><strong>Check-Out:</strong> {new Date(booking.checkoutTime).toLocaleString()}</p>
                             <p className="text-danger fs-5"><strong>Total Price:</strong> ${booking.totalPrice}</p>
+                            {booking.receptionistName && (
+                                <p className="text-muted small">
+                                    <i className="fa fa-user-tie me-1"></i>
+                                    <strong>Processed By:</strong> {booking.receptionistName}
+                                </p>
+                            )}
                         </div>
                     </div>
 

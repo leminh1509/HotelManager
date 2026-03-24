@@ -88,7 +88,7 @@ public class BookingService {
         String currentRoomStatus = room.getStatus().getName();
         LocalDateTime nowLimit = LocalDateTime.now().plusHours(2); // Buffer of 2 hours
         if ("Cleaning".equalsIgnoreCase(currentRoomStatus) && req.getCheckinTime().isBefore(nowLimit)) {
-            throw new ConflictException("Room " + room.getRoomNumber() 
+            throw new ConflictException("Room " + room.getRoomNumber()
                     + " is currently being cleaned. It cannot be booked for immediate check-in.");
         }
 
@@ -127,9 +127,16 @@ public class BookingService {
         booking.setGuestPhone(req.getGuestPhone());
         booking.setGuestIdNumber(req.getGuestIdNumber());
         booking.setGuestNationality(req.getGuestNationality());
-        booking.setGuestAddress(req.getGuestAddress());
         booking.setGuestCount(req.getGuestCount());
         booking.setSpecialRequest(req.getSpecialRequest());
+
+        // Ghi lại nhân viên tạo đơn (Walk-in)
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            User currentStaff = userRepo.findByEmail(auth.getName()).orElse(null);
+            booking.setReceptionist(currentStaff);
+        }
+
         booking.setEarlyCheckin(req.getEarlyCheckin() != null && req.getEarlyCheckin());
         booking.setLateCheckout(req.getLateCheckout() != null && req.getLateCheckout());
         booking.setCheckinTime(req.getCheckinTime());
@@ -267,6 +274,11 @@ public class BookingService {
         booking.setStatus(Status.Cancelled);
         roomService.updateStatus(booking.getRoom().getRoomId(), 1);
 
+        // Lưu vết nhân viên thực hiện hủy (nếu là staff)
+        if (isAdminOrReceptionist) {
+            booking.setReceptionist(requester);
+        }
+
         booking.setUpdatedAt(LocalDateTime.now());
 
         Booking updated = bookingRepo.save(booking);
@@ -310,7 +322,8 @@ public class BookingService {
         }
 
         if (booking.getStatus() != Status.Confirmed) {
-            throw new ConflictException("Only Confirmed bookings can be checked-in. Current status: " + booking.getStatus());
+            throw new ConflictException(
+                    "Only Confirmed bookings can be checked-in. Current status: " + booking.getStatus());
         }
 
         // Strict Time Validation
@@ -333,7 +346,14 @@ public class BookingService {
 
         booking.setStatus(Status.CheckedIn);
         booking.setUpdatedAt(LocalDateTime.now());
-        
+
+        // Ghi lại nhân viên thực hiện check-in
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            User currentStaff = userRepo.findByEmail(auth.getName()).orElse(null);
+            booking.setReceptionist(currentStaff);
+        }
+
         // Cập nhật trạng thái phòng → Occupied
         roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Occupied");
 
@@ -349,35 +369,36 @@ public class BookingService {
         }
 
         if (booking.getStatus() != Status.CheckedIn) {
-            throw new ConflictException("Only Checked-in bookings can be checked-out. Current status: " + booking.getStatus());
+            throw new ConflictException(
+                    "Only Checked-in bookings can be checked-out. Current status: " + booking.getStatus());
         }
 
         booking.setStatus(Status.CheckedOut);
         booking.setUpdatedAt(LocalDateTime.now());
+
+        // Ghi lại nhân viên thực hiện check-out
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User currentStaff = null;
+        if (auth != null && auth.isAuthenticated()) {
+            currentStaff = userRepo.findByEmail(auth.getName()).orElse(null);
+            booking.setReceptionist(currentStaff);
+        }
 
         // Đổi trạng thái phòng → Cleaning
         roomService.updateRoomStatus(booking.getRoom().getRoomId(), "Cleaning");
 
         Booking saved = bookingRepo.save(booking);
 
-        // Tự động tạo cleaning request
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String currentUserEmail = auth != null ? auth.getName() : null;
-        User currentUser = null;
-        if (currentUserEmail != null) {
-            currentUser = userRepo.findByEmail(currentUserEmail).orElse(null);
-        }
-        if (currentUser == null) {
-            currentUser = saved.getReceptionist();
-        }
-        if (currentUser == null) {
-            currentUser = saved.getUser();
+        // Tự động tạo cleaning request (Sử dụng nhân viên vừa check-out hoặc người tạo đơn)
+        User cleaningRequestCreator = (currentStaff != null) ? currentStaff : saved.getReceptionist();
+        if (cleaningRequestCreator == null) {
+            cleaningRequestCreator = saved.getUser(); // Fallback to guest if no staff
         }
 
         String description = "Room " + saved.getRoom().getRoomNumber() + " needs cleaning after guest check-out.";
         serviceRequestService.createRequest(
                 saved,
-                currentUser,
+                cleaningRequestCreator,
                 saved.getRoom().getRoomId(),
                 description,
                 ServiceRequestType.CLEANING,
@@ -397,10 +418,13 @@ public class BookingService {
     @Transactional
     public BookingResponse updateStatus(Integer bookingId, String statusStr) {
         Status newStatus = Status.fromString(statusStr);
-        if (newStatus == Status.CheckedIn) return checkIn(bookingId);
-        if (newStatus == Status.CheckedOut) return checkOut(bookingId);
-        if (newStatus == Status.Cancelled) return cancel(bookingId, null); // Basic cancel
-        
+        if (newStatus == Status.CheckedIn)
+            return checkIn(bookingId);
+        if (newStatus == Status.CheckedOut)
+            return checkOut(bookingId);
+        if (newStatus == Status.Cancelled)
+            return cancel(bookingId, null); // Basic cancel
+
         throw new ConflictException("Unsupported status transition via generic method: " + statusStr);
     }
 

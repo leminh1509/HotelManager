@@ -48,8 +48,7 @@ public class CustomerController {
                         .phone((String) obj[2])
                         .idNumber((String) obj[3])
                         .nationality((String) obj[4])
-                        .address((String) obj[5])
-                        .hasActiveBooking(obj[6] != null && ((Number) obj[6]).intValue() == 1)
+                        .hasActiveBooking(obj[5] != null && ((Number) obj[5]).intValue() == 1)
                         .build())
                 .toList();
 

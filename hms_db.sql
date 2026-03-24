@@ -124,7 +124,6 @@ CREATE TABLE booking (
   guest_phone VARCHAR(20) NULL,
   guest_id_number VARCHAR(20) NULL,
   guest_nationality VARCHAR(80) NULL,
-  guest_address VARCHAR(255) NULL,
 
   guest_count INT NOT NULL DEFAULT 1,
   special_request VARCHAR(500) NULL,
@@ -471,7 +470,7 @@ INSERT INTO room (room_number, category_id, status_id, price, capacity, floor, s
 INSERT INTO booking (
     user_id, room_id,
     guest_name, guest_email, guest_phone,
-    guest_id_number, guest_nationality, guest_address,
+    guest_id_number, guest_nationality,
     guest_count,
     checkin_time, checkout_time,
     status, total_price,

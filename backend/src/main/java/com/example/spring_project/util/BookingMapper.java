@@ -1,6 +1,5 @@
 package com.example.spring_project.util;
 
-
 import com.example.spring_project.dto.BookingResponse;
 import com.example.spring_project.dto.RoomResponse;
 import com.example.spring_project.entity.Booking;
@@ -12,7 +11,8 @@ import com.example.spring_project.entity.Room;
  */
 public class BookingMapper {
 
-    private BookingMapper() {} // no-instance
+    private BookingMapper() {
+    } // no-instance
 
     // ─────────────────────────────────────────────────────
     // Room → RoomResponse
@@ -45,7 +45,8 @@ public class BookingMapper {
     // ─────────────────────────────────────────────────────
     // Booking → BookingResponse
     // ─────────────────────────────────────────────────────
-    public static com.example.spring_project.dto.CategoryResponse toCategoryResponse(com.example.spring_project.entity.Category category) {
+    public static com.example.spring_project.dto.CategoryResponse toCategoryResponse(
+            com.example.spring_project.entity.Category category) {
         com.example.spring_project.dto.CategoryResponse dto = new com.example.spring_project.dto.CategoryResponse();
         dto.setCategoryId(category.getCategoryId());
         dto.setName(category.getName());
@@ -66,7 +67,6 @@ public class BookingMapper {
         dto.setGuestPhone(booking.getGuestPhone());
         dto.setGuestIdNumber(booking.getGuestIdNumber());
         dto.setGuestNationality(booking.getGuestNationality());
-        dto.setGuestAddress(booking.getGuestAddress());
         dto.setGuestCount(booking.getGuestCount());
         dto.setSpecialRequest(booking.getSpecialRequest());
         dto.setEarlyCheckin(booking.getEarlyCheckin());
@@ -91,10 +91,15 @@ public class BookingMapper {
             }
         }
 
-        // ── nested: user ──
+        // ── nested: user (guest) ──
         if (booking.getUser() != null) {
             dto.setUserId(booking.getUser().getUserId());
             dto.setUserEmail(booking.getUser().getEmail());
+        }
+
+        // ── nested: receptionist (staff - using existing receptionist_id) ──
+        if (booking.getReceptionist() != null) {
+            dto.setReceptionistName(booking.getReceptionist().getFullName());
         }
 
         return dto;

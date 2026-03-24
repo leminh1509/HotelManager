@@ -44,9 +44,6 @@ public class BookingCreateRequest {
     @Size(max = 80)
     private String guestNationality;
 
-    @Size(max = 255)
-    private String guestAddress;
-
     @Size(max = 500)
     private String specialRequest;
 
@@ -72,8 +69,6 @@ public class BookingCreateRequest {
     public void           setGuestIdNumber(String v){ this.guestIdNumber = v; }
     public String         getGuestNationality()    { return guestNationality; }
     public void           setGuestNationality(String v){ this.guestNationality = v; }
-    public String         getGuestAddress()        { return guestAddress; }
-    public void           setGuestAddress(String v){ this.guestAddress = v; }
     public String         getSpecialRequest()      { return specialRequest; }
     public void           setSpecialRequest(String v){ this.specialRequest = v; }
     public Boolean        getEarlyCheckin()        { return earlyCheckin; }
