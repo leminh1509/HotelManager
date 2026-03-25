@@ -585,3 +585,21 @@ INSERT INTO rules (title, content) VALUES
 ('Pool Safety Rules', 'No diving is allowed. Children under 12 must be accompanied by an adult. Glass containers are prohibited in the pool area.'),
 ('Energy Conservation', 'Please help us protect the environment by turning off lights, TV, and air conditioning when leaving your room.'),
 ('Prohibited Activities', 'Illegal activities, gambling, and weapons are strictly prohibited. The hotel reserves the right to report violations to local authorities and terminate the stay without refund.');
+
+SET SQL_SAFE_UPDATES = 0;
+-- 1. Insert unique guests into customer
+INSERT INTO customer (name, phone, id_number, email, nationality, created_at)
+SELECT 
+    guest_name, guest_phone, guest_id_number, 
+    MAX(guest_email), MAX(guest_nationality), MIN(created_at)
+FROM booking
+WHERE guest_name IS NOT NULL AND guest_phone IS NOT NULL AND guest_id_number IS NOT NULL
+GROUP BY guest_name, guest_phone, guest_id_number;
+
+-- 2. Update booking table with customer_id
+UPDATE booking b
+JOIN customer c ON b.guest_name = c.name 
+               AND b.guest_phone = c.phone 
+               AND b.guest_id_number = c.id_number
+SET b.customer_id = c.customer_id;
+SET SQL_SAFE_UPDATES = 1;

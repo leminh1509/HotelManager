@@ -75,9 +75,4 @@ public class OtpStore {
     private String normalize(String email) {
         return email == null ? "" : email.toLowerCase().trim();
     }
-
-    @PostConstruct
-    public void init() {
-        System.out.println("[OtpStore] Bean initialized. Instance: " + this.hashCode());
-    }
 }

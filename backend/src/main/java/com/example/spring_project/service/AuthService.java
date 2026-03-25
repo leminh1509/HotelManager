@@ -50,12 +50,6 @@ public class AuthService {
 
         // Gửi email OTP (async)
         emailService.sendRegisterOtpEmail(request.getEmail(), request.getFirstName(), otp);
-
-        // Debug log — xóa sau khi test xong
-        System.out.println("[OTP] sendRegisterOtp"
-                + " | email=" + request.getEmail().toLowerCase().trim()
-                + " | otp=" + otp
-                + " | otpStore.instance=" + otpStore.hashCode());
     }
 
     // Xác thực OTP → tạo User trong DB → trả JWT
@@ -64,14 +58,6 @@ public class AuthService {
     public AuthResponse verifyRegisterOtp(String email, String otp) {
         // Debug log
         OtpStore.OtpEntry stored = otpStore.getOtpEntry(email);
-        System.out.println("[OTP] verifyRegisterOtp"
-                + " | email=" + email.toLowerCase().trim()
-                + " | input=" + otp.trim()
-                + " | stored=" + (stored != null ? stored.getCode() : "NULL")
-                + " | expired=" + (stored != null ? stored.isExpired() : "N/A")
-                + " | hasPending=" + otpStore.hasPending(email)
-                + " | otpStore.instance=" + otpStore.hashCode());
-
         if (!otpStore.isOtpValid(email, otp)) {
             if (stored == null) {
                 throw new RuntimeException("OTP không tồn tại. Vui lòng yêu cầu lại.");
@@ -138,8 +124,6 @@ public class AuthService {
         String otp = generateOtp();
         otpStore.saveOtp(email, otp);
         emailService.sendRegisterOtpEmail(email, request.getFirstName(), otp);
-
-        System.out.println("[OTP] resendRegisterOtp | email=" + email.toLowerCase().trim() + " | otp=" + otp);
     }
 
     // LOGIN
