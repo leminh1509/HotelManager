@@ -34,15 +34,17 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
         List<User> findByIsActiveTrue();
 
-        @Query("SELECT u FROM User u WHERE " +
-                        "(:roleName IS NULL OR u.role.name = :roleName) AND " +
-                        "(:keyword IS NULL OR " +
-                        " LOWER(u.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-                        " LOWER(u.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-                        " LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-                        " LOWER(u.mobilePhone) LIKE LOWER(CONCAT('%', :keyword, '%'))) ")
-        Page<User> searchUsers(
-                        @Param("roleName") String roleName,
-                        @Param("keyword") String keyword,
-                        Pageable pageable);
+    @Query("SELECT u FROM User u WHERE " +
+            "(:roleName IS NULL OR u.role.name = :roleName) AND " +
+            "(:keyword IS NULL OR " +
+            " LOWER(u.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            " LOWER(u.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            " LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            " LOWER(u.mobilePhone) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            " LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            " LOWER(CONCAT(u.lastName, ' ', u.firstName)) LIKE LOWER(CONCAT('%', :keyword, '%'))) ")
+    Page<User> searchUsers(
+            @Param("roleName") String roleName,
+            @Param("keyword") String keyword,
+            Pageable pageable);
 }
