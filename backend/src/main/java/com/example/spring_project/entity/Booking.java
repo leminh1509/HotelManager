@@ -36,10 +36,15 @@ public class Booking {
     @Column(name = "booking_id")  // ✅ FIX: Map rõ ràng với database column
     private Integer bookingId;
 
-    // ── FK: customer ──
+    // ── FK: user (nullable for walk-ins) ──
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)  // ✅ FIX: snake_case
+    @JoinColumn(name = "user_id")  // ✅ REMOVED nullable = false
     private User user;
+
+    // ── FK: customer (Required) ──
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", nullable = false)
+    private Customer customer;
 
     // ── FK: room ──
     @ManyToOne(fetch = FetchType.LAZY)
@@ -129,6 +134,9 @@ public class Booking {
 
     public User           getReceptionist()           { return receptionist; }
     public void           setReceptionist(User v)     { this.receptionist = v; }
+
+    public Customer       getCustomer()               { return customer; }
+    public void           setCustomer(Customer v)     { this.customer = v; }
 
     public String         getGuestName()              { return guestName; }
     public void           setGuestName(String v)      { this.guestName = v; }

@@ -2,7 +2,7 @@ package com.example.spring_project.controller;
 
 import com.example.spring_project.dto.BookingResponse;
 import com.example.spring_project.dto.CustomerDTO;
-import com.example.spring_project.repository.BookingRepository;
+import com.example.spring_project.repository.CustomerRepository;
 import com.example.spring_project.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,8 +22,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CustomerController {
 
-    private final BookingRepository bookingRepo;
     private final BookingService bookingService;
+    private final CustomerRepository customerRepo;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllCustomers(
@@ -39,7 +39,7 @@ public class CustomerController {
         String p = (phone == null || phone.isEmpty()) ? null : phone;
         String id = (idNumber == null || idNumber.isEmpty()) ? null : idNumber;
 
-        Page<Object[]> guestPage = bookingRepo.findUniqueGuests(n, p, id, pageable);
+        Page<Object[]> guestPage = customerRepo.findUniqueGuests(n, p, id, pageable);
 
         List<CustomerDTO> customers = guestPage.getContent().stream()
                 .map(obj -> CustomerDTO.builder()
@@ -48,7 +48,7 @@ public class CustomerController {
                         .phone((String) obj[2])
                         .idNumber((String) obj[3])
                         .nationality((String) obj[4])
-                        .hasActiveBooking(obj[5] != null && ((Number) obj[5]).intValue() == 1)
+                        .hasActiveBooking(obj[5] instanceof Boolean ? (Boolean) obj[5] : (obj[5] != null && ((Number) obj[5]).intValue() == 1))
                         .build())
                 .toList();
 

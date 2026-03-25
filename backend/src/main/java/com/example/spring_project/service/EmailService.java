@@ -98,17 +98,18 @@ public class EmailService {
     // GỬI EMAIL THANH TOÁN THÀNH CÔNG (giữ nguyên từ trước)
     @Async
     public void sendPaymentSuccessEmail(Booking booking, double amountPaid) {
-        if (booking.getGuestEmail() == null || booking.getGuestEmail().isEmpty()) return;
+        String guestEmail = (booking.getCustomer() != null) ? booking.getCustomer().getEmail() : booking.getGuestEmail();
+        if (guestEmail == null || guestEmail.isEmpty()) return;
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setFrom(fromEmail);
-            helper.setTo(booking.getGuestEmail());
+            helper.setTo(guestEmail);
             helper.setSubject("Xác nhận thanh toán thành công - Mã đặt phòng: " + booking.getBookingId());
             helper.setText(buildPaymentEmailTemplate(booking, amountPaid), true);
             mailSender.send(message);
         } catch (MessagingException e) {
-            System.err.println("Failed to send email to: " + booking.getGuestEmail());
+            System.err.println("Failed to send email to: " + guestEmail);
             e.printStackTrace();
         }
     }
@@ -129,7 +130,7 @@ public class EmailService {
                 "<tr><td style='padding:8px 0;border-bottom:1px solid #dee2e6;'><strong>Mã Đặt Phòng:</strong></td>" +
                 "    <td style='padding:8px 0;text-align:right;border-bottom:1px solid #dee2e6;'><strong>" + booking.getBookingId() + "</strong></td></tr>" +
                 "<tr><td style='padding:8px 0;border-bottom:1px solid #dee2e6;'><strong>Khách hàng:</strong></td>" +
-                "    <td style='padding:8px 0;text-align:right;border-bottom:1px solid #dee2e6;'>" + booking.getGuestName() + "</td></tr>" +
+                "    <td style='padding:8px 0;text-align:right;border-bottom:1px solid #dee2e6;'>" + (booking.getCustomer() != null ? booking.getCustomer().getName() : booking.getGuestName()) + "</td></tr>" +
                 "<tr><td style='padding:8px 0;border-bottom:1px solid #dee2e6;'><strong>Phòng:</strong></td>" +
                 "    <td style='padding:8px 0;text-align:right;border-bottom:1px solid #dee2e6;'>" + room.getRoomNumber() + " - " + room.getCategory().getName() + "</td></tr>" +
                 "<tr><td style='padding:8px 0;border-bottom:1px solid #dee2e6;'><strong>Check-in:</strong></td>" +

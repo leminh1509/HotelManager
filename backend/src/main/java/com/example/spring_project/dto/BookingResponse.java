@@ -12,6 +12,7 @@ public class BookingResponse {
     private Integer bookingId;
     private String status;
     private Double totalPrice;
+    private Integer customerId;
 
     // ── room info ──
     private Integer roomId;
@@ -76,6 +77,14 @@ public class BookingResponse {
 
     public void setTotalPrice(Double v) {
         this.totalPrice = v;
+    }
+
+    public Integer getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(Integer v) {
+        this.customerId = v;
     }
 
     public Integer getRoomId() {

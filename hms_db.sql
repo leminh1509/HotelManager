@@ -112,10 +112,25 @@ CREATE TABLE room (
     FOREIGN KEY (status_id) REFERENCES room_status(status_id)
 ) ENGINE=InnoDB;
 
+-- Customer
+CREATE TABLE customer (
+  customer_id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  phone VARCHAR(20) NOT NULL,
+  id_number VARCHAR(20) NOT NULL,
+  email VARCHAR(255),
+  nationality VARCHAR(100),
+  address TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_customer (name, phone, id_number)
+) ENGINE=InnoDB;
+
 -- Booking
 CREATE TABLE booking (
   booking_id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,        
+  user_id INT NULL,             -- NULL for walk-in guests
+  customer_id INT NOT NULL,     -- Required for all bookings
   room_id INT NOT NULL,
   receptionist_id INT NULL,    
 
@@ -142,6 +157,9 @@ CREATE TABLE booking (
 
   CONSTRAINT fk_booking_user
     FOREIGN KEY (user_id) REFERENCES users(user_id),
+
+  CONSTRAINT fk_booking_customer
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
 
   CONSTRAINT fk_booking_room
     FOREIGN KEY (room_id) REFERENCES room(room_id),
@@ -466,9 +484,13 @@ INSERT INTO room (room_number, category_id, status_id, price, capacity, floor, s
 ('P.1004', 5, 1, 10000000, 2, 10, 120, '1 Royal Bed', 'Không hoàn trả', 'President Suite - Sang trọng bậc nhất', 'url_p1004'),
 ('P.1005', 5, 1, 10000000, 2, 10, 120, '1 Royal Bed', 'Không hoàn trả', 'President Suite - Tiện nghi tối tân', 'url_p1005');
 
+-- Sample Customer
+INSERT INTO customer (name, phone, id_number, email, nationality) VALUES
+('Nguyen Van Test', '0912345678', 'CCCD123456789', 'test.guest@email.com', 'Vietnam');
+
 -- booking
 INSERT INTO booking (
-    user_id, room_id,
+    user_id, customer_id, room_id,
     guest_name, guest_email, guest_phone,
     guest_id_number, guest_nationality,
     guest_count,
@@ -477,11 +499,11 @@ INSERT INTO booking (
     special_request,
     created_at, updated_at
 ) VALUES (
-    2, 2,  -- Giả sử user_id=2 là khách hàng, room_id=2 là phòng trống
+    2, 1, 2,  -- user_id=2 (customer), customer_id=1, room_id=2
     'Nguyen Van Test', 'test.guest@email.com', '0912345678',
-    'CCCD123456789', 'Vietnam', '123 Duong Test, TP.HCM',
+    'CCCD123456789', 'Vietnam',
     2,
-    CURDATE(), DATE_ADD(CURDATE(), INTERVAL 3 DAY), -- Check-in hôm nay, ở 3 ngày
+    CURDATE(), DATE_ADD(CURDATE(), INTERVAL 3 DAY),
     'Confirmed', 1500000.0,
     'Yêu cầu phòng yên tĩnh',
     NOW(), NOW()

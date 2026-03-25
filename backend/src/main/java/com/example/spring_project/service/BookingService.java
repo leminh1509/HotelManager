@@ -9,7 +9,9 @@ import com.example.spring_project.entity.ServiceRequestType;
 import com.example.spring_project.entity.User;
 import com.example.spring_project.exception.ConflictException;
 import com.example.spring_project.exception.ResourceNotFoundException;
+import com.example.spring_project.entity.Customer;
 import com.example.spring_project.repository.BookingRepository;
+import com.example.spring_project.repository.CustomerRepository;
 import com.example.spring_project.repository.UserRepository;
 import com.example.spring_project.util.BookingMapper;
 import org.springframework.stereotype.Service;
@@ -30,17 +32,20 @@ public class BookingService {
     private final UserRepository userRepo;
     private final SimpMessagingTemplate messagingTemplate;
     private final ServiceRequestService serviceRequestService;
+    private final CustomerRepository customerRepo;
 
     public BookingService(BookingRepository bookingRepo,
             RoomService roomService,
             UserRepository userRepo,
             SimpMessagingTemplate messagingTemplate,
-            ServiceRequestService serviceRequestService) {
+            ServiceRequestService serviceRequestService,
+            CustomerRepository customerRepo) {
         this.bookingRepo = bookingRepo;
         this.roomService = roomService;
         this.userRepo = userRepo;
         this.messagingTemplate = messagingTemplate;
         this.serviceRequestService = serviceRequestService;
+        this.customerRepo = customerRepo;
     }
 
     // ─────────────────────────────────────────────────────
@@ -93,10 +98,22 @@ public class BookingService {
         }
 
 
-        // 5.1) Validate Guest Info (Prevent multiple active bookings for same identity: Name + Phone + ID)
+        // 5.1) Find or Create Customer
+        Customer customer = customerRepo.findByNameAndPhoneAndIdNumber(
+                req.getGuestName(), req.getGuestPhone(), req.getGuestIdNumber())
+                .orElseGet(() -> {
+                    Customer newCustomer = new Customer();
+                    newCustomer.setName(req.getGuestName());
+                    newCustomer.setPhone(req.getGuestPhone());
+                    newCustomer.setIdNumber(req.getGuestIdNumber());
+                    newCustomer.setEmail(req.getGuestEmail());
+                    newCustomer.setNationality(req.getGuestNationality());
+                    return customerRepo.save(newCustomer);
+                });
+
+        // 5.2) Validate Guest Info (Prevent multiple active bookings for same identity: Name + Phone + ID)
         List<Status> activeStatuses = java.util.Arrays.asList(Status.Confirmed, Status.CheckedIn);
-        if (bookingRepo.existsByGuestNameAndGuestPhoneAndGuestIdNumberAndStatusIn(
-                req.getGuestName(), req.getGuestPhone(), req.getGuestIdNumber(), activeStatuses)) {
+        if (bookingRepo.existsByCustomerCustomerIdAndStatusIn(customer.getCustomerId(), activeStatuses)) {
             throw new ConflictException("Guest already has an active booking (Confirmed or Checked-in). " +
                     "Please check out the current booking before rebooking.");
         }
@@ -113,6 +130,7 @@ public class BookingService {
 
         Booking booking = new Booking();
         booking.setUser(user);
+        booking.setCustomer(customer);
         booking.setRoom(room);
         booking.setGuestName(req.getGuestName());
         booking.setGuestEmail(req.getGuestEmail());

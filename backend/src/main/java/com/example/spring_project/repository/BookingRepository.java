@@ -103,48 +103,18 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                         """)
         List<Booking> findOverdueCheckedIn(@Param("today") LocalDateTime today);
 
-        boolean existsByGuestPhoneAndStatusIn(String phone, List<Status> statuses);
+        boolean existsByCustomerPhoneAndStatusIn(String phone, List<Status> statuses);
 
-        boolean existsByGuestEmailAndStatusIn(String email, List<Status> statuses);
+        boolean existsByCustomerEmailAndStatusIn(String email, List<Status> statuses);
 
-        boolean existsByGuestIdNumberAndStatusIn(String idNumber, List<Status> statuses);
+        boolean existsByCustomerIdNumberAndStatusIn(String idNumber, List<Status> statuses);
 
         List<Booking> findByRoomRoomIdAndStatus(Integer roomId, Status status);
 
-        @Query(value = """
-                            SELECT
-                                guest_name,
-                                MAX(guest_email) as guest_email,
-                                guest_phone,
-                                MAX(guest_id_number) as guest_id_number,
-                                MAX(guest_nationality) as guest_nationality,
-                                MAX(CASE WHEN status IN ('Confirmed', 'Checked-in') THEN 1 ELSE 0 END) as has_active_booking
-                            FROM booking
-                            WHERE (:name IS NULL OR LOWER(guest_name) LIKE LOWER(CONCAT('%', :name, '%')))
-                              AND (:phone IS NULL OR guest_phone LIKE CONCAT('%', :phone, '%'))
-                              AND (:idNumber IS NULL OR guest_id_number LIKE CONCAT('%', :idNumber, '%'))
-                            GROUP BY guest_name, guest_phone, guest_id_number
-                        """, countQuery = """
-                            SELECT COUNT(*) FROM (
-                                SELECT guest_name, guest_phone
-                                FROM booking
-                                WHERE (:name IS NULL OR LOWER(guest_name) LIKE LOWER(CONCAT('%', :name, '%')))
-                                  AND (:phone IS NULL OR guest_phone LIKE CONCAT('%', :phone, '%'))
-                                  AND (:idNumber IS NULL OR guest_id_number LIKE CONCAT('%', :idNumber, '%'))
-                                GROUP BY guest_name, guest_phone, guest_id_number
-                            ) AS sub
-                        """, nativeQuery = true)
-        Page<Object[]> findUniqueGuests(
-                        @Param("name") String name,
-                        @Param("phone") String phone,
-                        @Param("idNumber") String idNumber,
-                        Pageable pageable);
-
         @Query("""
                             SELECT b FROM Booking b
-                            WHERE b.guestName = :name 
-                              AND b.guestPhone = :phone 
-                              AND b.guestIdNumber = :idNumber
+                            JOIN b.customer c
+                            WHERE c.name = :name AND c.phone = :phone AND c.idNumber = :idNumber
                             ORDER BY b.createdAt DESC
                         """)
         List<Booking> findByGuestInfo(
@@ -152,9 +122,13 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                         @Param("phone") String phone,
                         @Param("idNumber") String idNumber);
 
-        boolean existsByGuestNameAndGuestPhoneAndGuestIdNumberAndStatusIn(
-                        String name,
-                        String phone,
-                        String idNumber,
-                        List<Status> statuses);
+        @Query("""
+            SELECT COUNT(b) > 0 FROM Booking b 
+            WHERE b.customer.customerId = :customerId AND b.status IN :statuses
+        """)
+        boolean existsByCustomerIdAndStatusIn(
+                        @Param("customerId") Integer customerId,
+                        @Param("statuses") List<Status> statuses);
+
+        boolean existsByCustomerCustomerIdAndStatusIn(Integer customerId, List<Status> statuses);
 }

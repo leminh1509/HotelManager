@@ -61,6 +61,9 @@ public class BookingMapper {
         dto.setBookingId(booking.getBookingId());
         dto.setStatus(booking.getStatus().getDbValue());
         dto.setTotalPrice(booking.getTotalPrice());
+        if (booking.getCustomer() != null) {
+            dto.setCustomerId(booking.getCustomer().getCustomerId());
+        }
 
         dto.setGuestName(booking.getGuestName());
         dto.setGuestEmail(booking.getGuestEmail());
